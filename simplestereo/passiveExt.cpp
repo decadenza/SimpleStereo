@@ -8,7 +8,91 @@
  
 #include <iostream>
 #include <math.h>
-#include "threadPool.h"
+#include <thread>
+#include "headers/SafeQueue.hpp"
+
+SafeQueue<int> jobs; // Global variable
+
+void worker(npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *dataLab2,
+            npy_int *disparityMap, float *proximityWeights, int gammaC,
+            int width, int height, int winSize, int padding,
+            int minDisparity, int maxDisparity)
+{
+    int dBest;
+    float cost, costBest, tot;
+    int ii,jj,kk;
+    int i,j,y,x,d;
+    float w1[winSize][winSize], w2[winSize][winSize]; // Weights
+    
+    
+    while(!jobs.empty()) 
+    {
+        
+    jobs.pop(y); // Get element, put it in y and remove from queue
+        
+    printf("Working on %d\n", y); // TEMP
+    
+    for(x=0; x < width; ++x) {      // For each column on left image
+            
+            // Pre-compute weights for left window
+            for(i = 0; i < winSize; ++i) {
+                for(j = 0; j < winSize; ++j) {
+                    ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image
+                    jj = std::min(std::max(x-padding+j,0),width-1);  // Replicate border value if not
+                    
+                    w1[i][j] = proximityWeights[i*winSize + j] * 
+                               exp(-sqrt( fabs(dataLab1[3*(ii*width + jj)] - dataLab1[3*(y*width+x)]) +
+                                          fabs(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width+x)+1]) + 
+                                          fabs(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width+x)+2]) )/gammaC);
+                }
+            }
+            
+            dBest = 0;
+            costBest = INFINITY; // Initialize cost to an high value
+            for(d = x-minDisparity+1; d > std::max(0,x-maxDisparity); --d) {  // For each allowed disparity (reverse order)
+                
+                cost = 0;   // Cost of current match
+                tot = 0;    // Sum of weights
+                for(i = 0; i < winSize; ++i) {
+                    for(j = 0; j < winSize; ++j) {
+                        ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image borders
+                        jj = std::min(std::max(d-padding+j,0),width-1);  // Replicate border value if not
+                        kk = std::min(std::max(x-padding+j,0),width-1);
+                        
+                        // Build weight
+                        w2[i][j] = proximityWeights[i*winSize + j] * 
+                                   exp(-sqrt( fabs(dataLab2[3*(ii*width + jj)] - dataLab2[3*(y*width+d)]) +
+                                              fabs(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width+d)+1]) + 
+                                              fabs(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width+d)+2]) )/gammaC);
+                        
+                        // Update cost
+                        cost += w1[i][j]*w2[i][j]*( abs(data1[3*(ii*width + kk)] - data2[3*(ii*width + jj)]) + 
+                                                    abs(data1[3*(ii*width + kk)+1] - data2[3*(ii*width + jj)+1]) + 
+                                                    abs(data1[3*(ii*width + kk)+2] - data2[3*(ii*width + jj)+2]) );
+                        // And denominator
+                        tot += w1[i][j]*w2[i][j];
+                        
+                    }
+                }
+                
+                // Weighted average
+                cost = cost / tot;
+                
+                if(cost < costBest) {
+                    costBest = cost;
+                    dBest = d;
+                    }
+                
+            }
+            
+            // Update disparity
+            disparityMap[y*width + x] = x-dBest;
+            
+        }
+    }
+}
+
+
 
 PyObject *computeASW(PyObject *self, PyObject *args)
 {
@@ -57,11 +141,11 @@ PyObject *computeASW(PyObject *self, PyObject *args)
     
     // Working variables
     int padding = winSize / 2;
-    int i,j,x,y,d;
-    float w1[winSize][winSize], w2[winSize][winSize]; // Weights
-    int dBest;
-    float cost, costBest, tot;
-    int ii,jj,kk;
+    int i,j,y;
+    
+    int num_threads = std::thread::hardware_concurrency();
+    
+    std::thread workersArr[num_threads];
     
     // Build proximity weights matrix
     float proximityWeights[winSize][winSize];
@@ -72,72 +156,31 @@ PyObject *computeASW(PyObject *self, PyObject *args)
         }
     }
     
-    // Left image as reference - Main loop
+    
     for(y=0; y < height; ++y) {         // For each row
-        for(x=0; x < width; ++x) {      // For each column on left image
-            
-            // Pre-compute weights for left window
-            for(i = 0; i < winSize; ++i) {
-                for(j = 0; j < winSize; ++j) {
-                    ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image
-                    jj = std::min(std::max(x-padding+j,0),width-1);  // Replicate border value if not
-                    
-                    w1[i][j] = proximityWeights[i][j] * 
-                               exp(-sqrt( fabs(dataLab1[3*(ii*width + jj)] - dataLab1[3*(y*width+x)]) +
-                                          fabs(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width+x)+1]) + 
-                                          fabs(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width+x)+2]) )/gammaC);
-                }
-            }
-            
-            dBest = 0;
-            costBest = INFINITY; // Initialize cost to an high value
-            for(d = x-minDisparity+1; d > std::max(0,x-maxDisparity); --d) {  // For each allowed disparity (reverse order)
-                
-                cost = 0;   // Cost of current match
-                tot = 0;    // Sum of weights
-                for(i = 0; i < winSize; ++i) {
-                    for(j = 0; j < winSize; ++j) {
-                        ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image borders
-                        jj = std::min(std::max(d-padding+j,0),width-1);  // Replicate border value if not
-                        kk = std::min(std::max(x-padding+j,0),width-1);
-                        
-                        // Build weight
-                        w2[i][j] = proximityWeights[i][j] * 
-                                   exp(-sqrt( fabs(dataLab2[3*(ii*width + jj)] - dataLab2[3*(y*width+d)]) +
-                                              fabs(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width+d)+1]) + 
-                                              fabs(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width+d)+2]) )/gammaC);
-                        
-                        // Update cost
-                        cost += w1[i][j]*w2[i][j]*( abs(data1[3*(ii*width + kk)] - data2[3*(ii*width + jj)]) + 
-                                                    abs(data1[3*(ii*width + kk)+1] - data2[3*(ii*width + jj)+1]) + 
-                                                    abs(data1[3*(ii*width + kk)+2] - data2[3*(ii*width + jj)+2]) );
-                        // And denominator
-                        tot += w1[i][j]*w2[i][j];
-                        
-                    }
-                }
-                
-                // Weighted average
-                cost = cost / tot;
-                
-                if(cost < costBest) {
-                    costBest = cost;
-                    dBest = d;
-                    }
-                
-            }
-            
-            // Update disparity
-            disparityMap[y*width + x] = x-dBest;
-            
-        }
+        jobs.push(y);              // Put in queue
     }
     
+    
+    // Start workers
+    for(i = 0; i < num_threads; ++i) {
+        workersArr[i] = std::thread( worker, data1, data2, dataLab1, dataLab2,
+                                          disparityMap, &(proximityWeights[0][0]), gammaC,             // Don't know why usign "proximityWeights" only does not work
+                                          width, height, winSize, padding, minDisparity, maxDisparity);
+    }
+    // Join workers
+    for(i = 0; i < num_threads; ++i) {
+        workersArr[i].join();
+        }
     
     // Cast to PyObject and return (apparently you cannot return a PyArrayObject)
     return (PyObject*)disparityMapObj;  
     
 }
+
+
+
+
 
 
 /*MODULE INITIALIZATION*/
