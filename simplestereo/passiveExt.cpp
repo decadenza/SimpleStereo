@@ -1,3 +1,7 @@
+/* Custom implementation of
+ * Adaptive Support Weight from "Locally adaptive support-weight approach
+ * for visual correspondence search", K. Yoon, I. Kweon, 2005.
+ * */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <numpy/arrayobject.h>
@@ -75,7 +79,7 @@ PyObject *computeASW(PyObject *self, PyObject *args)
             for(i = 0; i < winSize; ++i) {
                 for(j = 0; j < winSize; ++j) {
                     ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image
-                    jj = std::min(std::max(x-padding+j,0),width-1);
+                    jj = std::min(std::max(x-padding+j,0),width-1);  // Replicate border value if not
                     
                     w1[i][j] = proximityWeights[i][j] * 
                                exp(-sqrt( fabs(dataLab1[3*(ii*width + jj)] - dataLab1[3*(y*width+x)]) +
@@ -85,7 +89,7 @@ PyObject *computeASW(PyObject *self, PyObject *args)
             }
             
             dBest = 0;
-            costBest = INFINITY; // Initialize cost to high value
+            costBest = INFINITY; // Initialize cost to an high value
             for(d = x-minDisparity+1; d > std::max(0,x-maxDisparity); --d) {  // For each allowed disparity (reverse order)
                 
                 cost = 0;   // Cost of current match

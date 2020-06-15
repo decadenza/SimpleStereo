@@ -19,7 +19,7 @@ class StereoASW():
     
     def __init__(self, winSize=11, maxDisparity=16, minDisparity=0, gammaC=7, gammaP=36): 
         """
-        Implementation of Adaptive Support Weight from "Locally adaptive support-weight approach
+        Custom implementation of Adaptive Support Weight from "Locally adaptive support-weight approach
         for visual correspondence search", K. Yoon, I. Kweon, 2005.
         
         Parameters
