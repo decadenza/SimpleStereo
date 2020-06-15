@@ -8,6 +8,7 @@
  
 #include <iostream>
 #include <math.h>
+#include "threadPool.h"
 
 PyObject *computeASW(PyObject *self, PyObject *args)
 {
