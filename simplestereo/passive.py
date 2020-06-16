@@ -17,10 +17,11 @@ from simplestereo import passiveExt
 
 class StereoASW():
     
-    def __init__(self, winSize=11, maxDisparity=16, minDisparity=0, gammaC=7, gammaP=36): 
+    def __init__(self, winSize=11, maxDisparity=16, minDisparity=0, gammaC=7, gammaP=36, consistent=False): 
         """
         Custom implementation of Adaptive Support Weight from "Locally adaptive support-weight approach
         for visual correspondence search", K. Yoon, I. Kweon, 2005.
+        
         
         Parameters
         ----------
@@ -34,10 +35,20 @@ class StereoASW():
             Color parameter. Default is 7.
         gammaP : int
             Proximity parameter. Default is 36.
+        consistent : bool
+            If True consistent check is made, i.e. disparity is calculated first using left image as reference,
+            then using right one as reference. Any non-corresponding value is invalidated (occluded)
+            and assigned as the nearest minimum left-right non-occluded disparity. Original idea from occlusion
+            detection and filling as in "Local stereo matching using geodesic support weights", Asmaa Hosni et al., 2009.
+            If enabled, running time is roughly doubled.
+            Default to False.
             
         ..warning::
-            Not optimized. Very slow for high resolution images or with high *winSize* or *maxDisparity* values.
+            It may get very slow for high resolution images or with high *winSize* or *maxDisparity* values.
         
+        ..todo::
+            Apply a smoothering filter on the invalidated pixels (to be done in C++ extension).
+            
         Notes
         -----
         This algorithm performs a 384x288 pixel image scan in about 60 sec (see DOI 10.1007/s11554-012-0313-2 with code "yk").
@@ -52,6 +63,7 @@ class StereoASW():
         self.minDisparity = minDisparity
         self.gammaC = gammaC
         self.gammaP = gammaP
+        self.consistent = consistent
         
     
     def compute(self, img1, img2):
@@ -79,7 +91,7 @@ class StereoASW():
         # Send to C++ extension
         disparityMap = passiveExt.computeASW(img1, img2, img1Lab, img2Lab, self.winSize,
                                              self.maxDisparity, self.minDisparity,
-                                             self.gammaC, self.gammaP)
+                                             self.gammaC, self.gammaP, self.consistent)
         
         return disparityMap
         
