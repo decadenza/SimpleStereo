@@ -36,9 +36,9 @@ void worker(npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *
             
             // Pre-compute weights for left window
             for(i = 0; i < winSize; ++i) {
+                ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image, replicate border if not
                 for(j = 0; j < winSize; ++j) {
-                    ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image
-                    jj = std::min(std::max(x-padding+j,0),width-1);  // Replicate border value if not
+                    jj = std::min(std::max(x-padding+j,0),width-1);
                     
                     w1[i][j] = proximityWeights[i*winSize + j] * 
                                exp(-sqrt( fabs(dataLab1[3*(ii*width + jj)] - dataLab1[3*(y*width+x)]) +
@@ -54,9 +54,9 @@ void worker(npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *
                 cost = 0;   // Cost of current match
                 tot = 0;    // Sum of weights
                 for(i = 0; i < winSize; ++i) {
+                    ii = std::min(std::max(y-padding+i,0),height-1);
                     for(j = 0; j < winSize; ++j) {
-                        ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image borders
-                        jj = std::min(std::max(d-padding+j,0),width-1);  // Replicate border value if not
+                        jj = std::min(std::max(d-padding+j,0),width-1);
                         kk = std::min(std::max(x-padding+j,0),width-1);
                         
                         // Build weight
