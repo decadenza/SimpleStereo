@@ -11,9 +11,8 @@
 #include <thread>
 #include "headers/SafeQueue.hpp"
 
-SafeQueue<int> jobs; // Global variable
 
-void workerASW(npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *dataLab2,
+void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *dataLab2,
             npy_int *disparityMap, float *proximityWeights, int gammaC,
             int width, int height, int winSize, int padding,
             int minDisparity, int maxDisparity)
@@ -94,7 +93,7 @@ void workerASW(npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_floa
 }
 
 
-void workerASWconsistent(npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *dataLab2,
+void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *dataLab2,
             npy_int *disparityMap, float *proximityWeights, int gammaC,
             int width, int height, int winSize, int padding,
             int minDisparity, int maxDisparity)
@@ -318,7 +317,7 @@ PyObject *computeASW(PyObject *self, PyObject *args)
     // Working variables
     int padding = winSize / 2;
     int i,j;
-    
+    SafeQueue<int> jobs; // Jobs queue
     int num_threads = std::thread::hardware_concurrency();
     
     std::thread workersArr[num_threads];
@@ -342,7 +341,7 @@ PyObject *computeASW(PyObject *self, PyObject *args)
     if(!consistent) {
     // Start workers
     for(i = 0; i < num_threads; ++i) {
-        workersArr[i] = std::thread( workerASW, data1, data2, dataLab1, dataLab2,
+        workersArr[i] = std::thread( workerASW, std::ref(jobs), data1, data2, dataLab1, dataLab2,
                                           disparityMap, &proximityWeights[0][0], gammaC,             // Don't know why usign "proximityWeights" only does not work
                                           width, height, winSize, padding, minDisparity, maxDisparity);
         }
@@ -350,7 +349,7 @@ PyObject *computeASW(PyObject *self, PyObject *args)
         
         // Start consistent workers
         for(i = 0; i < num_threads; ++i) {
-            workersArr[i] = std::thread( workerASWconsistent, data1, data2, dataLab1, dataLab2,
+            workersArr[i] = std::thread( workerASWconsistent, std::ref(jobs), data1, data2, dataLab1, dataLab2,
                                           disparityMap, &proximityWeights[0][0], gammaC,             // Don't know why usign "proximityWeights" only does not work
                                           width, height, winSize, padding, minDisparity, maxDisparity);
         }
