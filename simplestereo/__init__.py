@@ -4,9 +4,12 @@ simplestereo
 Common classes and functions.
 
 
+Documentation DOCSTRING follows numpy-style wherever possible.
+See https://numpydoc.readthedocs.io/en/latest/format.html
+
 .. todo::
-    - Add new rig class for structured light (projector + camera)
-    - Add new rig class for uncalibrated stereo
+    - Add new rig class for structured light (projector + camera).
+    - Add new rig class for uncalibrated stereo.
 """
 import json
 import numpy as np
@@ -45,7 +48,6 @@ class StereoRig:
         Fundamental matrix as numpy.ndarray (default None).
     reprojectionError : float, optional
         Total reprojection error resulting from calibration (default None).
-    
     
     .. note:: 
         This class follows OpenCV convention to set the origin of the world coordinate system into the first camera.
@@ -133,16 +135,17 @@ class StereoRig:
         """
         Calculate camera centers in world coordinates.
         
+        Anyway first camera will always be centered in zero (returned anyway).
+        
         Returns
         -------
         numpy.ndarray
-            3D coordinates of first camera center
+            3D coordinates of first camera center (always zero).
         numpy.ndarray
-            3D coordinates of second camera center
+            3D coordinates of second camera center.
         """
         Po1, Po2 = self.getProjectionMatrices()
-        #C1 = np.zeros(3)    # World origin is set in camera 1
-        C1 = -np.linalg.inv(Po1[:,:3]).dot(Po1[:,3])
+        C1 = np.zeros(3)    # World origin is set in camera 1
         C2 = -np.linalg.inv(Po2[:,:3]).dot(Po2[:,3])
         return C1, C2
     

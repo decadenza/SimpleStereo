@@ -13,7 +13,7 @@
 
 
 void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *dataLab2,
-            npy_int *disparityMap, float *proximityWeights, int gammaC,
+            npy_int16 *disparityMap, float *proximityWeights, int gammaC,
             int width, int height, int winSize, int padding,
             int minDisparity, int maxDisparity)
 {
@@ -94,7 +94,7 @@ void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_flo
 
 
 void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *dataLab2,
-            npy_int *disparityMap, float *proximityWeights, int gammaC,
+            npy_int16 *disparityMap, float *proximityWeights, int gammaC,
             int width, int height, int winSize, int padding,
             int minDisparity, int maxDisparity)
 {
@@ -311,8 +311,8 @@ PyObject *computeASW(PyObject *self, PyObject *args)
     
     // Initialize disparity map
     npy_intp disparityMapDims[2] = {height, width};
-    PyArrayObject *disparityMapObj = (PyArrayObject*)PyArray_EMPTY(2, disparityMapDims, NPY_INT,0);
-    npy_int *disparityMap = (npy_int *)PyArray_DATA(disparityMapObj); // Pointer to first element
+    PyArrayObject *disparityMapObj = (PyArrayObject*)PyArray_EMPTY(2, disparityMapDims, NPY_INT16,0);
+    npy_int16 *disparityMap = (npy_int16 *)PyArray_DATA(disparityMapObj); // Pointer to first element
     
     // Working variables
     int padding = winSize / 2;
@@ -360,10 +360,7 @@ PyObject *computeASW(PyObject *self, PyObject *args)
         workersArr[i].join();
     }    
     
-    
-    
-    
-    
+        
     // Cast to PyObject and return (apparently you cannot return a PyArrayObject)
     return (PyObject*)disparityMapObj;  
     
@@ -374,10 +371,11 @@ PyObject *computeASW(PyObject *self, PyObject *args)
 
 
 
-/*MODULE INITIALIZATION*/
+/*____________________PYTHON MODULE INITIALIZATION____________________*/
 static struct PyMethodDef module_methods[] = {
-    {"computeASW", computeASW, METH_VARARGS, NULL},             //nameout,functionname, METH_VARARGS, NULL
-    { NULL,NULL,0, NULL}
+    /* {name (external), function, calling, doc} */
+    {"computeASW",  computeASW, METH_VARARGS, NULL},
+    {NULL,NULL,0, NULL}
 };
 
 

@@ -3,9 +3,7 @@ passive
 =======
 Contains different passive stereo algorithms to build disparity maps.
 
-See also algorithms implemented in OpenCV:
-    - StereoBM
-    - StereoSGBM
+Simpler algorithms, like StereoBM and StereoSGBM, are already implemented in OpenCV.
 """
 import ctypes
 
@@ -16,45 +14,46 @@ from simplestereo import passiveExt
 
 
 class StereoASW():
+    """
+    Custom implementation of Adaptive Support Weight from "Locally adaptive support-weight approach
+    for visual correspondence search", K. Yoon, I. Kweon, 2005.
     
-    def __init__(self, winSize=11, maxDisparity=16, minDisparity=0, gammaC=7, gammaP=36, consistent=False): 
-        """
-        Custom implementation of Adaptive Support Weight from "Locally adaptive support-weight approach
-        for visual correspondence search", K. Yoon, I. Kweon, 2005.
+    
+    Parameters
+    ----------
+    winSize : int
+        Side of the square window. Must be an odd positive number.
+    maxDisparity: int
+        Maximum accepted disparity. Default is 16.
+    minDisparity: int
+        Minimum valid disparity, usually set to zero. Default is 0.
+    gammaC : int
+        Color parameter. Default is 7.
+    gammaP : int
+        Proximity parameter. Default is 36.
+    consistent : bool
+        If True consistent check is made, i.e. disparity is calculated first using left image as reference,
+        then using right one as reference. Any non-corresponding value is invalidated (occluded)
+        and assigned as the nearest minimum left-right non-occluded disparity. Original idea from occlusion
+        detection and filling as in "Local stereo matching using geodesic support weights", Asmaa Hosni et al., 2009.
+        If enabled, running time is roughly doubled.
+        Default to True.
+        
+    ..warning::
+        It may get very slow for high resolution images or with high *winSize* or *maxDisparity* values.
+    
+    ..todo::
         
         
-        Parameters
-        ----------
-        winSize : int
-            Side of the square window. Must be an odd positive number.
-        maxDisparity: int
-            Maximum accepted disparity. Default is 16.
-        minDisparity: int
-            Minimum valid disparity, usually set to zero. Default is 0.
-        gammaC : int
-            Color parameter. Default is 7.
-        gammaP : int
-            Proximity parameter. Default is 36.
-        consistent : bool
-            If True consistent check is made, i.e. disparity is calculated first using left image as reference,
-            then using right one as reference. Any non-corresponding value is invalidated (occluded)
-            and assigned as the nearest minimum left-right non-occluded disparity. Original idea from occlusion
-            detection and filling as in "Local stereo matching using geodesic support weights", Asmaa Hosni et al., 2009.
-            If enabled, running time is roughly doubled.
-            Default to False.
-            
-        ..warning::
-            It may get very slow for high resolution images or with high *winSize* or *maxDisparity* values.
-        
-        ..todo::
-            Apply a smoothering filter on the invalidated pixels (to be done in C++ extension).
-            
-        Notes
-        -----
-        This algorithm performs a 384x288 pixel image scan in about 60 sec (see DOI 10.1007/s11554-012-0313-2 with code "yk").
-        Optimized version is needed.
+    Notes
+    -----
+    - This algorithm performs a 384x288 pixel image scan with maxDisparity=16 in less than 1 sec
+    using 4 CPUs (while other implementations need 60 sec, see DOI 10.1007/s11554-012-0313-2 with code "yk").
+    - To improve the final result, a smoothering filter could be applied.
 
-        """
+    """
+    def __init__(self, winSize=11, maxDisparity=16, minDisparity=0, gammaC=7, gammaP=36, consistent=True): 
+        
         if not (winSize>0 and winSize%2 == 1) :
             raise ValueError("winSize must be a positive odd number!")
             
@@ -77,7 +76,7 @@ class StereoASW():
         
         Returns
         -------
-        numpy.ndarray
+        numpy.ndarray (np.int16)
             A disparity map of the same width and height of the images.
         """
         
@@ -101,15 +100,15 @@ class StereoASW():
 
 ################## TO BE COMPLETED...
 class StereoGSW():
+    """
+    Implementation of "Local stereo matching using geodesic support weights",
+    Asmaa Hosni, Michael Bleyer, Margrit Gelautz and Christoph Rhemann (2009).
     
+    ..warning::
+        VERY SLOW! NOT READY FOR PRODUCTION!
+    """
     def __init__(self, winSize=11, maxDisparity=16, minDisparity=0, gamma=10, fMax=120, iterations=3):
-        """
-        Implementation of "Local stereo matching using geodesic support weights",
-        Asmaa Hosni, Michael Bleyer, Margrit Gelautz and Christoph Rhemann (2009).
         
-        ..warning::
-            VERY SLOW! NOT READY FOR PRODUCTION!
-        """
         if not (winSize>0 and winSize%2 == 1) :
             raise ValueError("winSize must be a positive odd number!")
             
@@ -127,6 +126,7 @@ class StereoGSW():
         if img1.shape != img2.shape:
             raise ValueError("Images must have the same dimension!")
         
+        '''
         height, width = img1.shape[:2]
         winSize = self.winSize
         padding = (winSize-1)//2
@@ -235,6 +235,6 @@ class StereoGSW():
         
         # Da fare: applicare smoothering filter usando conservando i pesi calcolati prima (?)
         
-                   
+        '''           
         return disparityMap #.astype(np.uint8)
 
