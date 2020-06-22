@@ -8,10 +8,13 @@
  
 #include <iostream>
 #include <math.h>
+#include <algorithm>
+
 #include <thread>
 #include "headers/SafeQueue.hpp"
 
 
+// ******************************** ASW ********************************
 void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *dataLab2,
             npy_int16 *disparityMap, float *proximityWeights, int gammaC,
             int width, int height, int winSize, int padding,
@@ -289,7 +292,9 @@ PyObject *computeASW(PyObject *self, PyObject *args)
         return NULL;
         }
     if (PyArray_NDIM(img1)!=3 or PyArray_NDIM(img1)!=PyArray_NDIM(img2) or 
-        PyArray_DIM(img1,2)!=3  or PyArray_DIM(img2,2)!=3){
+        PyArray_DIM(img1,2)!=3 or PyArray_DIM(img2,2)!=3 or
+        PyArray_DIM(img1,0)!=PyArray_DIM(img2,0) or
+        PyArray_DIM(img1,1)!=PyArray_DIM(img2,1)){
         PyErr_SetString(PyExc_ValueError, "Wrong image dimensions!");
         return NULL;
         }
@@ -371,10 +376,257 @@ PyObject *computeASW(PyObject *self, PyObject *args)
 
 
 
+// ******************************** GSW ********************************
+
+void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
+            npy_int16 *disparityMap, int width, int height, int winSize, int padding,
+            int minDisparity, int maxDisparity, int gamma, double fMax, int iterations, int bins)
+{
+    int dBest;
+    float cost, costBest, temp, wBest;
+    int ii,jj,kk;
+    int i,j,k,y,x,d;
+    float w[winSize*winSize]; // Weights
+    int tot = winSize*winSize;
+    int center = (tot-1) / 2;
+    int xx, yy;
+    
+    while(!jobs.empty()) 
+    {
+        
+    jobs.pop(y); // Get element, put it in y and remove from queue
+    
+    std::cout << "Working " << y << std::endl;
+    
+    // USING LEFT IMAGE AS REFERENCE
+    for(x=0; x < width; ++x) {      // For each column on left image
+            
+            /* Build geodesic map approximation, managing border areas too */
+            
+            // Weights initialization
+            for(i=0;i<tot;i++){
+                w[i]=INFINITY; // Set all weights to high value
+                }
+            w[center] = 0; // Except for the center one
+            
+            // Iterations
+            for (d=0;d<iterations;++d){
+                
+                // Forward pass (row major order)
+                for(i=0;i<tot;++i){                 // For every window pixel
+                   yy = y-padding + i/winSize; // Whole image coordinates
+                   if(yy<0 or yy>=height) continue;   //Image y border
+                   xx = x-padding + i%winSize;
+                   if(xx<0 or xx>=width) continue;  // Image x border
+                   wBest = INFINITY;  
+                   
+                   for(k=0;k<=center;++k) // Find minimum in upper kernel
+                   {
+                       jj = y-padding + k/winSize; // Whole image coordinates (kernel)
+                       if(jj<0 or jj>=height) continue;
+                       kk = x-padding + k%winSize;
+                       if(kk<0 or kk>=width) continue;
+                       
+                       // OVER THE UPPER KERNEL
+                       temp = w[k] + sqrt( pow(data1[3*(yy*width + xx)  ] - data1[3*(jj*width + kk)  ],2)
+                                         + pow(data1[3*(yy*width + xx)+1] - data1[3*(jj*width + kk)+1],2)
+                                         + pow(data1[3*(yy*width + xx)+2] - data1[3*(jj*width + kk)+2],2) ); 
+                               
+                       if(temp<wBest) wBest=temp;
+                       }
+                   w[i] = wBest;
+                   }
+                   
+                // Backward pass (reverse row major order)
+                for(i=tot-1;i>=0;--i){                 // For every window pixel
+                   yy = y-padding + i/winSize; // Whole image coordinates
+                   if(yy<0 or yy>=height) continue;   //Image y border
+                   xx = x-padding + i%winSize;
+                   if(xx<0 or xx>=width) continue;  // Image x border
+                   wBest = INFINITY;  
+                   
+                   for(k=center;k<tot;++k) // Find minimum in upper kernel
+                   {
+                       jj = y-padding + k/winSize; // Whole image coordinates (kernel)
+                       if(jj<0 or jj>=height) continue;
+                       kk = x-padding + k%winSize;
+                       if(kk<0 or kk>=width) continue;
+                       
+                       // OVER THE LOWER KERNEL
+                       temp = w[k] + sqrt( pow(data1[3*(yy*width + xx)  ] - data1[3*(jj*width + kk)  ],2)
+                                         + pow(data1[3*(yy*width + xx)+1] - data1[3*(jj*width + kk)+1],2)
+                                         + pow(data1[3*(yy*width + xx)+2] - data1[3*(jj*width + kk)+2],2) ); 
+                               
+                       if(temp<wBest) wBest=temp;
+                       }
+                   w[i] = wBest;
+                   }
+                    
+                }
+            
+            // Convert to weights
+            for(i=0;i<tot;i++){
+                w[i]=exp(-w[i]/gamma);
+                }
+            
+            /*
+            if(y==280 and x==380){
+                for(i=0;i<tot;i++){
+                    if(i%winSize==0) std::cout << "\n";
+                    std::cout << w[i] << " ";
+                    
+                    }
+                std::cout << "\n\n"
+                }
+            */
+            
+            // Calculate best disp
+            dBest = 0;
+            costBest = INFINITY; // Initialize cost to an high value
+            
+            for(d = x-minDisparity; d >= std::max(0,x-maxDisparity); --d) {  // For each allowed x-coord on image 2 (reverse order)
+                
+                
+                cost = 0;   // Cost of current match
+                for(i = 0; i < winSize; ++i) {
+                    ii = y - padding + i;
+                    if( ii < 0) continue;       // Image top border
+                    if( ii >= height) break;    // Image bottom border
+                    
+                    for(j = 0; j < winSize; ++j) {
+                        kk = x - padding + j;
+                        jj = d - padding + j;
+                        
+                        if( jj < 0 or kk < 0) continue;         // Image left border
+                        if( jj >= width or kk >= width) break;  // Image right border
+                        
+                        
+                        // Update cost
+                        // DIFFERENCE TO BE REPLACED WITH MUTUAL INFORMATION
+                        
+                        // Color difference is capped to fMax
+                        cost += w[i*winSize + j] * std::min(fMax,
+                                                            sqrt(pow(data1[3*(ii*width + kk)]   - data2[3*(ii*width + jj)  ], 2)
+                                                               + pow(data1[3*(ii*width + kk)+1] - data2[3*(ii*width + jj)+1], 2)
+                                                               + pow(data1[3*(ii*width + kk)+2] - data2[3*(ii*width + jj)+2], 2)) );
+                        
+                        
+                    }
+                }
+                
+                
+                
+                if(cost < costBest) {
+                    costBest = cost;
+                    dBest = d;
+                    }
+                
+            }
+            
+            // Update disparity
+            disparityMap[y*width + x] = x-dBest;
+            
+    
+    
+        }
+    
+    
+    } // End of while
+    
+}
+
+
+PyObject *computeGSW(PyObject *self, PyObject *args)
+{
+    PyArrayObject *img1, *img2;
+    int winSize, maxDisparity, minDisparity, gamma, iterations, bins;
+    double fMax;
+    // Parse input. See https://docs.python.org/3/c-api/arg.html
+    if (!PyArg_ParseTuple(args, "OOiiiidii", &img1, &img2, 
+                          &winSize, &maxDisparity, &minDisparity, &gamma,
+                          &fMax, &iterations, &bins)){
+        PyErr_SetString(PyExc_ValueError, "Invalid input format!");
+        return NULL;
+        }
+    
+    // Check input format
+    if (!(PyArray_TYPE(img1) == NPY_UBYTE and PyArray_TYPE(img1) == NPY_UBYTE)){
+        // Raising an exception in C is done by setting the exception object or string and then returning NULL from the function.
+        // See https://docs.python.org/3/c-api/exceptions.html
+        PyErr_SetString(PyExc_TypeError, "Wrong type input!");
+        return NULL;
+        }
+    if (PyArray_NDIM(img1)!=3 or PyArray_NDIM(img1)!=PyArray_NDIM(img2) or 
+        PyArray_DIM(img1,2)!=3 or PyArray_DIM(img2,2)!=3 or
+        PyArray_DIM(img1,0)!=PyArray_DIM(img2,0) or
+        PyArray_DIM(img1,1)!=PyArray_DIM(img2,1)){
+        PyErr_SetString(PyExc_ValueError, "Wrong image dimensions!");
+        return NULL;
+        }
+    if (!(winSize>0 and winSize%2==1)) {
+        PyErr_SetString(PyExc_ValueError, "winSize must be a positive odd number!");
+        return NULL;
+        }
+    
+    
+    //Retrieve input
+    int height = PyArray_DIM(img1,0);
+    int width = PyArray_DIM(img1,1);
+    
+    // See https://numpy.org/devdocs/reference/c-api/dtype.html
+    npy_ubyte *data1 = (npy_ubyte *)PyArray_DATA(img1);       // Pointer to first element (casted to right type!)
+    npy_ubyte *data2 = (npy_ubyte *)PyArray_DATA(img2);       // These are 1D arrays, (f**k)!
+    
+    // Initialize disparity map
+    npy_intp disparityMapDims[2] = {height, width};
+    PyArrayObject *disparityMapObj = (PyArrayObject*)PyArray_EMPTY(2, disparityMapDims, NPY_INT16,0);
+    npy_int16 *disparityMap = (npy_int16 *)PyArray_DATA(disparityMapObj); // Pointer to first element
+    
+    // Working variables
+    int padding = winSize / 2;
+    int i,j;
+    SafeQueue<int> jobs; // Jobs queue
+    int num_threads = std::thread::hardware_concurrency();
+    
+    std::thread workersArr[num_threads];
+    
+    
+    
+    // Put each image row in queue
+    for(i=0; i < height; ++i) {   
+        jobs.push(i);
+    }
+    
+    
+    for(i = 0; i < num_threads; ++i) {
+        workersArr[i] = std::thread( workerGSW, std::ref(jobs), data1, data2,
+                                          disparityMap, width, height, winSize,
+                                          padding, minDisparity, maxDisparity, gamma, fMax, iterations, bins);
+    }
+    
+    
+    // Join threads
+    for(i = 0; i < num_threads; ++i) {
+        workersArr[i].join();
+    }    
+    
+        
+    // Cast to PyObject and return (apparently you cannot return a PyArrayObject)
+    return (PyObject*)disparityMapObj;  
+    
+}
+
+
+
+
+
+
+
 /*____________________PYTHON MODULE INITIALIZATION____________________*/
 static struct PyMethodDef module_methods[] = {
     /* {name (external), function, calling, doc} */
     {"computeASW",  computeASW, METH_VARARGS, NULL},
+    {"computeGSW",  computeGSW, METH_VARARGS, NULL},
     {NULL,NULL,0, NULL}
 };
 
