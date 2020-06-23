@@ -378,18 +378,22 @@ PyObject *computeASW(PyObject *self, PyObject *args)
 
 // ******************************** GSW ********************************
 
+// WORK IN PROGRESS
 void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
             npy_int16 *disparityMap, int width, int height, int winSize, int padding,
-            int minDisparity, int maxDisparity, int gamma, double fMax, int iterations, int bins)
+            int minDisparity, int maxDisparity, int gamma, float fMax, int iterations, int bins)
 {
     int dBest;
     float cost, costBest, temp, wBest;
     int ii,jj,kk;
     int i,j,k,y,x,d;
-    float w[winSize*winSize]; // Weights
     int tot = winSize*winSize;
+    float w[tot]; // Weights
     int center = (tot-1) / 2;
     int xx, yy;
+    float hist1[bins], hist2[bins],histJoint[bins*bins];
+    float histStep = (float)256/bins;
+    int a,b;
     
     while(!jobs.empty()) 
     {
@@ -456,7 +460,7 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                        temp = w[k] + sqrt( pow(data1[3*(yy*width + xx)  ] - data1[3*(jj*width + kk)  ],2)
                                          + pow(data1[3*(yy*width + xx)+1] - data1[3*(jj*width + kk)+1],2)
                                          + pow(data1[3*(yy*width + xx)+2] - data1[3*(jj*width + kk)+2],2) ); 
-                               
+                       
                        if(temp<wBest) wBest=temp;
                        }
                    w[i] = wBest;
@@ -469,23 +473,92 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                 w[i]=exp(-w[i]/gamma);
                 }
             
-            /*
-            if(y==280 and x==380){
-                for(i=0;i<tot;i++){
-                    if(i%winSize==0) std::cout << "\n";
-                    std::cout << w[i] << " ";
-                    
-                    }
-                std::cout << "\n\n"
-                }
-            */
-            
             // Calculate best disp
             dBest = 0;
             costBest = INFINITY; // Initialize cost to an high value
             
             for(d = x-minDisparity; d >= std::max(0,x-maxDisparity); --d) {  // For each allowed x-coord on image 2 (reverse order)
                 
+                cost=0;    // Cost of current match
+                
+                // MUTUAL INFORMATION
+                /*
+                 * Il peso w[i*winSize+j] misura l'importanza di QUEL pixel nel matching.
+                 * La probabilità (calcolata come istogramma) ci dice quanti pixel (di tutta la finestra)
+                 * cadono in quell'intervallo (bin). La mutual information ci dice quanto due finestre
+                 * sono interdipendenti.
+                 * */
+                 /*
+                //Reset histograms
+                for(k=0;k<bins;k++){
+                    hist1[k]=1e-10; // Avoid perfect zero...
+                    hist2[k]=1e-10; 
+                    }
+                for(k=0;k<bins*bins;k++){
+                    histJoint[k]=1e-10;
+                    }
+                
+                for(i = 0; i < winSize; ++i) {
+                    ii = y - padding + i;
+                    if( ii < 0) continue;       // Image top border
+                    if( ii >= height) break;    // Image bottom border
+                    
+                    for(j = 0; j < winSize; ++j) {
+                        kk = x - padding + j;
+                        jj = d - padding + j;
+                        
+                        if(jj < 0 or kk < 0) continue;         // Image left border
+                        if(jj >= width or kk >= width) break;  // Image right border
+                        
+                        for(k=0;k<3;++k){ // For each color channel
+                            a = data1[3*(ii*width + kk)+k]/histStep;
+                            b = data2[3*(ii*width + jj)+k]/histStep;
+                            
+                            //hist1[ a ] += w[i*winSize + j];
+                            //hist2[ b ] += w[i*winSize + j];
+                            //histJoint[ a*bins + b ] += w[i*winSize + j];
+                            
+                            hist1[ a ]++;
+                            hist2[ b ]++;
+                            histJoint[ a*bins + b ]++;
+                            }
+                    }
+                }
+                
+                
+                // Convert to probabilities
+                for(k=0;k<bins;++k){
+                    hist1[k]=hist1[k]/tot;
+                    hist2[k]=hist2[k]/tot;
+                    }
+                for(k=0;k<bins*bins;++k){
+                    histJoint[k]=histJoint[k]/tot;
+                    }
+                
+                
+                // Compute cost. How to compute cost???
+                for(i = 0; i < winSize; ++i) {
+                    ii = y - padding + i;
+                    if( ii < 0) continue;       // Image top border
+                    if( ii >= height) break;    // Image bottom border
+                    
+                    for(j = 0; j < winSize; ++j) {
+                        kk = x - padding + j;
+                        jj = d - padding + j;
+                        
+                        if(jj < 0 or kk < 0) continue;         // Image left border
+                        if(jj >= width or kk >= width) break;  // Image right border
+                        
+                        for(k=0;k<3;++k){ // For each color channel
+                            a = data1[3*(ii*width + kk)+k]/histStep;
+                            b = data2[3*(ii*width + jj)+k]/histStep;
+                            cost -= w[i*winSize+j] * histJoint[a*bins+b] * log2(histJoint[a*bins+b]/(hist1[a]*hist2[b]));
+                            }
+                    }
+                }
+                */
+                
+                // NORMAL COLOR DIFFERENCES
                 
                 cost = 0;   // Cost of current match
                 for(i = 0; i < winSize; ++i) {
@@ -502,18 +575,17 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                         
                         
                         // Update cost
-                        // DIFFERENCE TO BE REPLACED WITH MUTUAL INFORMATION
-                        
+                        // SQUARED DIFFERENCE TO BE REPLACED WITH MUTUAL INFORMATION. BUT HOW?
+                        // MUTUAL INFORMATION CANNOT BE ITERATED OVER PIXEL
                         // Color difference is capped to fMax
                         cost += w[i*winSize + j] * std::min(fMax,
-                                                            sqrt(pow(data1[3*(ii*width + kk)]   - data2[3*(ii*width + jj)  ], 2)
+                                                            (float) sqrt(pow(data1[3*(ii*width + kk)]   - data2[3*(ii*width + jj)  ], 2)
                                                                + pow(data1[3*(ii*width + kk)+1] - data2[3*(ii*width + jj)+1], 2)
                                                                + pow(data1[3*(ii*width + kk)+2] - data2[3*(ii*width + jj)+2], 2)) );
                         
                         
                     }
                 }
-                
                 
                 
                 if(cost < costBest) {
@@ -526,8 +598,6 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
             // Update disparity
             disparityMap[y*width + x] = x-dBest;
             
-    
-    
         }
     
     
@@ -540,9 +610,9 @@ PyObject *computeGSW(PyObject *self, PyObject *args)
 {
     PyArrayObject *img1, *img2;
     int winSize, maxDisparity, minDisparity, gamma, iterations, bins;
-    double fMax;
+    float fMax;
     // Parse input. See https://docs.python.org/3/c-api/arg.html
-    if (!PyArg_ParseTuple(args, "OOiiiidii", &img1, &img2, 
+    if (!PyArg_ParseTuple(args, "OOiiiifii", &img1, &img2, 
                           &winSize, &maxDisparity, &minDisparity, &gamma,
                           &fMax, &iterations, &bins)){
         PyErr_SetString(PyExc_ValueError, "Invalid input format!");
@@ -568,7 +638,6 @@ PyObject *computeGSW(PyObject *self, PyObject *args)
         return NULL;
         }
     
-    
     //Retrieve input
     int height = PyArray_DIM(img1,0);
     int width = PyArray_DIM(img1,1);
@@ -591,12 +660,10 @@ PyObject *computeGSW(PyObject *self, PyObject *args)
     std::thread workersArr[num_threads];
     
     
-    
     // Put each image row in queue
     for(i=0; i < height; ++i) {   
         jobs.push(i);
     }
-    
     
     for(i = 0; i < num_threads; ++i) {
         workersArr[i] = std::thread( workerGSW, std::ref(jobs), data1, data2,
@@ -604,16 +671,13 @@ PyObject *computeGSW(PyObject *self, PyObject *args)
                                           padding, minDisparity, maxDisparity, gamma, fMax, iterations, bins);
     }
     
-    
     // Join threads
     for(i = 0; i < num_threads; ++i) {
         workersArr[i].join();
     }    
     
-        
     // Cast to PyObject and return (apparently you cannot return a PyArrayObject)
-    return (PyObject*)disparityMapObj;  
-    
+    return (PyObject*)disparityMapObj;
 }
 
 

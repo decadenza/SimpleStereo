@@ -28,9 +28,9 @@ class StereoASW():
     minDisparity: int
         Minimum valid disparity, usually set to zero. Default is 0.
     gammaC : int
-        Color parameter. Default is 7.
+        Color parameter. If increased, it increases the color influence. Default is 7.
     gammaP : int
-        Proximity parameter. Default is 36.
+        Proximity parameter. If increased, it increases the proximity influence. Default is 36.
     consistent : bool
         If True consistent check is made, i.e. disparity is calculated first using left image as reference,
         then using right one as reference. Any non-corresponding value is invalidated (occluded)
@@ -42,9 +42,6 @@ class StereoASW():
     ..warning::
         It may get very slow for high resolution images or with high *winSize* or *maxDisparity* values.
     
-    ..todo::
-        
-        
     Notes
     -----
     - This algorithm performs a 384x288 pixel image scan with maxDisparity=16 in less than 1 sec
@@ -95,14 +92,41 @@ class StereoASW():
 
 
 
+
 ################## TO BE COMPLETED...
 class StereoGSW():
     """
-    Implementation of "Local stereo matching using geodesic support weights",
+    Tentative implementation of "Local stereo matching using geodesic support weights",
     Asmaa Hosni, Michael Bleyer, Margrit Gelautz and Christoph Rhemann (2009).
     
+    This is only for educational purposes.
+    The reference paper is not clear. Mutual Information computes a value for the whole
+    window (not position based). However formula (5) suggests a per-pixel iteration.
+    Currently implemented with sum of squared differences, weighted with geodesic.
+    
+    Parameters
+    ----------
+    winSize : int
+        Side of the square window. Must be an odd positive number.
+    maxDisparity: int
+        Maximum accepted disparity. Default is 16.
+    minDisparity: int
+        Minimum valid disparity, usually set to zero. Default is 0.
+    gamma : int
+        Gamma parameter. If increased, it increases the geodesic weight influence. Default is 10.
+    fMax : int or float
+        Color difference is capped to this value. Default is 120.
+    iterations : int
+        Number of iteration for geodesic distances estimation. Default is 3.
+    bins : int
+        Number of bins for histograms (needed for Mutual Information). Default is 20.
+        
     ..warning::
-        VERY SLOW! NOT READY FOR PRODUCTION!
+        This algorithm is very slow with high *winSize*. Do not use in production.
+    
+    ..todo::
+        Right image reference and occlusion filling to be implemented. 
+        Find a way to use Mutual information in matching cost.
     """
     def __init__(self, winSize=11, maxDisparity=16, minDisparity=0, gamma=10,
                  fMax=120, iterations=3, bins=20):
