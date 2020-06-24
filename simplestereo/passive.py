@@ -125,8 +125,9 @@ class StereoGSW():
         This algorithm is very slow with high *winSize*. Do not use in production.
     
     ..todo::
-        Right image reference and occlusion filling to be implemented. 
-        Find a way to use Mutual information in matching cost.
+        Implement Mutual information in matching cost.
+        Implement right image consistency and subsequent occlusion filling. 
+        
     """
     def __init__(self, winSize=11, maxDisparity=16, minDisparity=0, gamma=10,
                  fMax=120, iterations=3, bins=20):

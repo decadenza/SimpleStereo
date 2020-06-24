@@ -537,25 +537,7 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                 
                 
                 // Compute cost. How to compute cost???
-                for(i = 0; i < winSize; ++i) {
-                    ii = y - padding + i;
-                    if( ii < 0) continue;       // Image top border
-                    if( ii >= height) break;    // Image bottom border
-                    
-                    for(j = 0; j < winSize; ++j) {
-                        kk = x - padding + j;
-                        jj = d - padding + j;
-                        
-                        if(jj < 0 or kk < 0) continue;         // Image left border
-                        if(jj >= width or kk >= width) break;  // Image right border
-                        
-                        for(k=0;k<3;++k){ // For each color channel
-                            a = data1[3*(ii*width + kk)+k]/histStep;
-                            b = data2[3*(ii*width + jj)+k]/histStep;
-                            cost -= w[i*winSize+j] * histJoint[a*bins+b] * log2(histJoint[a*bins+b]/(hist1[a]*hist2[b]));
-                            }
-                    }
-                }
+                
                 */
                 
                 // NORMAL COLOR DIFFERENCES
