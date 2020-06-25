@@ -36,14 +36,19 @@ void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_flo
             
             // Pre-compute weights for left window
             for(i = 0; i < winSize; ++i) {
-                ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image, replicate border if not
+                ii = y - padding + i;
+                if( ii < 0) continue;       // Image top border
+                if( ii >= height) break;    // Image bottom border
+                
                 for(j = 0; j < winSize; ++j) {
-                    jj = std::min(std::max(x-padding+j,0),width-1);
+                    jj = x-padding+j;
+                    if(jj<0) continue;
+                    if(jj>=width) break;
                     
                     w1[i][j] = proximityWeights[i*winSize + j] * 
-                               exp(-sqrt( fabs(dataLab1[3*(ii*width + jj)] - dataLab1[3*(y*width+x)]) +
-                                          fabs(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width+x)+1]) + 
-                                          fabs(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width+x)+2]) )/gammaC);
+                               exp(-sqrt( pow(dataLab1[3*(ii*width + jj)  ] - dataLab1[3*(y*width + x)  ],2) +
+                                          pow(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width + x)+1],2) + 
+                                          pow(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width + x)+2],2) )/gammaC);
                 }
             }
             
@@ -54,19 +59,24 @@ void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_flo
                 cost = 0;   // Cost of current match
                 tot = 0;    // Sum of weights
                 for(i = 0; i < winSize; ++i) {
-                    ii = std::min(std::max(y-padding+i,0),height-1);
+                    ii = y - padding + i;
+                    if( ii < 0) continue;       // Image top border
+                    if( ii >= height) break;    // Image bottom border
+                    
                     for(j = 0; j < winSize; ++j) {
-                        jj = std::min(std::max(d-padding+j,0),width-1);
-                        kk = std::min(std::max(x-padding+j,0),width-1);
+                        jj = d-padding+j;
+                        kk = x-padding+j;
+                        if(jj<0 or kk<0) continue;
+                        if(jj>=width or kk>=width) break;
                         
                         // Build weight
                         w2[i][j] = proximityWeights[i*winSize + j] * 
-                                   exp(-sqrt( fabs(dataLab2[3*(ii*width + jj)] - dataLab2[3*(y*width+d)]) +
-                                              fabs(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width+d)+1]) + 
-                                              fabs(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width+d)+2]) )/gammaC);
+                                   exp(-sqrt( pow(dataLab2[3*(ii*width + jj)  ] - dataLab2[3*(y*width + d)  ],2) +
+                                              pow(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width + d)+1],2) + 
+                                              pow(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width + d)+2],2) )/gammaC);
                         
                         // Update cost
-                        cost += w1[i][j]*w2[i][j]*( abs(data1[3*(ii*width + kk)] - data2[3*(ii*width + jj)]) + 
+                        cost += w1[i][j]*w2[i][j]*( abs(data1[3*(ii*width + kk)  ] - data2[3*(ii*width + jj)  ]) + 
                                                     abs(data1[3*(ii*width + kk)+1] - data2[3*(ii*width + jj)+1]) + 
                                                     abs(data1[3*(ii*width + kk)+2] - data2[3*(ii*width + jj)+2]) );
                         // And denominator
@@ -120,14 +130,17 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
             
             // Pre-compute weights for left window
             for(i = 0; i < winSize; ++i) {
-                ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image, replicate border if not
+                ii = y-padding+i;
+                if(ii<0) continue;
+                if(ii>=height) break;
                 for(j = 0; j < winSize; ++j) {
-                    jj = std::min(std::max(x-padding+j,0),width-1);
-                    
+                    jj = x-padding+j;
+                    if(jj<0) continue;
+                    if(jj>=width) break;
                     w1[i][j] = proximityWeights[i*winSize + j] * 
-                               exp(-sqrt( fabs(dataLab1[3*(ii*width + jj)] - dataLab1[3*(y*width+x)]) +
-                                          fabs(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width+x)+1]) + 
-                                          fabs(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width+x)+2]) )/gammaC);
+                               exp(-sqrt( pow(dataLab1[3*(ii*width + jj)  ] - dataLab1[3*(y*width+x)  ],2) +
+                                          pow(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width+x)+1],2) + 
+                                          pow(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width+x)+2],2) )/gammaC);
                 }
             }
             
@@ -138,16 +151,19 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
                 cost = 0;   // Cost of current match
                 tot = 0;    // Sum of weights
                 for(i = 0; i < winSize; ++i) {
-                    ii = std::min(std::max(y-padding+i,0),height-1);
+                    ii = y-padding+i;
+                    if(ii<0) continue;
+                    if(ii>=height) break;
                     for(j = 0; j < winSize; ++j) {
-                        jj = std::min(std::max(d-padding+j,0),width-1);
-                        kk = std::min(std::max(x-padding+j,0),width-1);
-                        
+                        jj = d-padding+j;
+                        kk = x-padding+j;
+                        if(jj<0 or kk<0) continue;
+                        if(jj>=width or kk>=width) break;
                         // Build weight
                         w2[i][j] = proximityWeights[i*winSize + j] * 
-                                   exp(-sqrt( fabs(dataLab2[3*(ii*width + jj)] - dataLab2[3*(y*width+d)]) +
-                                              fabs(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width+d)+1]) + 
-                                              fabs(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width+d)+2]) )/gammaC);
+                                   exp(-sqrt( pow(dataLab2[3*(ii*width + jj)  ] - dataLab2[3*(y*width+d)  ],2) +
+                                              pow(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width+d)+1],2) + 
+                                              pow(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width+d)+2],2) )/gammaC);
                         
                         // Update cost
                         cost += w1[i][j]*w2[i][j]*( abs(data1[3*(ii*width + kk)] - data2[3*(ii*width + jj)]) + 
@@ -179,14 +195,17 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
             
         // Pre-compute weights for RIGHT window
         for(i = 0; i < winSize; ++i) {
-            ii = std::min(std::max(y-padding+i,0),height-1); // Ensure to be within image, replicate border if not
+            ii = y-padding+i;
+            if(ii<0) continue;
+            if(ii>=height) break;
             for(j = 0; j < winSize; ++j) {
-                jj = std::min(std::max(x-padding+j,0),width-1);
-                
+                jj = x-padding+j;
+                if(jj<0) continue;
+                if(jj>=width) break;
                 w2[i][j] = proximityWeights[i*winSize + j] * 
-                           exp(-sqrt( fabs(dataLab2[3*(ii*width + jj)] - dataLab2[3*(y*width+x)]) +
-                                      fabs(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width+x)+1]) + 
-                                      fabs(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width+x)+2]) )/gammaC);
+                           exp(-sqrt( pow(dataLab2[3*(ii*width + jj)  ] - dataLab2[3*(y*width+x)  ],2) +
+                                      pow(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width+x)+1],2) + 
+                                      pow(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width+x)+2],2) )/gammaC);
             }
         }
         
@@ -197,16 +216,19 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
             cost = 0;   // Cost of current match
             tot = 0;    // Sum of weights
             for(i = 0; i < winSize; ++i) {
-                ii = std::min(std::max(y-padding+i,0),height-1);
+                ii = y-padding+i;
+                if(ii<0) continue;
+                if(ii>=height) break;
                 for(j = 0; j < winSize; ++j) {
-                    jj = std::min(std::max(d-padding+j,0),width-1);
-                    kk = std::min(std::max(x-padding+j,0),width-1);
-                    
+                    jj = d-padding+j;
+                    kk = x-padding+j;
+                    if(jj<0 or kk<0) continue;
+                    if(jj>=width or kk>=width) break;
                     // Build weight
                     w1[i][j] = proximityWeights[i*winSize + j] * 
-                               exp(-sqrt( fabs(dataLab1[3*(ii*width + jj)] - dataLab1[3*(y*width+d)]) +
-                                          fabs(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width+d)+1]) + 
-                                          fabs(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width+d)+2]) )/gammaC);
+                               exp(-sqrt( pow(dataLab1[3*(ii*width + jj)] - dataLab1[3*(y*width+d)],2) +
+                                          pow(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width+d)+1],2) + 
+                                          pow(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width+d)+2],2) )/gammaC);
                     
                     // Update cost
                     cost += w1[i][j]*w2[i][j]*( abs(data2[3*(ii*width + kk)] - data1[3*(ii*width + jj)]) + 
@@ -377,8 +399,6 @@ PyObject *computeASW(PyObject *self, PyObject *args)
 
 
 // ******************************** GSW ********************************
-
-// WORK IN PROGRESS
 void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
             npy_int16 *disparityMap, int width, int height, int winSize, int padding,
             int minDisparity, int maxDisparity, int gamma, float fMax, int iterations, int bins)
@@ -391,16 +411,12 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
     float w[tot]; // Weights
     int center = (tot-1) / 2;
     int xx, yy;
-    float hist1[bins], hist2[bins],histJoint[bins*bins];
-    float histStep = (float)256/bins;
-    int a,b;
+    int left,right;
     
     while(!jobs.empty()) 
     {
         
     jobs.pop(y); // Get element, put it in y and remove from queue
-    
-    std::cout << "Working " << y << std::endl;
     
     // USING LEFT IMAGE AS REFERENCE
     for(x=0; x < width; ++x) {      // For each column on left image
@@ -482,65 +498,10 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                 cost=0;    // Cost of current match
                 
                 // MUTUAL INFORMATION
-                /*
-                 * Il peso w[i*winSize+j] misura l'importanza di QUEL pixel nel matching.
-                 * La probabilità (calcolata come istogramma) ci dice quanti pixel (di tutta la finestra)
-                 * cadono in quell'intervallo (bin). La mutual information ci dice quanto due finestre
-                 * sono interdipendenti.
-                 * */
-                 /*
-                //Reset histograms
-                for(k=0;k<bins;k++){
-                    hist1[k]=1e-10; // Avoid perfect zero...
-                    hist2[k]=1e-10; 
-                    }
-                for(k=0;k<bins*bins;k++){
-                    histJoint[k]=1e-10;
-                    }
-                
-                for(i = 0; i < winSize; ++i) {
-                    ii = y - padding + i;
-                    if( ii < 0) continue;       // Image top border
-                    if( ii >= height) break;    // Image bottom border
-                    
-                    for(j = 0; j < winSize; ++j) {
-                        kk = x - padding + j;
-                        jj = d - padding + j;
-                        
-                        if(jj < 0 or kk < 0) continue;         // Image left border
-                        if(jj >= width or kk >= width) break;  // Image right border
-                        
-                        for(k=0;k<3;++k){ // For each color channel
-                            a = data1[3*(ii*width + kk)+k]/histStep;
-                            b = data2[3*(ii*width + jj)+k]/histStep;
-                            
-                            //hist1[ a ] += w[i*winSize + j];
-                            //hist2[ b ] += w[i*winSize + j];
-                            //histJoint[ a*bins + b ] += w[i*winSize + j];
-                            
-                            hist1[ a ]++;
-                            hist2[ b ]++;
-                            histJoint[ a*bins + b ]++;
-                            }
-                    }
-                }
-                
-                
-                // Convert to probabilities
-                for(k=0;k<bins;++k){
-                    hist1[k]=hist1[k]/tot;
-                    hist2[k]=hist2[k]/tot;
-                    }
-                for(k=0;k<bins*bins;++k){
-                    histJoint[k]=histJoint[k]/tot;
-                    }
-                
-                
-                // Compute cost. How to compute cost???
-                
-                */
-                
-                // NORMAL COLOR DIFFERENCES
+                /* Needs to be implemented, but it's difficult to.
+                 * OpenCV Stereo_SGBM replaced the matching cost as well. */
+                 
+                // SQUARED COLOR DIFFERENCES
                 
                 cost = 0;   // Cost of current match
                 for(i = 0; i < winSize; ++i) {
@@ -557,8 +518,6 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                         
                         
                         // Update cost
-                        // SQUARED DIFFERENCE TO BE REPLACED WITH MUTUAL INFORMATION. BUT HOW?
-                        // MUTUAL INFORMATION CANNOT BE ITERATED OVER PIXEL
                         // Color difference is capped to fMax
                         cost += w[i*winSize + j] * std::min(fMax,
                                                             (float) sqrt(pow(data1[3*(ii*width + kk)]   - data2[3*(ii*width + jj)  ], 2)
@@ -582,7 +541,154 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
             
         }
     
+    // USING RIGHT IMAGE AS REFERENCE
+    for(x=0; x < width; ++x) {      // For each column on left image
+            
+            /* Build geodesic map approximation, managing border areas too */
+            // Weights initialization
+            for(i=0;i<tot;i++){
+                w[i]=INFINITY; // Set all weights to high value
+                }
+            w[center] = 0; // Except for the center one
+            
+            // Iterations
+            for (d=0;d<iterations;++d){
+                
+                // Forward pass (row major order)
+                for(i=0;i<tot;++i){                 // For every window pixel
+                   yy = y-padding + i/winSize; // Whole image coordinates
+                   if(yy<0 or yy>=height) continue;   //Image y border
+                   xx = x-padding + i%winSize;
+                   if(xx<0 or xx>=width) continue;  // Image x border
+                   wBest = INFINITY;  
+                   
+                   for(k=0;k<=center;++k) // Find minimum in upper kernel
+                   {
+                       jj = y-padding + k/winSize; // Whole image coordinates (kernel)
+                       if(jj<0 or jj>=height) continue;
+                       kk = x-padding + k%winSize;
+                       if(kk<0 or kk>=width) continue;
+                       
+                       // OVER THE UPPER KERNEL
+                       temp = w[k] + sqrt( pow(data2[3*(yy*width + xx)  ] - data2[3*(jj*width + kk)  ],2)
+                                         + pow(data2[3*(yy*width + xx)+1] - data2[3*(jj*width + kk)+1],2)
+                                         + pow(data2[3*(yy*width + xx)+2] - data2[3*(jj*width + kk)+2],2) ); 
+                               
+                       if(temp<wBest) wBest=temp;
+                       }
+                   w[i] = wBest;
+                   }
+                   
+                // Backward pass (reverse row major order)
+                for(i=tot-1;i>=0;--i){                 // For every window pixel
+                   yy = y-padding + i/winSize; // Whole image coordinates
+                   if(yy<0 or yy>=height) continue;   //Image y border
+                   xx = x-padding + i%winSize;
+                   if(xx<0 or xx>=width) continue;  // Image x border
+                   wBest = INFINITY;  
+                   
+                   for(k=center;k<tot;++k) // Find minimum in upper kernel
+                   {
+                       jj = y-padding + k/winSize; // Whole image coordinates (kernel)
+                       if(jj<0 or jj>=height) continue;
+                       kk = x-padding + k%winSize;
+                       if(kk<0 or kk>=width) continue;
+                       
+                       // OVER THE LOWER KERNEL
+                       temp = w[k] + sqrt( pow(data2[3*(yy*width + xx)  ] - data2[3*(jj*width + kk)  ],2)
+                                         + pow(data2[3*(yy*width + xx)+1] - data2[3*(jj*width + kk)+1],2)
+                                         + pow(data2[3*(yy*width + xx)+2] - data2[3*(jj*width + kk)+2],2) ); 
+                       
+                       if(temp<wBest) wBest=temp;
+                       }
+                   w[i] = wBest;
+                   }
+                    
+                }
+            
+            // Convert to weights
+            for(i=0;i<tot;i++){
+                w[i]=exp(-w[i]/gamma);
+                }
+            
+            // Calculate best disp
+            dBest = 0;
+            costBest = INFINITY; // Initialize cost to an high value
+            
+            for(d = x+minDisparity; d <= std::min(width-1,x+maxDisparity); ++d) {  // For each allowed disparity ON LEFT    
+                cost=0;    // Cost of current match
+                
+                // SQUARED COLOR DIFFERENCES
+                cost = 0;   // Cost of current match
+                for(i = 0; i < winSize; ++i) {
+                    ii = y - padding + i;
+                    if( ii < 0) continue;       // Image top border
+                    if( ii >= height) break;    // Image bottom border
+                    
+                    for(j = 0; j < winSize; ++j) {
+                        kk = x - padding + j;
+                        jj = d - padding + j;
+                        
+                        if( jj < 0 or kk < 0) continue;         // Image left border
+                        if( jj >= width or kk >= width) break;  // Image right border
+                        
+                        
+                        // Update cost
+                        // Color difference is capped to fMax
+                        cost += w[i*winSize + j] * std::min(fMax,
+                                                            (float) sqrt(pow(data2[3*(ii*width + kk)]   - data1[3*(ii*width + jj)  ], 2)
+                                                               + pow(data2[3*(ii*width + kk)+1] - data1[3*(ii*width + jj)+1], 2)
+                                                               + pow(data2[3*(ii*width + kk)+2] - data1[3*(ii*width + jj)+2], 2)) );
+                        
+                        
+                    }
+                }
+                
+                
+                if(cost < costBest) {
+                    costBest = cost;
+                    dBest = d;
+                    }
+                
+            }
+            
+        // Update disparity map (dBest-x is the disparity, dBest is the best x coordinate on img1)
+        if(disparityMap[y*width + dBest] != dBest-x) // Check if equal to first calculation
+            disparityMap[y*width + dBest] = -1;       // Invalidated pixel!
+            
+        }
     
+    // Left-Right consistency check
+    // Disparity value == -1 means invalidated (occluded) pixel
+    for(j=0; j < width; ++j) {
+        if(disparityMap[y*width + j] == -1){
+            // Find limits
+            left = j-1;
+            right = j+1;
+            while(left>=0 and disparityMap[y*width + left] == -1){
+                --left;
+                }
+            while(right<width and disparityMap[y*width + right] == -1){
+                ++right;
+                }
+            // Left and right contain the first non occluded pixel in that direction
+            // Ensure that we are within image limits
+            // and assing valid value to occluded pixels
+            if(left < 0){
+                for(k=0;k<right;++k)
+                    disparityMap[y*width + k] = disparityMap[y*width + right];
+                }
+            else if(right > width-1){
+                for(k=left+1;k<width;++k)
+                    disparityMap[y*width + k] = disparityMap[y*width + left];
+                }
+            else{
+                for(k=left+1;k<right;++k)
+                    disparityMap[y*width + k] = std::min(disparityMap[y*width + left],disparityMap[y*width + right]);
+                }
+            }
+        }
+        
     } // End of while
     
 }
@@ -635,7 +741,7 @@ PyObject *computeGSW(PyObject *self, PyObject *args)
     
     // Working variables
     int padding = winSize / 2;
-    int i,j;
+    int i;
     SafeQueue<int> jobs; // Jobs queue
     int num_threads = std::thread::hardware_concurrency();
     

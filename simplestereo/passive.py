@@ -96,13 +96,8 @@ class StereoASW():
 ################## TO BE COMPLETED...
 class StereoGSW():
     """
-    Tentative implementation of "Local stereo matching using geodesic support weights",
+    *Tentative* implementation of "Local stereo matching using geodesic support weights",
     Asmaa Hosni, Michael Bleyer, Margrit Gelautz and Christoph Rhemann (2009).
-    
-    This is only for educational purposes.
-    The reference paper is not clear. Mutual Information computes a value for the whole
-    window (not position based). However formula (5) suggests a per-pixel iteration.
-    Currently implemented with sum of squared differences, weighted with geodesic.
     
     Parameters
     ----------
@@ -119,14 +114,18 @@ class StereoGSW():
     iterations : int
         Number of iteration for geodesic distances estimation. Default is 3.
     bins : int
-        Number of bins for histograms (needed for Mutual Information). Default is 20.
+        Number of bins for histograms (currently not used, needed for Mutual Information). Default is 20.
         
     ..warning::
-        This algorithm is very slow with high *winSize*. Do not use in production.
+        Not optimized. Do not use in production.
     
     ..todo::
-        Implement Mutual information in matching cost.
-        Implement right image consistency and subsequent occlusion filling. 
+        This is a work in progress.
+        The reference paper is not clear. Traditional Mutual Information computes a value for the whole
+        window (not position based). However formula (5) suggests a per-pixel iteration.
+        Currently implemented with sum of squared differences, weighted with geodesic.
+        Need to implement Mutual information as matching cost.
+        Need to implement right image consistency and subsequent occlusion filling. 
         
     """
     def __init__(self, winSize=11, maxDisparity=16, minDisparity=0, gamma=10,
