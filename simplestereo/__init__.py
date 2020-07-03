@@ -56,7 +56,7 @@ class StereoRig:
         (see :func:`ss.utils.moveExtrinsicOriginToFirstCamera`).
     
     """  
-    def __init__(self, res1, res2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, E=None, F=None, reprojectionError=None):
+    def __init__(self, res1, res2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, F=None, E=None, reprojectionError=None):
         self.res1 = res1
         self.res2 = res2
         self.cameraMatrix1 = np.array(cameraMatrix1)
@@ -99,7 +99,7 @@ class StereoRig:
         E = np.array(data.get('E')) if data.get('E') else None
         reprojectionError = data.get('reprojectionError')
         
-        return cls(res1, res2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, E, F, reprojectionError)
+        return cls(res1, res2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, F, E, reprojectionError)
         
     def save(self, filepath):
         """
@@ -301,7 +301,7 @@ class RectifiedStereoRig(StereoRig):
         
         if isinstance(args[0], StereoRig):                  # Extend unpacking a StereoRig object 
             r = args[0]
-            super(RectifiedStereoRig, self).__init__(r.res1, r.res2, r.cameraMatrix1, r.distCoeffs1, r.cameraMatrix2, r.distCoeffs2, r.R, r.T, r.E, r.reprojectionError)
+            super(RectifiedStereoRig, self).__init__(r.res1, r.res2, r.cameraMatrix1, r.distCoeffs1, r.cameraMatrix2, r.distCoeffs2, r.R, r.T, r.F, r.E, r.reprojectionError)
         else:                                               # Or use all the parameters
             super(RectifiedStereoRig, self).__init__(*args)
         
@@ -339,7 +339,7 @@ class RectifiedStereoRig(StereoRig):
         E = np.array(data.get('E'))
         reprojectionError = data.get('reprojectionError')
         
-        return cls(rectHomography1, rectHomography2, res1, res2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, E, reprojectionError)
+        return cls(rectHomography1, rectHomography2, res1, res2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, F, E, reprojectionError)
         
     def save(self, filepath):
         """
@@ -371,7 +371,7 @@ class RectifiedStereoRig(StereoRig):
             if self.reprojectionError:
                 out['reprojectionError'] = self.reprojectionError
             json.dump(out, f)
-    
+        
     
     def getRectificationTransformations(self):
         """
@@ -481,12 +481,12 @@ class RectifiedStereoRig(StereoRig):
             A 4x4 matrix.
         """
         b = self.getBaseline()
-        Q = np.eye(4)
+        Q = np.eye(4, dtype='float64')
         Q[2,2] = 0
         Q[0,3] = -self.K1[0,2]                  # -cx
         Q[1,3] = -self.K1[1,2]                  # -cy
         Q[2,3] = self.K1[0,0]                   # fx
-        Q[3,2] = -1/b                           #-1/Tx
-        Q[3,3] = (self.K1[0,2]-self.K2[0,2])/b  #cx-cx'/Tx
+        Q[3,2] = -1/b                           # -1/b
+        Q[3,3] = (self.K1[0,2]-self.K2[0,2])/b  # cx-cx'/b
         
         return Q    

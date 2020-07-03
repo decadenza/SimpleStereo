@@ -12,19 +12,21 @@
 
 #include <thread>
 #include "headers/SafeQueue.hpp"
+#include "headers/ColorConversion.hpp"
 
 
 // ******************************** ASW ********************************
-void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *dataLab2,
-            npy_int16 *disparityMap, float *proximityWeights, int gammaC,
-            int width, int height, int winSize, int padding,
-            int minDisparity, int maxDisparity)
+void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, double *dataLab1, double *dataLab2,
+              npy_int16 *disparityMap, double *proximityWeights, double gammaC,
+              int width, int height, int winSize, int padding,
+              int minDisparity, int maxDisparity)
 {
     int dBest;
-    float cost, costBest, tot;
+    double cost, costBest, tot;
     int ii,jj,kk;
     int i,j,y,x,d;
-    float w1[winSize][winSize], w2[winSize][winSize]; // Weights
+    double *w1 = new double[winSize*winSize]; // Weights
+    double *w2 = new double[winSize*winSize];
     
     
     while(!jobs.empty()) 
@@ -41,11 +43,11 @@ void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_flo
                 if( ii >= height) break;    // Image bottom border
                 
                 for(j = 0; j < winSize; ++j) {
-                    jj = x-padding+j;
+                    jj = x - padding + j;
                     if(jj<0) continue;
                     if(jj>=width) break;
                     
-                    w1[i][j] = proximityWeights[i*winSize + j] * 
+                    w1[i*winSize+j] = proximityWeights[i*winSize + j] * 
                                exp(-sqrt( pow(dataLab1[3*(ii*width + jj)  ] - dataLab1[3*(y*width + x)  ],2) +
                                           pow(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width + x)+1],2) + 
                                           pow(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width + x)+2],2) )/gammaC);
@@ -55,7 +57,6 @@ void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_flo
             dBest = 0;
             costBest = INFINITY; // Initialize cost to an high value
             for(d = x-minDisparity; d >= std::max(0,x-maxDisparity); --d) {  // For each allowed disparity (reverse order)
-                
                 cost = 0;   // Cost of current match
                 tot = 0;    // Sum of weights
                 for(i = 0; i < winSize; ++i) {
@@ -64,23 +65,24 @@ void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_flo
                     if( ii >= height) break;    // Image bottom border
                     
                     for(j = 0; j < winSize; ++j) {
-                        jj = d-padding+j;
-                        kk = x-padding+j;
+                        jj = d - padding + j;
+                        kk = x - padding + j;
                         if(jj<0 or kk<0) continue;
                         if(jj>=width or kk>=width) break;
                         
                         // Build weight
-                        w2[i][j] = proximityWeights[i*winSize + j] * 
+                        w2[i*winSize+j] = proximityWeights[i*winSize + j] * 
                                    exp(-sqrt( pow(dataLab2[3*(ii*width + jj)  ] - dataLab2[3*(y*width + d)  ],2) +
                                               pow(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width + d)+1],2) + 
                                               pow(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width + d)+2],2) )/gammaC);
                         
                         // Update cost
-                        cost += w1[i][j]*w2[i][j]*( abs(data1[3*(ii*width + kk)  ] - data2[3*(ii*width + jj)  ]) + 
-                                                    abs(data1[3*(ii*width + kk)+1] - data2[3*(ii*width + jj)+1]) + 
-                                                    abs(data1[3*(ii*width + kk)+2] - data2[3*(ii*width + jj)+2]) );
+                        cost += w1[i*winSize+j]*w2[i*winSize+j]*std::min( 40, abs(data1[3*(ii*width + kk)  ] - data2[3*(ii*width + jj)  ]) + 
+                                                                              abs(data1[3*(ii*width + kk)+1] - data2[3*(ii*width + jj)+1]) + 
+                                                                              abs(data1[3*(ii*width + kk)+2] - data2[3*(ii*width + jj)+2]) );
+                        
                         // And denominator
-                        tot += w1[i][j]*w2[i][j];
+                        tot += w1[i*winSize+j]*w2[i*winSize+j];
                         
                     }
                 }
@@ -106,25 +108,23 @@ void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_flo
 }
 
 
-void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, npy_float *dataLab1, npy_float *dataLab2,
-            npy_int16 *disparityMap, float *proximityWeights, int gammaC,
+void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, double *dataLab1, double *dataLab2,
+            npy_int16 *disparityMap, double *proximityWeights, double gammaC,
             int width, int height, int winSize, int padding,
             int minDisparity, int maxDisparity)
 {
     int dBest;
-    float cost, costBest, tot;
+    double cost, costBest, tot;
     int ii,jj,kk;
     int i,j,y,x,d;
-    float w1[winSize][winSize], w2[winSize][winSize]; // Weights
+    double *w1 = new double[winSize*winSize]; // Weights
+    double *w2 = new double[winSize*winSize];
     int left,right,k;
     
     while(!jobs.empty()) 
     {
         
     jobs.pop(y); // Get element, put it in y and remove from queue
-    
-    // TEMP
-    //printf("Working on %d\n", y);
     
     for(x=0; x < width; ++x) {      // For each column on left image
             
@@ -137,7 +137,7 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
                     jj = x-padding+j;
                     if(jj<0) continue;
                     if(jj>=width) break;
-                    w1[i][j] = proximityWeights[i*winSize + j] * 
+                    w1[i*winSize+j] = proximityWeights[i*winSize + j] * 
                                exp(-sqrt( pow(dataLab1[3*(ii*width + jj)  ] - dataLab1[3*(y*width+x)  ],2) +
                                           pow(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width+x)+1],2) + 
                                           pow(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width+x)+2],2) )/gammaC);
@@ -160,17 +160,17 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
                         if(jj<0 or kk<0) continue;
                         if(jj>=width or kk>=width) break;
                         // Build weight
-                        w2[i][j] = proximityWeights[i*winSize + j] * 
+                        w2[i*winSize+j] = proximityWeights[i*winSize + j] * 
                                    exp(-sqrt( pow(dataLab2[3*(ii*width + jj)  ] - dataLab2[3*(y*width+d)  ],2) +
                                               pow(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width+d)+1],2) + 
                                               pow(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width+d)+2],2) )/gammaC);
                         
                         // Update cost
-                        cost += w1[i][j]*w2[i][j]*( abs(data1[3*(ii*width + kk)] - data2[3*(ii*width + jj)]) + 
+                        cost += w1[i*winSize+j]*w2[i*winSize+j]*std::min( 40, abs(data1[3*(ii*width + kk)] - data2[3*(ii*width + jj)]) + 
                                                     abs(data1[3*(ii*width + kk)+1] - data2[3*(ii*width + jj)+1]) + 
                                                     abs(data1[3*(ii*width + kk)+2] - data2[3*(ii*width + jj)+2]) );
                         // And denominator
-                        tot += w1[i][j]*w2[i][j];
+                        tot += w1[i*winSize+j]*w2[i*winSize+j];
                         
                     }
                 }
@@ -202,7 +202,7 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
                 jj = x-padding+j;
                 if(jj<0) continue;
                 if(jj>=width) break;
-                w2[i][j] = proximityWeights[i*winSize + j] * 
+                w2[i*winSize+j] = proximityWeights[i*winSize + j] * 
                            exp(-sqrt( pow(dataLab2[3*(ii*width + jj)  ] - dataLab2[3*(y*width+x)  ],2) +
                                       pow(dataLab2[3*(ii*width + jj)+1] - dataLab2[3*(y*width+x)+1],2) + 
                                       pow(dataLab2[3*(ii*width + jj)+2] - dataLab2[3*(y*width+x)+2],2) )/gammaC);
@@ -225,17 +225,17 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
                     if(jj<0 or kk<0) continue;
                     if(jj>=width or kk>=width) break;
                     // Build weight
-                    w1[i][j] = proximityWeights[i*winSize + j] * 
-                               exp(-sqrt( pow(dataLab1[3*(ii*width + jj)] - dataLab1[3*(y*width+d)],2) +
+                    w1[i*winSize+j] = proximityWeights[i*winSize + j] * 
+                               exp(-sqrt( pow(dataLab1[3*(ii*width + jj)  ] - dataLab1[3*(y*width+d)  ],2) +
                                           pow(dataLab1[3*(ii*width + jj)+1] - dataLab1[3*(y*width+d)+1],2) + 
                                           pow(dataLab1[3*(ii*width + jj)+2] - dataLab1[3*(y*width+d)+2],2) )/gammaC);
                     
                     // Update cost
-                    cost += w1[i][j]*w2[i][j]*( abs(data2[3*(ii*width + kk)] - data1[3*(ii*width + jj)]) + 
-                                                abs(data2[3*(ii*width + kk)+1] - data1[3*(ii*width + jj)+1]) + 
-                                                abs(data2[3*(ii*width + kk)+2] - data1[3*(ii*width + jj)+2]) );
+                    cost += w1[i*winSize+j]*w2[i*winSize+j]*std::min( 40, abs(data2[3*(ii*width + kk)  ] - data1[3*(ii*width + jj)  ]) + 
+                                                                          abs(data2[3*(ii*width + kk)+1] - data1[3*(ii*width + jj)+1]) + 
+                                                                          abs(data2[3*(ii*width + kk)+2] - data1[3*(ii*width + jj)+2]) );
                     // And denominator
-                    tot += w1[i][j]*w2[i][j];
+                    tot += w1[i*winSize+j]*w2[i*winSize+j];
                     
                 }
             }
@@ -282,7 +282,7 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
                 }
             else{
                 for(k=left+1;k<right;++k)
-                    disparityMap[y*width + k] = std::min(disparityMap[y*width + left],disparityMap[y*width + right]);
+                    disparityMap[y*width + k] = std::min(disparityMap[y*width + left],disparityMap[y*width + right]); // Set background disparity
                 }
             }
         }
@@ -292,14 +292,16 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
 }
 
 
+
 PyObject *computeASW(PyObject *self, PyObject *args)
 {
-    PyArrayObject *img1, *img2, *img1Lab, *img2Lab;
-    int winSize, maxDisparity, minDisparity, gammaC, gammaP;
+    PyArrayObject *img1, *img2;
+    int winSize, maxDisparity, minDisparity;
+    double gammaC, gammaP;
     int consistent = 0; // Optional value
     
     // Parse input. See https://docs.python.org/3/c-api/arg.html
-    if (!PyArg_ParseTuple(args, "OOOOiiiii|p", &img1, &img2, &img1Lab, &img2Lab, 
+    if (!PyArg_ParseTuple(args, "OOiiidd|p", &img1, &img2,
                           &winSize, &maxDisparity, &minDisparity, &gammaC, &gammaP,
                           &consistent)){
         PyErr_SetString(PyExc_ValueError, "Invalid input format!");
@@ -333,8 +335,13 @@ PyObject *computeASW(PyObject *self, PyObject *args)
     // See https://numpy.org/devdocs/reference/c-api/dtype.html
     npy_ubyte *data1 = (npy_ubyte *)PyArray_DATA(img1);       // Pointer to first element (casted to right type!)
     npy_ubyte *data2 = (npy_ubyte *)PyArray_DATA(img2);       // These are 1D arrays, (f**k)!
-    npy_float *dataLab1 = (npy_float *)PyArray_DATA(img1Lab); // No elegant way to see them as data[height][width][color]?
-    npy_float *dataLab2 = (npy_float *)PyArray_DATA(img2Lab);
+    
+    // Convert to CIELab
+    ColorConversion cc;
+    double *dataLab1 = new double[height*width*3];
+    double *dataLab2 = new double[height*width*3];
+    cc.ImageFromBGR2Lab(data1, dataLab1, width, height);
+    cc.ImageFromBGR2Lab(data2, dataLab2, width, height);
     
     // Initialize disparity map
     npy_intp disparityMapDims[2] = {height, width};
@@ -347,29 +354,33 @@ PyObject *computeASW(PyObject *self, PyObject *args)
     SafeQueue<int> jobs; // Jobs queue
     int num_threads = std::thread::hardware_concurrency();
     
+    
     std::thread workersArr[num_threads];
     
     // Build proximity weights matrix
-    float proximityWeights[winSize][winSize];
+    double *proximityWeights = new double[winSize*winSize];
     
     for(i = 0; i < winSize; ++i) {
         for(j = 0; j < winSize; ++j) {
-            proximityWeights[i][j] = exp(-sqrt( pow(i-padding,2) + pow(j-padding,2))/gammaP);
+            proximityWeights[i*winSize+j] = exp(-sqrt( pow(i-padding,2) + pow(j-padding,2))/gammaP);
         }
     }
     
-    
+    // TEMP
+    //printf("BGR %d %d %d\n", data1[3*(90*width + 67)], data1[3*(90*width + 67)+1], data1[3*(90*width + 67)+2]);
+    //printf("LAB %f %f %f\n", dataLab1[3*(90*width + 67)], dataLab1[3*(90*width + 67)+1], dataLab1[3*(90*width + 67)+2]);
+            
+            
     // Put each image row in queue
     for(i=0; i < height; ++i) {   
         jobs.push(i);
     }
     
-    
     if(!consistent) {
     // Start workers
     for(i = 0; i < num_threads; ++i) {
         workersArr[i] = std::thread( workerASW, std::ref(jobs), data1, data2, dataLab1, dataLab2,
-                                          disparityMap, &proximityWeights[0][0], gammaC,             // Don't know why usign "proximityWeights" only does not work
+                                          disparityMap, proximityWeights, gammaC,             
                                           width, height, winSize, padding, minDisparity, maxDisparity);
         }
     } else { // If consistent mode is chosen
@@ -377,7 +388,7 @@ PyObject *computeASW(PyObject *self, PyObject *args)
         // Start consistent workers
         for(i = 0; i < num_threads; ++i) {
             workersArr[i] = std::thread( workerASWconsistent, std::ref(jobs), data1, data2, dataLab1, dataLab2,
-                                          disparityMap, &proximityWeights[0][0], gammaC,             // Don't know why usign "proximityWeights" only does not work
+                                          disparityMap, proximityWeights, gammaC,             
                                           width, height, winSize, padding, minDisparity, maxDisparity);
         }
     }
@@ -421,8 +432,8 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
     // USING LEFT IMAGE AS REFERENCE
     for(x=0; x < width; ++x) {      // For each column on left image
             
-            /* Build geodesic map approximation, managing border areas too */
-            
+            /* Build geodesic map approximation*/
+            /* Refer to "Distance Transformations in Digital Images", GUNILLA BORGEFORS*/
             // Weights initialization
             for(i=0;i<tot;i++){
                 w[i]=INFINITY; // Set all weights to high value
@@ -435,17 +446,17 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                 // Forward pass (row major order)
                 for(i=0;i<tot;++i){                 // For every window pixel
                    yy = y-padding + i/winSize; // Whole image coordinates
-                   if(yy<0 or yy>=height) continue;   //Image y border
                    xx = x-padding + i%winSize;
-                   if(xx<0 or xx>=width) continue;  // Image x border
+                   if(xx<0 or yy<0) continue;           //Image left border
+                   if(xx>=width or yy>=height) break;  // Image right border
                    wBest = INFINITY;  
                    
                    for(k=0;k<=center;++k) // Find minimum in upper kernel
                    {
                        jj = y-padding + k/winSize; // Whole image coordinates (kernel)
-                       if(jj<0 or jj>=height) continue;
                        kk = x-padding + k%winSize;
-                       if(kk<0 or kk>=width) continue;
+                       if(jj<0 or kk<0) continue;
+                       if(jj>=height or kk>=width) break;
                        
                        // OVER THE UPPER KERNEL
                        temp = w[k] + sqrt( pow(data1[3*(yy*width + xx)  ] - data1[3*(jj*width + kk)  ],2)
@@ -460,17 +471,17 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                 // Backward pass (reverse row major order)
                 for(i=tot-1;i>=0;--i){                 // For every window pixel
                    yy = y-padding + i/winSize; // Whole image coordinates
-                   if(yy<0 or yy>=height) continue;   //Image y border
                    xx = x-padding + i%winSize;
-                   if(xx<0 or xx>=width) continue;  // Image x border
+                   if(yy<0 or xx<0) continue;   
+                   if(yy>=height or xx>=width) break; 
                    wBest = INFINITY;  
                    
                    for(k=center;k<tot;++k) // Find minimum in upper kernel
                    {
                        jj = y-padding + k/winSize; // Whole image coordinates (kernel)
-                       if(jj<0 or jj>=height) continue;
                        kk = x-padding + k%winSize;
-                       if(kk<0 or kk>=width) continue;
+                       if(jj<0 or kk<0) continue;
+                       if(jj>=height or kk>=width) break;
                        
                        // OVER THE LOWER KERNEL
                        temp = w[k] + sqrt( pow(data1[3*(yy*width + xx)  ] - data1[3*(jj*width + kk)  ],2)
@@ -521,8 +532,8 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                         // Color difference is capped to fMax
                         cost += w[i*winSize + j] * std::min(fMax,
                                                             (float) sqrt(pow(data1[3*(ii*width + kk)]   - data2[3*(ii*width + jj)  ], 2)
-                                                               + pow(data1[3*(ii*width + kk)+1] - data2[3*(ii*width + jj)+1], 2)
-                                                               + pow(data1[3*(ii*width + kk)+2] - data2[3*(ii*width + jj)+2], 2)) );
+                                                                       + pow(data1[3*(ii*width + kk)+1] - data2[3*(ii*width + jj)+1], 2)
+                                                                       + pow(data1[3*(ii*width + kk)+2] - data2[3*(ii*width + jj)+2], 2)) );
                         
                         
                     }

@@ -52,8 +52,11 @@ def getFittingMatrix(cameraMatrix1, cameraMatrix2, H1, H2, dims1, dims2, distCoe
     
     minX1 = min(tR1[0], bR1[0], bL1[0], tL1[0])
     minX2 = min(tR2[0], bR2[0], bL2[0], tL2[0])
+    maxX1 = max(tR1[0], bR1[0], bL1[0], tL1[0])
+    maxX2 = max(tR2[0], bR2[0], bL2[0], tL2[0])
     minX = min(minX1, minX2)
-    maxX = max(tR1[0], bR1[0], bL1[0], tL1[0], tR2[0], bR2[0], bL2[0], tL2[0])
+    maxX = max(maxX1, maxX2)
+    
     minY = min(tR2[1], bR2[1], bL2[1], tL2[1], tR1[1], bR1[1], bL1[1], tL1[1])
     maxY = max(tR2[1], bR2[1], bL2[1], tL2[1], tR1[1], bR1[1], bL1[1], tL1[1])
     
@@ -71,24 +74,20 @@ def getFittingMatrix(cameraMatrix1, cameraMatrix2, H1, H2, dims1, dims2, distCoe
     # Scale Y
     scaleY = flipY * zoom * destDims[1]/(maxY - minY)
     
-    # Translation X
-    tX1 = -minX1 * scaleX
-    tX2 = -minX2 * scaleX
-    
-    # Keep x-centered after zoom
-    s = destDims[0]*(zoom-1)/2
-    if flipX == -1:
-        tX1 += s
-        tX2 += s
+    # Translation X (keep always at left border)
+    if flipX == 1:
+        tX1 = -minX1 * scaleX
+        tX2 = -minX2 * scaleX
     else:
-        tX1 -= s
-        tX2 -= s
-        
-    # Translation Y
-    tY = -minY * scaleY - destDims[1]*(zoom-1)/2
-    if flipY == -1:
-        tY += destDims[1]*zoom
+        tX1 = -maxX1 * scaleX
+        tX2 = -maxX2 * scaleX
     
+    # Translation Y (keep always at top border)
+    if flipY == 1:
+        tY = -minY * scaleY
+    else:
+        tY = -maxY * scaleY
+        
     K1 = np.array( [[scaleX,0,tX1], [0,scaleY,tY], [0,0,1]] )
     K2 = np.array( [[scaleX,0,tX2], [0,scaleY,tY], [0,0,1]] )
     
@@ -358,6 +357,7 @@ def loopRectify(rig):
     vc2 = -min( getMinYCoord(Hp1, dims1), getMinYCoord(Hp2, dims2) )
     
     # Build similarity transforms
+    
     '''
     # Original formulation (NOT WORKING)
     Hr1 = np.array([ [ F[2,1]-w1[1]*F[2,2], w1[0]*F[2,2]-F[2,0], 0], \
@@ -469,7 +469,6 @@ def directRectify(rig):
     dims2 = rig.res2
     F = rig.getFundamentalMatrix()
     
-    
     def getMinYCoord(H, dims):
         # Get the minimum Y coordinate after a transformation H.
         # Please refer to "Computying rectifying homographies for stereo vision", CVPR 1999, Loop C. and Zhang Z.
@@ -514,7 +513,6 @@ def directRectify(rig):
         m2 = M1[1,1]*C1[1,2] - M1[1,2]*C1[1,1]
         
         if np.all(np.equal(RT1[:,:3], RT2[:,:3])) and np.all(np.equal(A1, A2)) and np.all(np.equal(P1, P2)) and np.all(np.equal(Pc1, Pc2)):
-            print("CASO PARTICOLARE 2")
             # PARTICULAR CASE 2: The cameras have the same orientation: we have a single solution
             sol = [-m1/m2]
             

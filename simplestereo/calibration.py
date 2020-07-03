@@ -25,7 +25,7 @@ def chessboardCalibrate(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, square
     Parameters
     ----------
     images : list or tuple       
-        A list (or tuple) of 2 dimensional tuples (left and right) of image paths, e.g. [("oneL.png","oneR.png"), ("twoL.png","twoR.png"), ...]
+        A list (or tuple) of 2 dimensional tuples (ordered left and right) of image paths, e.g. [("oneL.png","oneR.png"), ("twoL.png","twoR.png"), ...]
     chessboardSize: tuple
         Chessboard dimensions. Default to (7,6).
     squareSize : int or float
@@ -42,7 +42,7 @@ def chessboardCalibrate(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, square
     Add a way to exclude images that have high reprojection errors and re-calibrate.
     """
     
-    # Prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+    # Prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...
     objp = np.zeros((chessboardSize[0]*chessboardSize[1],3), np.float32)
     objp[:,:2] = np.mgrid[0:chessboardSize[0],0:chessboardSize[1]].T.reshape(-1,2) * squareSize
     
@@ -90,7 +90,7 @@ def chessboardCalibrate(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, square
     retval, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate( np.array([[objp]] * counter), imagePoints1, imagePoints2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize = img1.shape[::-1], flags=flags, criteria = DEFAULT_TERMINATION_CRITERIA)
     
     # Build StereoRig object
-    stereoRigObj = ss.StereoRig(img1.shape[::-1][:2], img2.shape[::-1][:2], cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, E = E, F = F, reprojectionError = retval)
+    stereoRigObj = ss.StereoRig(img1.shape[::-1][:2], img2.shape[::-1][:2], cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
     
     return stereoRigObj
 

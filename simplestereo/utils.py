@@ -22,7 +22,9 @@ class Capture:
     device : int or str
         Id of the opened video capturing device (i.e. a camera index). If there is a single camera connected, usually it will be 0 (default 0).
         Also the string containing full URL of the video stream (e.g. *protocol://username:password@script?params*) or a path to a video file.
-         
+    flipY : bool
+        If True, output image is flipped on the Y-axis. Default to False.
+        
     Raises
     ------
     ValueError
@@ -36,13 +38,15 @@ class Capture:
     ----
     Add support for other options (e.g. change focal length where supported).
     """
-    def __init__(self, device = 0):
+    def __init__(self, device = 0, flipY=False):
         self.video_capture = cv2.VideoCapture(device)
         if not self.video_capture.isOpened():
             raise ValueError('Cannot open device!')
         self.isFile = os.path.isfile(device) # Check if we're opening a video file
         
-        self.flip = cv2.flip if device == 0 else lambda f, *a, **k: f # Flip around y axis only if is default PC webcam
+        #self.flip = cv2.flip if device == 0 else lambda f, *a, **k: f # Flip around y axis only if device==0 (usually PC webcam)
+        self.flip = cv2.flip if flipY else lambda f, *a, **k: f # Flip around y axis
+        
         self.running = False
         self.frame = None   # Keep this as attribute (needed for streaming)
         

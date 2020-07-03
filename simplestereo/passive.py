@@ -15,29 +15,29 @@ from simplestereo import passiveExt
 
 class StereoASW():
     """
-    Custom implementation of Adaptive Support Weight from "Locally adaptive support-weight approach
-    for visual correspondence search", K. Yoon, I. Kweon, 2005.
+    Custom implementation of "Adaptive Support-Weight Approach
+    for Correspondence Search", K. Yoon, I. Kweon, 2006.
     
     
     Parameters
     ----------
     winSize : int
-        Side of the square window. Must be an odd positive number.
+        Side of the square window. Must be an odd positive number. Default is 35.
     maxDisparity: int
         Maximum accepted disparity. Default is 16.
     minDisparity: int
         Minimum valid disparity, usually set to zero. Default is 0.
-    gammaC : int
-        Color parameter. If increased, it increases the color influence. Default is 7.
-    gammaP : int
-        Proximity parameter. If increased, it increases the proximity influence. Default is 36.
+    gammaC : float
+        Color parameter. If increased, it increases the color influence. Default is 5.
+    gammaP : float
+        Proximity parameter. If increased, it increases the proximity influence. Default is 17.5.
     consistent : bool
         If True consistent check is made, i.e. disparity is calculated first using left image as reference,
         then using right one as reference. Any non-corresponding value is invalidated (occluded)
         and assigned as the nearest minimum left-right non-occluded disparity. Original idea from occlusion
         detection and filling as in "Local stereo matching using geodesic support weights", Asmaa Hosni et al., 2009.
         If enabled, running time is roughly doubled.
-        Default to True.
+        Default to False.
         
     ..warning::
         It may get very slow for high resolution images or with high *winSize* or *maxDisparity* values.
@@ -49,7 +49,7 @@ class StereoASW():
     - To improve the final result, a smoothering filter could be applied.
 
     """
-    def __init__(self, winSize=11, maxDisparity=16, minDisparity=0, gammaC=7, gammaP=36, consistent=True): 
+    def __init__(self, winSize=35, maxDisparity=16, minDisparity=0, gammaC=5, gammaP=17.5, consistent=False): 
         
         if not (winSize>0 and winSize%2 == 1) :
             raise ValueError("winSize must be a positive odd number!")
@@ -77,15 +77,11 @@ class StereoASW():
             A disparity map of the same width and height of the images.
         """
         
-        # Convert from BGR to CIELab
-        img1Lab = cv2.cvtColor(img1.astype("float32") / 255, cv2.COLOR_BGR2Lab)
-        img2Lab = cv2.cvtColor(img2.astype("float32") / 255, cv2.COLOR_BGR2Lab)
-        
         # Send to C++ extension
-        disparityMap = passiveExt.computeASW(img1, img2, img1Lab, img2Lab, self.winSize,
+        disparityMap = passiveExt.computeASW(img1, img2, self.winSize,
                                              self.maxDisparity, self.minDisparity,
                                              self.gammaC, self.gammaP, self.consistent)
-        
+                                             
         return disparityMap
         
 
