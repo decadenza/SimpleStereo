@@ -27,6 +27,6 @@ def exportPoints(points3D, filepath):
         f.write("property float x\nproperty float y\nproperty float z\n")
         f.write("end_header\n")
         for x,y,z in points3D.reshape(points3D.shape[0]*points3D.shape[1],3):
-            f.write("{} {} {}\n".format(x, -y, z))
+            f.write("{} {} {}\n".format(x, y, z))
     
     

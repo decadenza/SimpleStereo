@@ -87,10 +87,10 @@ def chessboardCalibrate(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, square
     flags = 0
     
     # Do stereo calibration
-    retval, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate( np.array([[objp]] * counter), imagePoints1, imagePoints2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize = img1.shape[::-1], flags=flags, criteria = DEFAULT_TERMINATION_CRITERIA)
+    retval, intrinsic1, distCoeffs1, intrinsic2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate( np.array([[objp]] * counter), imagePoints1, imagePoints2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize = img1.shape[::-1], flags=flags, criteria = DEFAULT_TERMINATION_CRITERIA)
     
     # Build StereoRig object
-    stereoRigObj = ss.StereoRig(img1.shape[::-1][:2], img2.shape[::-1][:2], cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
+    stereoRigObj = ss.StereoRig(img1.shape[::-1][:2], img2.shape[::-1][:2], intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
     
     return stereoRigObj
 

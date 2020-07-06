@@ -13,7 +13,7 @@ from scipy.linalg import null_space, cholesky
 import simplestereo as ss
 
 
-def getFittingMatrix(cameraMatrix1, cameraMatrix2, H1, H2, dims1, dims2, distCoeffs1=None, distCoeffs2=None, destDims=None, zoom=1):
+def getFittingMatrices(cameraMatrix1, cameraMatrix2, H1, H2, dims1, dims2, distCoeffs1=None, distCoeffs2=None, destDims=None, zoom=1):
     """
     Compute affine tranformation to fit the rectified images into desidered dimensions.
     
@@ -54,8 +54,6 @@ def getFittingMatrix(cameraMatrix1, cameraMatrix2, H1, H2, dims1, dims2, distCoe
     minX2 = min(tR2[0], bR2[0], bL2[0], tL2[0])
     maxX1 = max(tR1[0], bR1[0], bL1[0], tL1[0])
     maxX2 = max(tR2[0], bR2[0], bL2[0], tL2[0])
-    minX = min(minX1, minX2)
-    maxX = max(maxX1, maxX2)
     
     minY = min(tR2[1], bR2[1], bL2[1], tL2[1], tR1[1], bR1[1], bL1[1], tL1[1])
     maxY = max(tR2[1], bR2[1], bL2[1], tL2[1], tR1[1], bR1[1], bL1[1], tL1[1])
@@ -68,10 +66,13 @@ def getFittingMatrix(cameraMatrix1, cameraMatrix2, H1, H2, dims1, dims2, distCoe
     if tL1[1]>bL1[1]:
         flipY = -1
     
-    # Scale X
-    scaleX = flipX * zoom * destDims[0]/(maxX - minX)
+    # Scale X (choose (unique) scale X to best fit bigger image between left and right)
+    if(maxX2 - minX2 > maxX1 - minX1):
+        scaleX = flipX * zoom * destDims[0]/(maxX2 - minX2)
+    else:
+        scaleX = flipX * zoom * destDims[0]/(maxX1 - minX1)
     
-    # Scale Y
+    # Scale Y (unique not to lose rectification) 
     scaleY = flipY * zoom * destDims[1]/(maxY - minY)
     
     # Translation X (keep always at left border)
@@ -175,13 +176,19 @@ def stereoRectify(rig):
         An object of the RectifiedStereoRig class containing the rectifying homographies.
     
     """
-    R1, R2, _, _, _, _, _  =   cv2.stereoRectify(rig.cameraMatrix1, rig.distCoeffs1, rig.cameraMatrix2, rig.distCoeffs2, rig.res1, rig.R, rig.T)
+    R1, R2, _, _, _, _, _ = cv2.stereoRectify(rig.intrinsic1, rig.distCoeffs1, rig.intrinsic2, rig.distCoeffs2, rig.res1, rig.R, rig.T, flags=0)
     
-    # OpenCV does not compute the rectifying homography, but a rotation in the object space. To get the homography:
-    Rectify1 = R1.dot(np.linalg.inv(rig.cameraMatrix1))
-    Rectify2 = R2.dot(np.linalg.inv(rig.cameraMatrix2))
+    # OpenCV does not compute the rectifying homography, but a rotation in the object space.
+    # R1 = Rnew * Rcam^{-1}
+    # To get the homography:
+    homography1 = R1.dot(np.linalg.inv(rig.intrinsic1))
+    homography2 = R2.dot(np.linalg.inv(rig.intrinsic2))
+    # To get the common orientation, since the first camera has orientation as origin:
+    # Rcommon = R1
+    # It also can be retrieved from R2, cancelling the rotation of the second camera.
+    # Rcommon = R2.dot(np.linalg.inv(rig.R))
     
-    rectStereoRig = ss.RectifiedStereoRig(Rectify1, Rectify2, rig)
+    rectStereoRig = ss.RectifiedStereoRig(R1, homography1, homography2, rig)
     
     return rectStereoRig
 
@@ -222,14 +229,14 @@ def fusielloRectify(rig):
     # Create rotation matrix (new common orientation of the cameras)
     Rot = np.array( [ v1, v2, v3 ] )
     
-    # New intrinsic is arbitrary. Skipped here (it needs to be adapted later using fitting matrices).
-    # A = (rig.cameraMatrix1 + rig.cameraMatrix2)/2
+    # New intrinsic is arbitrary (it needs to be adapted later using fitting matrices).
+    A = (rig.intrinsic1 + rig.intrinsic2)/2
     
     # Transformations to rectify images
-    Rectify1 = Rot.dot( np.linalg.inv(rig.cameraMatrix1) )
-    Rectify2 = Rot.dot( np.linalg.inv(rig.R) ).dot(np.linalg.inv(rig.cameraMatrix2))
+    Rectify1 = A.dot(Rot).dot( np.linalg.inv(rig.intrinsic1) )
+    Rectify2 = A.dot(Rot).dot( np.linalg.inv(rig.R) ).dot(np.linalg.inv(rig.intrinsic2))
     
-    rectStereoRig = ss.RectifiedStereoRig(Rectify1, Rectify2, rig)
+    rectStereoRig = ss.RectifiedStereoRig(Rot, Rectify1, Rectify2, rig)
     
     return rectStereoRig
 
@@ -264,14 +271,19 @@ def loopRectify(rig):
         try:
             D1 = cholesky(A1, lower=False) # Upper triangle so that A1 = D1.T.dot(D1)
             D2 = cholesky(A2, lower=False)
-        except np.linalg.LinAlgError: # If factorization fails because of negative eigenvalues
-            # Add a small value 1e-10 to diagonal elements.
-            # Increase a bit if cholesky continues to fail.
+        except np.linalg.LinAlgError as e:
+            # If factorization fails because of negative eigenvalues
+            # Try to manage with it...
+            # Add a small value to diagonal elements
             A1 += 1e-10 * np.eye(3) 
             A2 += 1e-10 * np.eye(3)
-            D1 = cholesky(A1, lower=False)
-            D2 = cholesky(A2, lower=False)
-            
+            try:
+                D1 = cholesky(A1, lower=False)
+                D2 = cholesky(A2, lower=False)
+            except np.linalg.LinAlgError:
+                # If fails again, raise the original error
+                raise e
+                
         # Calculate the eigenvector associated to the maximum eigenvalue of np.linalg.inv(D1).T.dot(B1).dot(np.linalg.inv(D1))
         D1_inv = np.linalg.inv(D1)
         eval1, evec1 = np.linalg.eig(D1_inv.T.dot(B1).dot(D1_inv))   # Calculate corresponding eigenvectors/values
@@ -358,13 +370,11 @@ def loopRectify(rig):
     
     # Build similarity transforms
     
-    '''
     # Original formulation (NOT WORKING)
-    Hr1 = np.array([ [ F[2,1]-w1[1]*F[2,2], w1[0]*F[2,2]-F[2,0], 0], \
-                     [ F[2,0]-w1[0]*F[2,2], F[2,1]-w1[1]*F[2,2], F[2,2] + vc2 ], \
-                     [0, 0, 1] ])
+    #Hr1 = np.array([ [ F[2,1]-w1[1]*F[2,2], w1[0]*F[2,2]-F[2,0], 0], \
+    #                 [ F[2,0]-w1[0]*F[2,2], F[2,1]-w1[1]*F[2,2], F[2,2] + vc2 ], \
+    #                 [0, 0, 1] ])
     
-    '''
     # Changed sign to second row of Hr1 to make it work...
     Hr1 = np.array([ [ F[2,1]-w1[1]*F[2,2], w1[0]*F[2,2]-F[2,0], 0], \
                      [ w1[0]*F[2,2]-F[2,0], w1[1]*F[2,2]-F[2,1], -(F[2,2] + vc2) ], \
@@ -387,7 +397,28 @@ def loopRectify(rig):
     Rectify1 = Hs1.dot(Hrp1)
     Rectify2 = Hs2.dot(Hrp2)
     
-    rectStereoRig = ss.RectifiedStereoRig(Rectify1, Rectify2, rig)
+    # END OF ORIGINAL ALGORITHM
+    
+    ### Rcommon to be calculated here!
+    # New x axis
+    C1 , C2 = rig.getCenters()
+    xv = C1 - C2                    # New x axis
+    
+    # Calculation of the z axis of common orientation (thanks to Marta)
+    zv = np.cross(e1[:,0],z)        # New z axis
+    zv = zv/zv[2]
+    
+    # Get y axis as cross product
+    yv = np.cross(zv, xv)           # New y axis
+    
+    xv = xv / np.linalg.norm(xv)    # Normalize x direction
+    yv = yv / np.linalg.norm(yv)    # Normalize y direction
+    zv = zv / np.linalg.norm(zv)    # Normalize z direction
+    
+    # Build common camera orientation
+    Rcommon = np.array([xv,yv,zv])
+    
+    rectStereoRig = ss.RectifiedStereoRig(Rcommon, Rectify1, Rectify2, rig)
     
     return rectStereoRig
 
@@ -461,8 +492,8 @@ def directRectify(rig):
         3x3 rectification homographies.
     """
     # Load data from stereo rig
-    A1 = rig.cameraMatrix1
-    A2 = rig.cameraMatrix2
+    A1 = rig.intrinsic1
+    A2 = rig.intrinsic2
     RT1 = np.hstack((np.eye(3), np.zeros((3,1))))   # World origin set in first camera
     RT2 = np.hstack((rig.R, rig.T))
     dims1 = rig.res1
@@ -517,7 +548,6 @@ def directRectify(rig):
             sol = [-m1/m2]
             
         else:
-            
             # Polynomial coefficients II
             m3 = C2[1,2]/C2[1,1]
             m4 = C2[1,1]/C1[1,1]
@@ -554,7 +584,7 @@ def directRectify(rig):
                 raise ValueError("No analitic solution.")
         
            
-        def getW(ss):
+        def evaluateSolution(ss):
             # Inner function to compute w1 and w2 from the solution
             
             # Point over image 1 in world coordinates
@@ -577,12 +607,12 @@ def directRectify(rig):
             w2 = w2 / w2[2]
             #l = -w1[1]/w1[0]               # Loop-Zhang lambda parameter (not needed)
             
-            return w1, w2
+            return w1, w2, Rnew
         
         
         def getDistortion(s):
             # Inner function as compact version of getLoopZhangDistortionValue()
-            w1, w2 = getW(s)    
+            w1, w2, _ = evaluateSolution(s)    
             dist1 = float( w1.dot(P1).dot(w1)/w1.dot(Pc1).dot(w1) )
             dist2 = float( w2.dot(P2).dot(w2)/w2.dot(Pc2).dot(w2) )
             return dist1+dist2
@@ -590,8 +620,8 @@ def directRectify(rig):
         
         # Find minimum distortion among admissible solutions (4 or 2 solutions)
         bestSol = min(zip( sol, map(getDistortion, sol)), key=lambda x:x[1])[0]
-        # Get associated w1 and w2
-        w1, w2 = getW(bestSol)
+        # Get associated w1, w2 and new common orientation.
+        w1, w2, Rnew = evaluateSolution(bestSol)
     
     # At this point we have the correct w1 and w2
     # From here we follow the rest of the Loop-Zhang algorithm
@@ -625,6 +655,6 @@ def directRectify(rig):
     Rectify2 = Hs2.dot(Hrp2)
     
     # Build a RectifiedStereoRig object
-    rectStereoRig = ss.RectifiedStereoRig(Rectify1, Rectify2, rig)
+    rectStereoRig = ss.RectifiedStereoRig(Rnew, Rectify1, Rectify2, rig)
     
     return rectStereoRig

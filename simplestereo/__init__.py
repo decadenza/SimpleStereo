@@ -34,7 +34,7 @@ class StereoRig:
     ----------
     res1, res2 : tuple
         Resolution of camera as (width, height)  
-    cameraMatrix1, cameraMatrix2 : numpy.ndarray
+    intrinsic1, intrinsic2 : numpy.ndarray
         3x3 intrinsic camera matrix in the form [[fx, 0, tx], [0, fy, ty], [0, 0, 1]].
     distCoeffs1, distCoeffs2 : list or numpy.ndarray
         List of distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).
@@ -56,15 +56,15 @@ class StereoRig:
         (see :func:`ss.utils.moveExtrinsicOriginToFirstCamera`).
     
     """  
-    def __init__(self, res1, res2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, F=None, E=None, reprojectionError=None):
+    def __init__(self, res1, res2, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F=None, E=None, reprojectionError=None):
         self.res1 = res1
         self.res2 = res2
-        self.cameraMatrix1 = np.array(cameraMatrix1)
-        self.cameraMatrix2 = np.array(cameraMatrix2)
-        self.R = np.array(R)
-        self.T = np.array(T).reshape((-1,1))              
+        self.intrinsic1 = np.array(intrinsic1)
+        self.intrinsic2 = np.array(intrinsic2)
         self.distCoeffs1 = np.array(distCoeffs1) if any(distCoeffs1) else np.zeros(5) # Convert to numpy.ndarray
         self.distCoeffs2 = np.array(distCoeffs2) if any(distCoeffs2) else np.zeros(5)
+        self.R = np.array(R)
+        self.T = np.array(T).reshape((-1,1))              
         self.F = np.array(F) if F is not None else None
         self.E = np.array(E) if E is not None else None
         self.reprojectionError = reprojectionError
@@ -89,8 +89,8 @@ class StereoRig:
         
         res1 = tuple(data.get('res1'))
         res2 = tuple(data.get('res2'))
-        cameraMatrix1 = np.array(data.get('cameraMatrix1'))
-        cameraMatrix2 = np.array(data.get('cameraMatrix2'))
+        intrinsic1 = np.array(data.get('intrinsic1'))
+        intrinsic2 = np.array(data.get('intrinsic2'))
         R = np.array(data.get('R'))
         T = np.array(data.get('T')).reshape((-1,1))              
         distCoeffs1 = np.array(data.get('distCoeffs1'))
@@ -99,7 +99,7 @@ class StereoRig:
         E = np.array(data.get('E')) if data.get('E') else None
         reprojectionError = data.get('reprojectionError')
         
-        return cls(res1, res2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, F, E, reprojectionError)
+        return cls(res1, res2, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F, E, reprojectionError)
         
     def save(self, filepath):
         """
@@ -116,8 +116,8 @@ class StereoRig:
             out = {}
             out['res1'] = self.res1
             out['res2'] = self.res2
-            out['cameraMatrix1'] = self.cameraMatrix1.tolist()
-            out['cameraMatrix2'] = self.cameraMatrix2.tolist()
+            out['intrinsic1'] = self.intrinsic1.tolist()
+            out['intrinsic2'] = self.intrinsic2.tolist()
             out['R'] = self.R.tolist()
             out['T'] = self.T.tolist()
             out['distCoeffs1'] = self.distCoeffs1.tolist()
@@ -173,8 +173,8 @@ class StereoRig:
         numpy.ndarray
             The 3x4 projection matrix of the second camera.
         """
-        Po1 = np.hstack( (self.cameraMatrix1, np.zeros((3,1))) )
-        Po2 = self.cameraMatrix2.dot( np.hstack( (self.R, self.T) ) )
+        Po1 = np.hstack( (self.intrinsic1, np.zeros((3,1))) )
+        Po2 = self.intrinsic2.dot( np.hstack( (self.R, self.T) ) )
         return Po1, Po2
     
     def getFundamentalMatrix(self):
@@ -216,7 +216,7 @@ class StereoRig:
         """
         if True or self.E is None:  # If E is not set, calculate it and update the object data.
             F = self.getFundamentalMatrix()
-            self.E = self.cameraMatrix2.T.dot(F).dot(self.cameraMatrix1)
+            self.E = self.intrinsic2.T.dot(F).dot(self.intrinsic1)
             
         return self.E
     
@@ -258,17 +258,17 @@ class StereoRig:
         cv2.undistort
         """
         if changeCameras:   # Change camera matrices
-            cameraMatrixNew1, _ = cv2.getOptimalNewCameraMatrix(self.cameraMatrix1, self.distCoeffs1, self.res1, alpha, destDims, centerPrincipalPoint)
-            cameraMatrixNew2, _ = cv2.getOptimalNewCameraMatrix(self.cameraMatrix2, self.distCoeffs2, self.res2, alpha, destDims, centerPrincipalPoint)
+            cameraMatrixNew1, _ = cv2.getOptimalNewCameraMatrix(self.intrinsic1, self.distCoeffs1, self.res1, alpha, destDims, centerPrincipalPoint)
+            cameraMatrixNew2, _ = cv2.getOptimalNewCameraMatrix(self.intrinsic2, self.distCoeffs2, self.res2, alpha, destDims, centerPrincipalPoint)
             
-            img1_undist = cv2.undistort(img1, self.cameraMatrix1, self.distCoeffs1, None, cameraMatrixNew1)
-            img2_undist = cv2.undistort(img2, self.cameraMatrix2, self.distCoeffs2, None, cameraMatrixNew2)
+            img1_undist = cv2.undistort(img1, self.intrinsic1, self.distCoeffs1, None, cameraMatrixNew1)
+            img2_undist = cv2.undistort(img2, self.intrinsic2, self.distCoeffs2, None, cameraMatrixNew2)
             
             return img1_undist, img2_undist, cameraMatrixNew1, cameraMatrixNew2
         
         else:   # Use original camera matrices
-            img1_undist = cv2.undistort(img1, self.cameraMatrix1, self.distCoeffs1, None, None)
-            img2_undist = cv2.undistort(img2, self.cameraMatrix2, self.distCoeffs2, None, None)
+            img1_undist = cv2.undistort(img1, self.intrinsic1, self.distCoeffs1, None, None)
+            img2_undist = cv2.undistort(img2, self.intrinsic2, self.distCoeffs2, None, None)
             
             return img1_undist, img2_undist
         
@@ -286,22 +286,28 @@ class RectifiedStereoRig(StereoRig):
     
     Parameters
     ----------
-    rectHomography1, rectHomography1 : np.array
-        3x3 matrices representing rectification homographies computed with one of the rectification methods.
-    
-    StereoRig
+    Rcommon : np.array
+        3x3 matrices representing the new common camera orientation after rectification.
+    rectHomography1, rectHomography2 : np.array
+        3x3 rectification homographies.
+    StereoRig:
         A StereoRig object or, *alternatively*, all the parameters of :meth:`simplestereo.StereoRig` (in the same order).
     """
-    def __init__(self, rectHomography1, rectHomography2, *args):
+    def __init__(self, Rcommon, rectHomography1, rectHomography2, *args):
         
-        self.rectHomography1 = rectHomography1
+        self.Rcommon = Rcommon                  # Common camera orientation
+        self.rectHomography1 = rectHomography1  # Rectification homographies
         self.rectHomography2 = rectHomography2
-        self.K1 = None                                       # Fitting affine transformations
-        self.K2 = None                                       # aka new camera matrices after rectification
+        
+        # Final intrinsic matrices that keep track of all affine transformations applied, are
+        # calculated in self.computeRectificationMaps() considering destination dimensions and zoom.
+        # N.B. These will be needed for depth reconstruction!
+        self.K1 = None
+        self.K2 = None
         
         if isinstance(args[0], StereoRig):                  # Extend unpacking a StereoRig object 
             r = args[0]
-            super(RectifiedStereoRig, self).__init__(r.res1, r.res2, r.cameraMatrix1, r.distCoeffs1, r.cameraMatrix2, r.distCoeffs2, r.R, r.T, r.F, r.E, r.reprojectionError)
+            super(RectifiedStereoRig, self).__init__(r.res1, r.res2, r.intrinsic1, r.intrinsic2, r.distCoeffs1, r.distCoeffs2, r.R, r.T, r.F, r.E, r.reprojectionError)
         else:                                               # Or use all the parameters
             super(RectifiedStereoRig, self).__init__(*args)
         
@@ -325,12 +331,13 @@ class RectifiedStereoRig(StereoRig):
         with open(filepath, 'r') as f:
             data = json.load(f)
         
+        Rcommon = np.array(data.get('Rcommon'))
         rectHomography1 = np.array(data.get('rectHomography1'))
         rectHomography2 = np.array(data.get('rectHomography2'))
         res1 = tuple(data.get('res1'))
         res2 = tuple(data.get('res2'))
-        cameraMatrix1 = np.array(data.get('cameraMatrix1'))
-        cameraMatrix2 = np.array(data.get('cameraMatrix2'))
+        intrinsic1 = np.array(data.get('intrinsic1'))
+        intrinsic2 = np.array(data.get('intrinsic2'))
         R = np.array(data.get('R'))
         T = np.array(data.get('T'))              
         distCoeffs1 = np.array(data.get('distCoeffs1'))
@@ -339,7 +346,7 @@ class RectifiedStereoRig(StereoRig):
         E = np.array(data.get('E'))
         reprojectionError = data.get('reprojectionError')
         
-        return cls(rectHomography1, rectHomography2, res1, res2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, R, T, F, E, reprojectionError)
+        return cls(Rcommon, rectHomography1, rectHomography2, res1, res2, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F, E, reprojectionError)
         
     def save(self, filepath):
         """
@@ -354,12 +361,13 @@ class RectifiedStereoRig(StereoRig):
         """
         with open(filepath, 'w') as f:
             out = {}
+            out['Rcommon'] = self.Rcommon.tolist()
             out['rectHomography1'] = self.rectHomography1.tolist()
             out['rectHomography2'] = self.rectHomography2.tolist()
             out['res1'] = self.res1
             out['res2'] = self.res2
-            out['cameraMatrix1'] = self.cameraMatrix1.tolist()
-            out['cameraMatrix2'] = self.cameraMatrix2.tolist()
+            out['intrinsic1'] = self.intrinsic1.tolist()
+            out['intrinsic2'] = self.intrinsic2.tolist()
             out['R'] = self.R.tolist()
             out['T'] = self.T.tolist()
             out['distCoeffs1'] = self.distCoeffs1.tolist()
@@ -371,19 +379,26 @@ class RectifiedStereoRig(StereoRig):
             if self.reprojectionError:
                 out['reprojectionError'] = self.reprojectionError
             json.dump(out, f)
-        
     
-    def getRectificationTransformations(self):
+    def getRectifiedProjectionMatrices(self):
         """
-        Get raw rectification 3x3 matrices without any affine trasformation.
+        Calculate the projection matrices of camera 1 and camera 2 after rectification.
+        
+        New projection matrices, after rectification, share the same orientation `Rcommon`,
+        have only one horizontal displacement (the baseline) and
+        have new intrinsics (`K1` and `K2`) that depends on all the rigid manipulation done after rectification.
         
         Returns
         -------
-        rectHomography1, rectHomography2 : numpy.ndarray
-            3x3 rectification transformations for camera 1 and camera 2.
+        numpy.ndarray
+            The 3x4 projection matrix of the first camera.
+        numpy.ndarray
+            The 3x4 projection matrix of the second camera.
         """
-        return self.rectHomography1, self.rectHomography2
-    
+        C1, C2 = self.getCenters()
+        P1 = self.K1.dot(self.Rcommon).dot( np.hstack( (np.eye(3), -C1[:,None]) ) )
+        P2 = self.K2.dot(self.Rcommon).dot( np.hstack( (np.eye(3), -C2[:,None]) ) ) # TBC
+        return P1, P2  
     
     def computeRectificationMaps(self, destDims=None, zoom=1):
         """
@@ -417,29 +432,31 @@ class RectifiedStereoRig(StereoRig):
         To adapt it to be used with OpenCV the transformation to be used in :func:`cv2.initUndistortRectifyMap()` (and other functions)
         is given by ``rectHomography.dot(cameraMatrix)``.
         For each camera, the function computes homography H as the rectification transformation.
-        
-        ..todo::
-            destDims needs to be considered in computing the Q matrix for 3D reconstruction.
         """
         if destDims is None:
             destDims = self.res1
-            
-        # Find fitting matrix
-        K1, K2 = rectification.getFittingMatrix(self.cameraMatrix1, self.cameraMatrix2, self.rectHomography1, self.rectHomography2, self.res1, self.res2, self.distCoeffs1, self.distCoeffs2, destDims, zoom)
         
-        # Build rectification transforms from homographies (see cv2.initUndistortRectifyMap documentation)
-        R1 = self.rectHomography1.dot(self.cameraMatrix1)
-        R2 = self.rectHomography2.dot(self.cameraMatrix2)
+        # Find fitting matrices, as additional correction of the new camera matrices (if any).
+        # Useful e.g. to change destination image resolution or zoom.
+        Fit1, Fit2 = rectification.getFittingMatrices(self.intrinsic1, self.intrinsic2, self.rectHomography1, self.rectHomography2, self.res1, self.res2, self.distCoeffs1, self.distCoeffs2, destDims, zoom)
+        
+        # Isolate affine transformation applied after rectification
+        # These would be the FINAL new camera intrinsics (needed for 3D reconstrunction)
+        self.K1 = Fit1.dot(self.rectHomography1).dot( self.intrinsic1 ).dot(self.Rcommon.T)
+        self.K2 = Fit2.dot(self.rectHomography2).dot( self.intrinsic2.dot(self.R) ).dot(self.Rcommon.T)
+        
+        print("K1", self.K1)
+        print("K2", self.K2)
+        
+        # OpenCV requirements...
+        R1 = self.Rcommon
+        R2 = self.Rcommon.dot(self.R.T)
         
         # Recompute final maps considering fitting transformations too
-        mapx1_new, mapy1_new = cv2.initUndistortRectifyMap(self.cameraMatrix1, self.distCoeffs1, R1, K1, destDims, cv2.CV_32FC1)
-        mapx2_new, mapy2_new = cv2.initUndistortRectifyMap(self.cameraMatrix2, self.distCoeffs2, R2, K2, destDims, cv2.CV_32FC1)
-        self.mapx1 = mapx1_new
-        self.mapy1 = mapy1_new
-        self.mapx2 = mapx2_new
-        self.mapy2 = mapy2_new
-        self.K1 = K1
-        self.K2 = K2
+        #P1, P2 = self.getRectifiedProjectionMatrices()
+        self.mapx1, self.mapy1 = cv2.initUndistortRectifyMap(self.intrinsic1, self.distCoeffs1, R1, self.K1, destDims, cv2.CV_32FC1)
+        self.mapx2, self.mapy2 = cv2.initUndistortRectifyMap(self.intrinsic2, self.distCoeffs2, R2, self.K2, destDims, cv2.CV_32FC1)
+        
         
         
     def rectifyImages(self, img1, img2, interpolation=cv2.INTER_LINEAR):
@@ -468,6 +485,40 @@ class RectifiedStereoRig(StereoRig):
         
         return img1_rect, img2_rect
     
+    '''
+    def get3DPoints(self, disparityMap):
+        """
+        To be optimized in C++
+        """
+        height, width = disparityMap.shape[:2]
+        fx1 = self.intrinsic1[0,0]
+        fy1 = self.intrinsic1[1,1]
+        cx1 = self.intrinsic1[0,2]
+        cy1 = self.intrinsic1[1,2]
+        fx2 = self.intrinsic2[0,0]
+        cx2 = self.intrinsic2[0,2]
+        
+        # Initialize array of 3D points x,y,z in world units
+        points = np.empty((height,width,3), dtype=float)
+        
+        # Baseline (in meter if calibration is done with units)
+        b = self.getBaseline()
+        
+        # Need to cancel the transformations done with rectification 
+        #L1 = np.linalg.inv(self.K1.dot(self.rectHomography1))
+        #L1 = np.linalg.inv(self.K1)
+        #L2 = np.linalg.inv(self.K2.dot(self.rectHomography2))
+        #L2 = np.linalg.inv(self.K2)
+        
+        for y in range(height):
+            for x in range(width):
+                points[y,x,0] = b*(x-cx1)/width
+                points[y,x,1] = -b*(y-cy1)/height
+                points[y,x,2] = fx1 * b/(disparityMap[y,x]-cx1+cx2)
+                
+                
+        return points
+    '''
     
     def getQ(self):
         """
@@ -481,7 +532,9 @@ class RectifiedStereoRig(StereoRig):
             A 4x4 matrix.
         """
         b = self.getBaseline()
+        
         Q = np.eye(4, dtype='float64')
+        Q[1,1] = -1                             # Invert Y axis (so it goes upward)
         Q[2,2] = 0
         Q[0,3] = -self.K1[0,2]                  # -cx
         Q[1,3] = -self.K1[1,2]                  # -cy
@@ -490,3 +543,5 @@ class RectifiedStereoRig(StereoRig):
         Q[3,3] = (self.K1[0,2]-self.K2[0,2])/b  # cx-cx'/b
         
         return Q    
+        
+    
