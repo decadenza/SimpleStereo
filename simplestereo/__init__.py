@@ -61,8 +61,8 @@ class StereoRig:
         self.res2 = res2
         self.intrinsic1 = np.array(intrinsic1)
         self.intrinsic2 = np.array(intrinsic2)
-        self.distCoeffs1 = np.array(distCoeffs1) if any(distCoeffs1) else np.zeros(5) # Convert to numpy.ndarray
-        self.distCoeffs2 = np.array(distCoeffs2) if any(distCoeffs2) else np.zeros(5)
+        self.distCoeffs1 = np.array(distCoeffs1) if distCoeffs1 is not None else np.zeros(5) # Convert to numpy.ndarray
+        self.distCoeffs2 = np.array(distCoeffs2) if distCoeffs2 is not None else np.zeros(5)
         self.R = np.array(R)
         self.T = np.array(T).reshape((-1,1))              
         self.F = np.array(F) if F is not None else None
@@ -445,10 +445,7 @@ class RectifiedStereoRig(StereoRig):
         self.K1 = Fit1.dot(self.rectHomography1).dot( self.intrinsic1 ).dot(self.Rcommon.T)
         self.K2 = Fit2.dot(self.rectHomography2).dot( self.intrinsic2.dot(self.R) ).dot(self.Rcommon.T)
         
-        print("K1", self.K1)
-        print("K2", self.K2)
-        
-        # OpenCV requirements...
+        # OpenCV requires the final rotations applied
         R1 = self.Rcommon
         R2 = self.Rcommon.dot(self.R.T)
         
@@ -456,7 +453,6 @@ class RectifiedStereoRig(StereoRig):
         #P1, P2 = self.getRectifiedProjectionMatrices()
         self.mapx1, self.mapy1 = cv2.initUndistortRectifyMap(self.intrinsic1, self.distCoeffs1, R1, self.K1, destDims, cv2.CV_32FC1)
         self.mapx2, self.mapy2 = cv2.initUndistortRectifyMap(self.intrinsic2, self.distCoeffs2, R2, self.K2, destDims, cv2.CV_32FC1)
-        
         
         
     def rectifyImages(self, img1, img2, interpolation=cv2.INTER_LINEAR):
@@ -485,63 +481,60 @@ class RectifiedStereoRig(StereoRig):
         
         return img1_rect, img2_rect
     
-    '''
-    def get3DPoints(self, disparityMap):
+    def get3DPoints(self,disparityMap):
         """
-        To be optimized in C++
-        """
-        height, width = disparityMap.shape[:2]
-        fx1 = self.intrinsic1[0,0]
-        fy1 = self.intrinsic1[1,1]
-        cx1 = self.intrinsic1[0,2]
-        cy1 = self.intrinsic1[1,2]
-        fx2 = self.intrinsic2[0,0]
-        cx2 = self.intrinsic2[0,2]
+        Get the 3D points in the space from the disparity map.
         
-        # Initialize array of 3D points x,y,z in world units
-        points = np.empty((height,width,3), dtype=float)
+        If the calibration was done with real world units (e.g. millimeters),
+        the output would be in the same units. The world origin will be in the
+        left camera.
         
-        # Baseline (in meter if calibration is done with units)
-        b = self.getBaseline()
-        
-        # Need to cancel the transformations done with rectification 
-        #L1 = np.linalg.inv(self.K1.dot(self.rectHomography1))
-        #L1 = np.linalg.inv(self.K1)
-        #L2 = np.linalg.inv(self.K2.dot(self.rectHomography2))
-        #L2 = np.linalg.inv(self.K2)
-        
-        for y in range(height):
-            for x in range(width):
-                points[y,x,0] = b*(x-cx1)/width
-                points[y,x,1] = -b*(y-cy1)/height
-                points[y,x,2] = fx1 * b/(disparityMap[y,x]-cx1+cx2)
-                
-                
-        return points
-    '''
-    
-    def getQ(self):
-        """
-        Get the Q matrix to be used as input of ``cv2.reprojectImageTo3D``, together with the disparity map.
-        
-        After rectification a common camera matrix K is applied to both images. The baseline remains the same.
-        
+        Parameters
+        ----------
+        disparityMap : numpy.ndarray
+            A dense disparity map having same height and width of images.
+            
         Returns
         -------
         numpy.ndarray
-            A 4x4 matrix.
+            Array of points having shape *(height,width,3)*, where at each y,x coordinates
+            a *(x,y,z)* point is associated.
+        
         """
-        b = self.getBaseline()
+        height, width = disparityMap.shape[:2]
+        
+        # Build the Q matrix as OpenCV requirement
+        # to be used as input of ``cv2.reprojectImageTo3D``
+        # We need to cancel the final intrinsics (contained in self.K1 and self.K2)
+        
+        # IMPLEMENTATION NOTES
+        # fx and fy are assumed the same for left and right
+        # Possibly there are different x-shearing term in self.K1[0,1] and self.K2[0,1] as a1 and a2
+        # cx1 is not the same of cx2
+        # cy1 is equal cy2 (as images are rectified)
+        
+        b   = self.getBaseline()
+        fx  = self.K1[0,0]
+        fy  = self.K2[1,1]
+        cx1 = self.K1[0,2]
+        cx2 = self.K2[0,2]
+        a1  = self.K1[0,1]
+        a2  = self.K2[0,1]
+        cy  = self.K1[1,2]
         
         Q = np.eye(4, dtype='float64')
-        Q[1,1] = -1                             # Invert Y axis (so it goes upward)
+        
+        Q[0,1] = -a1/fy
+        Q[0,3] = a1*cy/fy - cx1
+        
+        Q[1,1] = -fx/fy          # Invert Y axis (so it goes upward) consider different fx fy focal lengths
+        Q[1,3] = cy*fx/fy
+                                 
         Q[2,2] = 0
-        Q[0,3] = -self.K1[0,2]                  # -cx
-        Q[1,3] = -self.K1[1,2]                  # -cy
-        Q[2,3] = self.K1[0,0]                   # fx
-        Q[3,2] = -1/b                           # -1/b
-        Q[3,3] = (self.K1[0,2]-self.K2[0,2])/b  # cx-cx'/b
+        Q[2,3] = -fx
         
-        return Q    
+        Q[3,1] = (a2-a1)/(fy*b)
+        Q[3,2] = 1/b                        
+        Q[3,3] = ((a1-a2)*cy-cx1+cx2)/b    
         
-    
+        return cv2.reprojectImageTo3D(disparityMap, Q)
