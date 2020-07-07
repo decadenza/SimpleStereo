@@ -527,14 +527,15 @@ class RectifiedStereoRig(StereoRig):
         Q[0,1] = -a1/fy
         Q[0,3] = a1*cy/fy - cx1
         
-        Q[1,1] = -fx/fy
-        Q[1,3] = cy*fx/fy
+        Q[1,1] = fx/fy
+        Q[1,3] = -cy*fx/fy
                                  
         Q[2,2] = 0
         Q[2,3] = -fx
         
         Q[3,1] = (a2-a1)/(fy*b)
         Q[3,2] = 1/b                        
-        Q[3,3] = ((a1-a2)*cy+(-cx1+cx2)*fy)/(fy*b)    
+        Q[3,3] = ((a1-a2)*cy+(cx2-cx1)*fy)/(fy*b)    
+        
         
         return cv2.reprojectImageTo3D(disparityMap, Q)
