@@ -42,6 +42,11 @@ class StereoASW():
     ..warning::
         It may get very slow for high resolution images or with high *winSize* or *maxDisparity* values.
     
+    ..todo::
+        Alternative version can be written like this: compute disparity map on every other pixel
+        with the traditional algorithm, then fill the remaining pixels using left-right disparity
+        boundaries. This proved to be 40-50% faster with no significant decrease in quality.
+        
     Notes
     -----
     - This algorithm performs a 384x288 pixel image scan with maxDisparity=16 in less than 1 sec
