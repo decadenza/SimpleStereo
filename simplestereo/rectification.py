@@ -13,7 +13,7 @@ from scipy.linalg import null_space, cholesky
 import simplestereo as ss
 
 
-def getFittingMatrices(cameraMatrix1, cameraMatrix2, H1, H2, dims1, dims2, distCoeffs1=None, distCoeffs2=None, destDims=None, zoom=1):
+def getFittingMatrices(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2, distCoeffs1=None, distCoeffs2=None, destDims=None, zoom=1):
     """
     Compute affine tranformation to fit the rectified images into desidered dimensions.
     
@@ -24,7 +24,7 @@ def getFittingMatrices(cameraMatrix1, cameraMatrix2, H1, H2, dims1, dims2, distC
     
     Parameters
     ----------
-    cameraMatrix1, cameraMatrix2 : numpy.ndarray
+    intrinsicMatrix1, intrinsicMatrix2 : numpy.ndarray
         3x3 original camera matrices of intrinsic parameters.
     H1, H2 : numpy.ndarray
         3x3 rectifying homographies.
@@ -47,8 +47,8 @@ def getFittingMatrices(cameraMatrix1, cameraMatrix2, H1, H2, dims1, dims2, distC
         destDims = dims1
 
     # Get border points
-    tL1, tR1, bR1, bL1 = _getCorners(H1, cameraMatrix1, dims1, distCoeffs1)
-    tL2, tR2, bR2, bL2 = _getCorners(H2, cameraMatrix2, dims2, distCoeffs2)
+    tL1, tR1, bR1, bL1 = _getCorners(H1, intrinsicMatrix1, dims1, distCoeffs1)
+    tL2, tR2, bR2, bL2 = _getCorners(H2, intrinsicMatrix2, dims2, distCoeffs2)
     
     minX1 = min(tR1[0], bR1[0], bL1[0], tL1[0])
     minX2 = min(tR2[0], bR2[0], bL2[0], tL2[0])
@@ -95,7 +95,7 @@ def getFittingMatrices(cameraMatrix1, cameraMatrix2, H1, H2, dims1, dims2, distC
     return K1, K2
     
 
-def _getCorners(H, cameraMatrix, dims, distCoeffs=None):
+def _getCorners(H, intrinsicMatrix, dims, distCoeffs=None):
     """
     Get points on the image borders after distortion correction and a rectification transformation.
     
@@ -103,8 +103,8 @@ def _getCorners(H, cameraMatrix, dims, distCoeffs=None):
     ----------
     H : numpy.ndarray
         3x3 rectification homography.
-    cameraMatrix : numpy.ndarray
-        3x3 camera matrix.
+    intrinsicMatrix : numpy.ndarray
+        3x3 camera matrix of intrinsic parameters.
     dims : tuple
         Image dimensions in pixels as (width, height).
     distCoeffs : numpy.ndarray or None
@@ -124,7 +124,7 @@ def _getCorners(H, cameraMatrix, dims, distCoeffs=None):
     corners[1,0] = [dims[0]-1,0]              # Top right
     corners[2,0] = [dims[0]-1,dims[1]-1]      # Bottom right
     corners[3,0] = [0, dims[1]-1]             # Bottom left
-    undist_rect_corners = cv2.undistortPoints(corners, cameraMatrix, distCoeffs, R=H.dot(cameraMatrix))
+    undist_rect_corners = cv2.undistortPoints(corners, intrinsicMatrix, distCoeffs, R=H.dot(intrinsicMatrix))
     
     return [(x,y) for x, y in np.squeeze(undist_rect_corners)]
 

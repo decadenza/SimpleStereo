@@ -39,25 +39,27 @@ class Capture:
     Add support for other options (e.g. change focal length where supported).
     """
     def __init__(self, device = 0, flipY=False):
+        # Check if we're opening a video file
+        self.isFile = os.path.isfile(device)
         self.video_capture = cv2.VideoCapture(device)
-        if not self.video_capture.isOpened():
-            raise ValueError('Cannot open device!')
-        self.isFile = os.path.isfile(device) # Check if we're opening a video file
-        
-        #self.flip = cv2.flip if device == 0 else lambda f, *a, **k: f # Flip around y axis only if device==0 (usually PC webcam)
-        self.flip = cv2.flip if flipY else lambda f, *a, **k: f # Flip around y axis
-        
+        # Flip around y axis if needed
+        self.flip = cv2.flip if flipY else lambda f, *a, **k: f 
         self.running = False
-        self.frame = None   # Keep this as attribute (needed for streaming)
+        # Keep this as attribute (needed for streaming)
+        self.frame = None   
         
         if self.isFile:                             # If we are opening a video file
             self.getFrame = self.video_capture.read # we use read()
             self.grab = lambda *args: None          # and cannot grab()
         else:                                       # If opening a webcam or a URL streaming
-            self.t=Thread(target=self.__loop)       # use a separate thread
-            self.t.daemon=True                          
             self.grab = self.video_capture.grab     # that grabs continuously (grab() is fast)
             self.getFrame = self.video_capture.retrieve # and retrieve() (slower) the image only when needed
+            self.t=Thread(target=self.__loop)       # use a separate thread
+            self.t.daemon=True                          
+        
+        # Check if capture is opened
+        if not self.video_capture.isOpened():
+            raise ValueError('Cannot open device!')
             
     
     def __del__(self):
@@ -68,8 +70,8 @@ class Capture:
         return self
     
     def __exit__(self, type, value, traceback):
-        self.stop()
-        self.video_capture.release()
+        # To allow use in with statement
+        self.__del__()
           
     def start(self):
         """
@@ -79,7 +81,7 @@ class Capture:
         The thread continuously calls ``grab()`` to stay updated to the last frame,
         while ``retrieve()`` is called only when the frame is actually needed.
         """
-        if self.isFile: # N/A if is a file
+        if self.isFile: # Do not start if it is file
             return
         self.running = True
         self.t.start()
@@ -89,16 +91,15 @@ class Capture:
         """
         Stop the capture.
         
+        When finished, remember to call this method to **stop the capturing thread**.
         No need to call this for video files.
         
-        Notes
-        -----
-        When finished, remember to call this method to **stop the capturing thread**.
         """
         if self.isFile: # N/A if is a file
             return
-        self.running = False
-        self.t.join()
+        if self.running:
+            self.running = False
+            self.t.join()
         return
         
     def __loop(self):
@@ -112,6 +113,8 @@ class Capture:
         Returns None if there is no frame (e.g. end of video file).
         """
         ret, self.frame = self.getFrame()
+        if not ret:
+            return None
         return self.flip(self.frame, 1)
     
     def setResolution(self, width, height):
@@ -130,6 +133,7 @@ class Capture:
         bool
             True if the resolution was set successfully, False otherwise.
         """
+        # You cannot change resolution while running or on files
         if self.running or self.isFile:
             return False
         
