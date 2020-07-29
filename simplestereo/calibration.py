@@ -16,11 +16,11 @@ DEFAULT_CHESSBOARD_SIZE = (7,6)
 DEFAULT_CORNERSUBPIX_WINSIZE = (11,11)
 DEFAULT_TERMINATION_CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-6)
 
-def chessboardCalibrate(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1):
+def chessboardStereo(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1):
     """
-    Does stereo calibration from a list of images using OpenCV and returns a StereoRig object.
+    Performs stereo calibration from a list of images using OpenCV and returns a StereoRig object.
     
-    Width and height of the chessboard can't be of the same length.
+    Width and height of the chessboard should be different to avoid ambiguity.
     
     Parameters
     ----------
@@ -28,18 +28,16 @@ def chessboardCalibrate(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, square
         A list (or tuple) of 2 dimensional tuples (ordered left and right) of image paths, e.g. [("oneL.png","oneR.png"), ("twoL.png","twoR.png"), ...]
     chessboardSize: tuple
         Chessboard dimensions. Default to (7,6).
-    squareSize : int or float
+    squareSize : float
         If the square size is known, calibration can be in metric units. Default to 1.
         
     Returns
     ----------
     StereoRig
         A StereoRig object
-        
     
-    Todo
-    ----
-    Add a way to exclude images that have high reprojection errors and re-calibrate.
+    ..todo::
+        Iteratively exclude images that have high reprojection errors and re-calibrate.
     """
     
     # Prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...

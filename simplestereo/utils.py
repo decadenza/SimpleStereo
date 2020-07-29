@@ -58,7 +58,7 @@ class Capture:
             self.t.daemon=True                          
         
         # Check if capture is opened
-        if not self.video_capture.isOpened():
+        if self.video_capture is None or not self.video_capture.isOpened():
             raise ValueError('Cannot open device!')
             
     
