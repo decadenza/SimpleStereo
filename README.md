@@ -27,17 +27,18 @@ SimpleStereo aims to be a support framework for stereo vision applications.
 
 ## Basic example
 SimpleStereo helps you with common tasks.
-    ```python
-    import simplestereo as ss
-    calibrationImages = ["0.png","1.png","2.png",...]
-    # Calibrate and build StereoRig object
-    rig = ss.calibration.chessboardStereo( images, chessboardSize=(7,6), squareSize=60.5 )
-    # Save rig object to file
-    rig.save("myRig.json")
-    # Optionally print some info
-    print("Reprojection error:", rig.reprojectionError)
-    print("Centers:", rig.getCenters())
-    print("Baseline:", rig.getBaseline())
-    ```
+
+```python
+import simplestereo as ss
+calibrationImages = ["0.png","1.png","2.png",...]
+# Calibrate and build StereoRig object
+rig = ss.calibration.chessboardStereo( images, chessboardSize=(7,6), squareSize=60.5 )
+# Save rig object to file
+rig.save("myRig.json")
+# Optionally print some info
+print("Reprojection error:", rig.reprojectionError)
+print("Centers:", rig.getCenters())
+print("Baseline:", rig.getBaseline())
+```
     
 More examples available.
