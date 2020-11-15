@@ -121,7 +121,8 @@ class Capture:
         """
         Set resolution of the camera.
         
-        Cannot call this for video files or when the thread is running.
+        Do not call this for video files or when the thread is running.
+        It works only for supported cameras.
         
         Parameters
         ----------
@@ -140,6 +141,28 @@ class Capture:
         # Set properties. Each returns === True on success.
         return self.video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, width) and self.video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
+    def setFrameRate(self, fps):
+        """
+        Set framerate of the camera.
+        
+        Do not call this for video files or when the thread is running.
+        It works only for supported cameras.
+        
+        Parameters
+        ----------
+        fps : int
+            Frames per second.
+        
+        Returns
+        -------
+        bool
+            True if the framerate was set successfully, False otherwise.
+        """
+        # You cannot change resolution while running or on files
+        if self.running or self.isFile:
+            return False
+        
+        return self.video_capture.set(cv2.CAP_PROP_FPS, fps)
 
 
 
@@ -201,13 +224,13 @@ def getCrossProductMatrix(v):
 
 
 
-# To check how distortion is related to this.
 def drawCorrespondingEpipolarLines(img1, img2, F, x1=[], x2=[], color=(0,0,255), thickness=1):
     """
     Draw epipolar lines passing by given coordinates in img1 or img1.
     
     The epipolar lines can be drawn on the images, knowing the fundamental matrix.
     Please note that this is an in-place method, i.e. passed images will be modified directly.
+    Distortion is *not* taken into account.
     
     Parameters
     ----------
@@ -269,4 +292,46 @@ def drawCorrespondingEpipolarLines(img1, img2, F, x1=[], x2=[], color=(0,0,255),
         line = F.dot(np.array([ [k[0]], [k[1]], [1]])) # Find epipolar line on img2 (homogeneous coordinates)
         p = drawLineOnImg2(line)
         
+
+
+def distortPoints(points, distCoeff):
+    '''
+    Undistort relative coordinate points.
     
+    
+    Parameters
+    ----------
+    points : list
+       List of lists (or tuples) of x,y points in relative coordinates 
+       (already multiplied by the inverse intrinsic matrix and undistorted).
+    distCoeff : list
+        List of 4, 5 or 8 elements (see OpenCV).
+    
+    Returns
+    -------
+    list
+        List of lists of distorted x,y points in relative coordinates
+    '''
+    # Implemented only as
+    # (k1,k2,p1,p2[,k3[,k4,k5,k6]]) vector of 4, 5 or 8
+    # TODO
+    # (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]]) vector of 4, 5, 8, 12 or 14 elements
+    distCoeff = list(np.array(distCoeff).flatten())
+    nCoeff = len(distCoeff)
+    if not nCoeff in [4,5,8]:
+        raise ValueError(f"distCoeff is not in a valid format! (length {nCoeff} unexpected)")
+    
+    
+    k1,k2,p1,p2,k3,k4,k5,k6 = distCoeff + [0] * (8 - len(distCoeff))
+    
+    distPoints = []
+    
+    for p in points:
+        x = p[0][0]
+        y = p[0][1]
+        r2 = x**2 + y**2
+        xd = x*(1 + k1*r2 + k2*r2**2 + k3*r2**3 + k4*r2**4 + k5*r2**5 + k6*r2**6) + 2*p1*x*y + p2*(r2 + 2*x**2)
+        yd = y*(1 + k1*r2 + k2*r2**2 + k3*r2**3 + k4*r2**4 + k5*r2**5 + k6*r2**6) + p1*(r2 + 2*y**2) + 2*p2*x*y
+        distPoints.append([(xd,yd)])
+    
+    return np.array(distPoints)

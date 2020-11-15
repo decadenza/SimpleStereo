@@ -42,10 +42,20 @@ def exportPoints(points3D, filepath, referenceImage=None):
         else:
             f.write("property uchar red\nproperty uchar green\nproperty uchar blue\n")
             f.write("end_header\n")
-            for i in range(points3D.shape[0]):  # height
-                for j in range(points3D.shape[1]): # width
-                    # Precision limited to 6 decimal places.
-                    f.write("{:.6f} {:.6f} {:.6f} {:d} {:d} {:d}\n".format(
-                        points3D[i,j,0], points3D[i,j,1], points3D[i,j,2], 
-                        referenceImage[i,j,2], referenceImage[i,j,1], referenceImage[i,j,0])) # Invert BGR to RGB
+            if referenceImage.ndim > 2:
+                # BGR
+                for i in range(points3D.shape[0]):  # height
+                    for j in range(points3D.shape[1]): # width
+                        # Precision limited to 6 decimal places.
+                        f.write("{:.6f} {:.6f} {:.6f} {:d} {:d} {:d}\n".format(
+                            points3D[i,j,0], points3D[i,j,1], points3D[i,j,2], 
+                            referenceImage[i,j,2], referenceImage[i,j,1], referenceImage[i,j,0])) # Invert BGR to RGB
+            else:
+                # GRAYSCALE
+                for i in range(points3D.shape[0]):  # height
+                    for j in range(points3D.shape[1]): # width
+                        # Precision limited to 6 decimal places.
+                        f.write("{:.6f} {:.6f} {:.6f} {:d} {:d} {:d}\n".format(
+                            points3D[i,j,0], points3D[i,j,1], points3D[i,j,2], 
+                            referenceImage[i,j], referenceImage[i,j], referenceImage[i,j])) # Grayscale
     

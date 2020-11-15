@@ -18,6 +18,7 @@ import cv2
 from . import calibration
 from . import rectification
 from . import passive
+from . import active
 from . import postprocessing
 from . import utils
 

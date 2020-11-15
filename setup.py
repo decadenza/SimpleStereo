@@ -15,7 +15,7 @@ if __name__ == '__main__':
           ext_modules=[Extension('simplestereo.passiveExt', ['./simplestereo/passiveExt.cpp'])],
           install_requires=[
                             'numpy>=1.18',
-                            'opencv-python>=4.2, <4.3',
+                            'opencv-contrib-python==4.2.0.34',
                             'scipy>=1.4',
                            ],
          )
