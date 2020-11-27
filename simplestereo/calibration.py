@@ -157,8 +157,7 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
     graycode.setWhiteThreshold(white_thr)
     
     cam_shape = cv2.imread(images[0][0], cv2.IMREAD_GRAYSCALE).shape
-    #patch_size_half = int(np.ceil(cam_shape[1] / 180))
-    patch_size_half = int(np.ceil(cam_shape[1] / 480))
+    patch_size_half = int(np.ceil(cam_shape[1] / 180))
     
     cam_corners_list = []
     cam_objps_list = []
@@ -392,9 +391,6 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
         cam_int = camIntrinsic
         cam_dist = camDistCoeffs
     
-    # TEMP
-    print("Camera Error", cam_rms)
-    
     # FIND MIDDLE-WHITE POINTS INDEXES
     whiteUpperLeftIndexes = []
     
@@ -441,12 +437,6 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
         whiteCenters = cv2.perspectiveTransform(whiteCenters_dist,cam_int)   
         cam_whiteCorners_list.append(whiteCenters) # List of [[x,y]]
         
-        #temp = cv2.imread(images[i][-1], cv2.IMREAD_GRAYSCALE)
-        #for p in whiteCenters:
-        #    cv2.circle(temp, (int(p[0,0]),int(p[0,1])), 2, (0,0,255))
-        #cv2.imshow("TEST", temp)
-        #cv2.waitKey(0)
-        
     # Iterate over sets of Gray code images
     for setnum, imageset in enumerate(images):
         
@@ -475,12 +465,6 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
             src_points = []
             dst_points = []
             
-            #print("Showing patch",c_x,c_y)
-            #cv2.imshow("Patch", white_img[c_y-patch_size_half:c_y+patch_size_half+1,c_x-patch_size_half:c_x+patch_size_half+1])
-            #for jjj in range(len(imgs)):
-            #    cv2.imshow(f"P {jjj}", imgs[jjj][c_y-patch_size_half:c_y+patch_size_half+1,c_x-patch_size_half:c_x+patch_size_half+1])
-            #cv2.waitKey(0)
-            
             for dx in range(-patch_size_half, patch_size_half + 1):
                 for dy in range(-patch_size_half, patch_size_half + 1):
                     x = c_x + dx
@@ -493,7 +477,6 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
                         src_points.append((x, y))
                         dst_points.append(np.array(proj_pix))
                     
-            #print(setnum, "POINTS", len(src_points), "/", (patch_size_half*2)**2)        
             if len(src_points) < patch_size_half**2:
                 #warnings.warn(f"Corner {c_x},{c_y} was skipped because decoded pixel were too few.")
                 skipped+=1
@@ -525,8 +508,6 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
     # Calibrate projector
     proj_rms, proj_int, proj_dist, proj_rvecs, proj_tvecs = cv2.calibrateCamera(
         proj_objps_list, proj_corners_list, projectorResolution, None, None, None, None)
-    
-    print("Projector Error", proj_rms)
     
     # Stereo calibrate
     retval, intrinsic1, distCoeffs1, intrinsic2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate(

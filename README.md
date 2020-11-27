@@ -16,9 +16,9 @@ SimpleStereo aims to be a support framework for stereo vision applications.
 * Export raw point cloud to PLY file
 
 ## Stereo rectification algorithms
-* Fusiello
-* Loop and Zhang
-* Lafiosca and Ceccaroni
+- [x] Fusiello
+- [x] Loop and Zhang
+- [x] Lafiosca and Ceccaroni
 
 ## Stereo Matching algorithms
 - [x] Adaptive Support Weight algorithm
