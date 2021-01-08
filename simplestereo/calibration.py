@@ -98,7 +98,7 @@ def chessboardStereo(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSiz
 
 
 def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1, 
-                     black_thr=40, white_thr=5, camIntrinsic=None, camDistCoeffs=None, normalize=False):
+                     black_thr=40, white_thr=5, camIntrinsic=None, camDistCoeffs=None):
     """
     Performs stereo calibration between a camera (reference) and a projector.
     
@@ -181,8 +181,6 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
             if cam_shape != img.shape:
                 raise ValueError(f'Image size of {fname} is mismatch!')
             
-            if normalize:
-                cv2.normalize(img, img, 0, 255, cv2.NORM_MINMAX)
             
             imgs.append(img)
         
@@ -194,9 +192,13 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
         
         if not res:
             raise ValueError(f'Chessboard not found in set {os.path.dirname(imageset[0])}!')
-            
+        
+        # Subpixel refinement
+        cam_corners_sub = cv2.cornerSubPix(normal_img, cam_corners, DEFAULT_CORNERSUBPIX_WINSIZE, (-1,-1), DEFAULT_TERMINATION_CRITERIA)
+        
+        
+        cam_corners_list.append(cam_corners_sub)    
         cam_objps_list.append(objps)
-        cam_corners_list.append(cam_corners)
         
         
         
@@ -267,7 +269,6 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
     retval, intrinsic1, distCoeffs1, intrinsic2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate(
         proj_objps_list, cam_corners_list2, proj_corners_list, cam_int, cam_dist, proj_int, proj_dist, None, flags=cv2.CALIB_FIX_INTRINSIC)
     
-    
     # Build StereoRig object
     stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution[::-1], intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
     
@@ -275,7 +276,7 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
 
     
 def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1, 
-                     black_thr=40, white_thr=5, camIntrinsic=None, camDistCoeffs=None, normalize=False):
+                     black_thr=40, white_thr=5, camIntrinsic=None, camDistCoeffs=None):
     """
     Performs stereo calibration between a camera (reference) and a projector.
     
@@ -313,8 +314,6 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
     camIntrinsic : list, optional
         Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).
         If not given they will be calculated.
-    normalize : bool
-        If True, the images are min-max normalized before processing. Default to False.
                 
     Returns
     ----------
@@ -359,9 +358,6 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
         # Load only the normal light image
         normal_img = cv2.imread(imageset[-2], cv2.IMREAD_GRAYSCALE)
         
-        if normalize:
-            cv2.normalize(normal_img, normal_img, 0, 255, cv2.NORM_MINMAX)
-                
         # Find chessboard corners
         res, cam_corners = cv2.findChessboardCorners(normal_img, chessboardSize)
         
@@ -448,9 +444,6 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
         for fname in imageset[:-3]: # Exclude non pattern images
             img = cv2.imread(fname, cv2.IMREAD_GRAYSCALE)
             
-            if normalize:
-                cv2.normalize(img, img, 0, 255, cv2.NORM_MINMAX)
-            
             if cam_shape != img.shape:
                 raise ValueError(f'Image size of {fname} is mismatch!')
             imgs.append(img)
@@ -502,7 +495,6 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
         
     if skipped>0:
         warnings.warn(f"{skipped} over {len(proj_objps_list)*chessboardSize[0]*chessboardSize[1]} skipped corners.")
-    
     
     
     # Calibrate projector

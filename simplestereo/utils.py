@@ -298,7 +298,6 @@ def distortPoints(points, distCoeff):
     '''
     Undistort relative coordinate points.
     
-    
     Parameters
     ----------
     points : list
@@ -311,11 +310,12 @@ def distortPoints(points, distCoeff):
     -------
     list
         List of lists of distorted x,y points in relative coordinates
+    
+    .. todo::
+        Implemented only for (k1,k2,p1,p2[,k3[,k4,k5,k6]]) vector of 4, 5 or 8 distortion coefficients.
+        To be extended for (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]]) 
+        vector of 4, 5, 8, 12 or 14 elements.
     '''
-    # Implemented only as
-    # (k1,k2,p1,p2[,k3[,k4,k5,k6]]) vector of 4, 5 or 8
-    # TODO
-    # (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]]) vector of 4, 5, 8, 12 or 14 elements
     distCoeff = list(np.array(distCoeff).flatten())
     nCoeff = len(distCoeff)
     if not nCoeff in [4,5,8]:
