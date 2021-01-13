@@ -114,59 +114,6 @@ def buildFringe(period=10, dims=(1280,720), color=(0,0,255), dtype=np.uint8, hor
         
     return fullFringe
 
-'''
-def drawCentralStripe(fringe, color=(0,0,255), horizontal=False):
-    """
-    Add a central stripe with selected color to a fringe built by
-    :func:`buildFringe`.
-    
-    Parameters
-    ----------
-    fringe : numpy.ndarray
-        Grayscale fringe image.
-    color : tuple
-        BGR color for the central stripe. Default to (0,0,255).
-    horizontal : bool
-        Fringe orientation. Default to False (vertical fringe).
-        
-    Returns
-    -------
-    numpy.ndarray
-        Central-striped fringe image with same dimensions and type of input.
-    """
-    if len(fringe.shape)==2: # Grayscale image 
-        fringe = np.repeat(fringe[:, :, np.newaxis],3,axis=2)
-    
-    h,w = fringe.shape[:2]
-    dtype = fringe.dtype
-    maxValue = np.iinfo(fringe.dtype).max
-    color = [maxValue*c/255 for c in color]
-    
-    # Find central white stripe
-    i = h//2
-    j = w//2
-        
-    if horizontal:
-        while(fringe[i,j,0]!=0 and i>=0):
-            i-=1
-        i+=1    
-        while(fringe[i,j,0]!=0 and i<h):
-            fringe[i,:,0] = color[0]*fringe[i,:,0]/maxValue
-            fringe[i,:,1] = color[1]*fringe[i,:,1]/maxValue
-            fringe[i,:,2] = color[2]*fringe[i,:,2]/maxValue
-            i+=1
-    else:
-        while(fringe[i,j,0]!=0 and j>=0):
-            j-=1
-        j+=1    
-        while(fringe[i,j,0]!=0 and j<w):
-            fringe[:,j,0] = color[0]*fringe[:,j,0]/maxValue
-            fringe[:,j,1] = color[1]*fringe[:,j,1]/maxValue
-            fringe[:,j,2] = color[2]*fringe[:,j,2]/maxValue
-            j+=1
-    
-    return fringe.astype(dtype)
-'''   
 
     
 def findCentralStripe(fringe, color, threshold=100, horizontal=False):
@@ -215,18 +162,18 @@ def findCentralStripe(fringe, color, threshold=100, horizontal=False):
     
     if horizontal:
         y = getCenters(fringe,axis=0)
-        x = np.arange(0.5,w,1)[:,np.newaxis]
-        res = np.hstack((x,y)).T # x,y coordinates
-        res = res[~np.isnan(res).any(axis=1)] # Remove rows with NaN
-        f = interp1d(x,y,kind="nearest",fill_value="extrapolate")
+        x = np.arange(0.5,w,1)  # Consider pixel center, as first is in x=0.5
+        #res = np.hstack((x,y)).T              # x,y coordinates
+        #res = res[~np.isnan(res).any(axis=1)] # Remove rows with NaN
+        f = interp1d(x,y,kind="nearest",fill_value="extrapolate") # Interpolate
         y = f(x)
         
     else:
         x = getCenters(fringe,axis=1)
-        y = np.arange(0.5,h,1)
-        res = np.vstack((x,y)).T # x,y coordinates
-        res = res[~np.isnan(res).any(axis=1)] # Remove rows with NaN
-        f = interp1d(y,x,kind="nearest",fill_value="extrapolate")
+        y = np.arange(0.5,h,1)                # Consider pixel center, as first is in y=0.5
+        #res = np.vstack((x,y)).T              # x,y coordinates
+        #res = res[~np.isnan(res).any(axis=1)] # Remove rows with NaN
+        f = interp1d(y,x,kind="nearest",fill_value="extrapolate") # Interpolate
         x = f(y)
     
     return np.vstack((x, y)).T

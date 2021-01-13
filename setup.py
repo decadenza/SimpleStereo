@@ -17,5 +17,6 @@ if __name__ == '__main__':
                             'numpy>=1.19',
                             'opencv-contrib-python>=4.5',
                             'scipy>=1.4',
+                            'matplotlib>=3',
                            ],
          )
