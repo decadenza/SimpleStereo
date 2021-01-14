@@ -90,11 +90,11 @@ def buildFringe(period=10, dims=(1280,720), color=(0,0,255), dtype=np.uint8, hor
         
         if color is not None:
             col = np.repeat(col[:, :, np.newaxis], 3, axis=2)
-            left = int(dims[1]/2 - period/4)
-            right = int(left+period)
-            col[left:right, 0, 0] *= color[0]/255
-            col[left:right, 0, 1] *= color[1]/255 
-            col[left:right, 0, 2] *= color[2]/255 
+            top = int( period * ( int(dims[1]/(2*period)) - 0.25 ) )
+            bottom = int(top+period)
+            col[top:bottom, 0, 0] *= color[0]/255
+            col[top:bottom, 0, 1] *= color[1]/255 
+            col[top:bottom, 0, 2] *= color[2]/255 
             
         fullFringe = np.repeat(col.astype(dtype), dims[0], axis=1)
         
@@ -104,7 +104,7 @@ def buildFringe(period=10, dims=(1280,720), color=(0,0,255), dtype=np.uint8, hor
         
         if color is not None:
             row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
-            left = int(dims[0]/2 - period/4)
+            left = int( period * ( int(dims[0]/(2*period)) - 0.25 ) )
             right = int(left+period)
             row[0, left:right, 0] *= color[0]/255
             row[0, left:right, 1] *= color[1]/255 
