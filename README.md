@@ -1,9 +1,10 @@
 # SimpleStereo
-Stereo vision made simple. With Python 3.
+Stereo vision made simple.
 
 SimpleStereo aims to be a support framework for stereo vision applications.
 
 ## Dependencies
+* Python 3
 * NumPy
 * SciPy
 * OpenCV
@@ -14,15 +15,16 @@ SimpleStereo aims to be a support framework for stereo vision applications.
 * Passive stereo calibration (chessboard)
 * Camera-Projector calibration (adapted from https://github.com/kamino410/procam-calibration)
 * Export raw point cloud to PLY file
+* The StereoFTP algorithm (improvement of Fourier Transform Profilometry) 
 
 ## Stereo rectification algorithms
-- [x] Fusiello
+- [x] Fusiello et al.
 - [x] Loop and Zhang
 - [x] Lafiosca and Ceccaroni
 
 ## Stereo Matching algorithms
 - [x] Adaptive Support Weight algorithm
-- [ ] Geodesic Support Weight algorithm with Mutual Information (to be completed)
+- [x] Geodesic Support Weight algorithm (*original Mutual Information implementation not completed*)
 
 
 ## Basic example
