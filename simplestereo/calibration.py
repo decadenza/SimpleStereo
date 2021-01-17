@@ -19,6 +19,58 @@ DEFAULT_CHESSBOARD_SIZE = (6,7) # As inner (rows, columns)
 DEFAULT_CORNERSUBPIX_WINSIZE = (11,11)
 DEFAULT_TERMINATION_CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-6)
 
+def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1, showImages=False):
+    """
+    Calibrate a single camera with a chessboard pattern.
+    
+    Parameters
+    ----------
+    images : list or tuple       
+        A list (or tuple) of 2 dimensional tuples (ordered left and right) of image paths, e.g. [("oneL.png","oneR.png"), ("twoL.png","twoR.png"), ...]
+    chessboardSize: tuple
+        Chessboard *internal* dimensions as (width, height). Dimensions should be different to avoid ambiguity.
+        Default to (7,6).
+    squareSize : float
+        If the square size is known, calibration can be in metric units. Default to 1.
+    showImages : bool
+        If True, each processed image is showed to check for correct chessboard detection.
+        Default to False.
+    
+    Returns
+    -------
+    Same values of `cv2.calibrateCamera` (retval, cameraMatrix, distCoeffs, rvecs, tvecs).
+    """
+    
+    # Prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...
+    objp = np.zeros((chessboardSize[0]*chessboardSize[1],3), np.float32)
+    objp[:,:2] = np.mgrid[0:chessboardSize[0],0:chessboardSize[1]].T.reshape(-1,2) * squareSize
+    
+    # Arrays to store object points and image points from all the images.
+    objpoints = [] # 3d point in real world space
+    imgpoints = [] # 2d points in image plane.
+    
+    for fname in images:
+        img = cv2.imread(fname)
+        gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        
+        # Find the chess board corners
+        ret, corners = cv2.findChessboardCorners(gray, chessboardSize)
+
+        # If found, add object points and image points (after refining them)
+        if ret == True:
+            objpoints.append(objp)
+            corners2 = cv2.cornerSubPix(gray,corners, DEFAULT_CORNERSUBPIX_WINSIZE, (-1,-1), DEFAULT_TERMINATION_CRITERIA)
+            imgpoints.append(corners2)
+            if showImages:
+                # Draw and display the corners
+                img = cv2.drawChessboardCorners(img, chessboardSize, corners2,ret)
+                cv2.imshow('Chessboard',img)
+                cv2.waitKey(0)
+        
+    return cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+    
+    
+        
 def chessboardStereo(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1):
     """
     Performs stereo calibration between two cameras and returns a StereoRig object.
