@@ -168,17 +168,15 @@ def findCentralStripe(fringe, color, threshold=100, horizontal=False):
     if horizontal:
         y = getCenters(fringe,axis=0)
         x = np.arange(0.5,w,1)  # Consider pixel center, as first is in x=0.5
-        #res = np.hstack((x,y)).T              # x,y coordinates
-        #res = res[~np.isnan(res).any(axis=1)] # Remove rows with NaN
-        f = interp1d(x,y,kind="nearest",fill_value="extrapolate") # Interpolate
+        mask = ~np.isnan(y)                   # Remove coords with NaN
+        f = interp1d(x[mask],y[mask],kind="nearest",fill_value="extrapolate") # Interpolate
         y = f(x)
         
     else:
         x = getCenters(fringe,axis=1)
         y = np.arange(0.5,h,1)                # Consider pixel center, as first is in y=0.5
-        #res = np.vstack((x,y)).T              # x,y coordinates
-        #res = res[~np.isnan(res).any(axis=1)] # Remove rows with NaN
-        f = interp1d(y,x,kind="nearest",fill_value="extrapolate") # Interpolate
+        mask = ~np.isnan(x)                   # Remove coords with NaN
+        f = interp1d(y[mask],x[mask],kind="nearest",fill_value="extrapolate") # Interpolate
         x = f(y)
     
     return np.vstack((x, y)).T
@@ -238,6 +236,17 @@ class StereoFTP:
         # One pixel spaced (x,y) coords of the stripe
         # over the projector image height (width if horizontal is True)
         self.fringeStripe = cs.reshape(-1,2)
+        
+        ### Get epipole on projector
+        # We may get the fundamental matrix
+        # F = stereoRig.getFundamentalMatrix()
+        # and get epipole on projector image plane like
+        # ep = null_space(F.T).ravel()
+        # ep = ep/ep[2]
+        # Alternatively, we can project the camera position onto projector
+        # image plane. Since the camera is in origin, it is easier:
+        ep = self.stereoRig.intrinsic2.dot(self.stereoRig.T)
+        self.ep = ep/ep[2]
     
     @staticmethod
     def convertGrayscale(img):
@@ -276,20 +285,16 @@ class StereoFTP:
         
         # Get baseline vector
         _, B = self.stereoRig.getCenters()
-        
         # Find new directions
         v1 = B                          # New x direction
         v2 = np.cross([0,0,1], v1)      # New y direction
         v3 = np.cross(v1,v2)            # New z direction
-        
         # Normalize
         v1 = v1 / np.linalg.norm(v1)    # Normalize x
         v2 = v2 / np.linalg.norm(v2)    # Normalize y
         v3 = v3 / np.linalg.norm(v3)    # Normalize z
-        
         # Create rotation matrix
         R = np.array( [ v1, v2, v3 ] )
-        
         
         # Build rectification transforms
         R1 = ( R ).dot( np.linalg.inv(self.stereoRig.intrinsic1) )
@@ -419,14 +424,14 @@ class StereoFTP:
         if self.horizontal:
             Tc = ((b[0,0,1] - b[1,0,1])**2 + (b[0,0,0] - b[1,0,0])**2)/abs(b[0,0,1]-b[1,0,1])
         else:
-            # Use the first Euler theorem to get the wanted period
+            # Use the first Euclid theorem to get the wanted period
             Tc = ((b[0,0,0] - b[1,0,0])**2 + (b[0,0,1] - b[1,0,1])**2)/abs(b[0,0,0]-b[1,0,0])
         
         # Return frequency
         return 1/Tc    
         
         
-    def scan(self, image, fc=None, radius_factor=0.5, roi = None, discont = 1.9*np.pi, plot=False):
+    def scan(self, image, fc=None, radius_factor=0.5, roi=None, discont=1.9*np.pi, plot=False):
         """
         Process an image and get the point cloud.
         
@@ -591,6 +596,7 @@ class StereoFTP:
             plt.show()
             plt.close()
         
+        ### Lazy shortcut for many values
         Ac = self.stereoRig.intrinsic1
         Dc = self.stereoRig.distCoeffs1
         
@@ -598,23 +604,13 @@ class StereoFTP:
         R = self.stereoRig.R
         T = self.stereoRig.T
         Dp = self.stereoRig.distCoeffs2
+        ep = self.ep
         
-        # Get fundamental matrix
-        #F = getFundamentalMatrixFromProjections(Pc,Pp)
-        # Get epipole on projector image plane
-        #ep = null_space(F.T).ravel()
-        #ep = ep/ep[2]
-        # Alternatively, we can project the camera on projector image plane
-        # Since the camera is in origin, it is easy
-        ep = Ap.dot(T)
-        ep = ep/ep[2]
-        
-    
         # Two rectification homographies and new common orientation
-        # calculated during initialization
+        # were calculated during initialization
         # self.Rectify1, self.Rectify2, self.Rotation
         
-        # Get inverse common orientation and extend to 4x4 transform
+        ### Get inverse common orientation and extend to 4x4 transform
         R_inv = np.linalg.inv(self.Rotation)
         R_inv = np.hstack( ( np.vstack( (R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
         R_inv[3,3] = 1
@@ -632,6 +628,7 @@ class StereoFTP:
         # Find integer indexes (round half down)
         # Accept loss of precision as k values must be rounded to integers
         cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)
+        
         pointA = projCoords[cam_indexes[:,1],cam_indexes[:,0]] # As (x,y)
         
         if self.horizontal:
