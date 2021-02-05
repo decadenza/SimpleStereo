@@ -195,8 +195,12 @@ class StereoRig:
         The fundamental matrix has always a free scaling factor.
         """
         if self.F is None:   # If F is not set, calculate it and update the object data.
-            P1, P2 = self.getProjectionMatrices()
-            self.F = calibration.getFundamentalMatrixFromProjections(P1,P2)
+            #P1, P2 = self.getProjectionMatrices()
+            #self.F = calibration.getFundamentalMatrixFromProjections(P1,P2)
+            # Alternative formula by
+            # Multiple View Geometry in Computer Vision, by Richard Hartley and Andrew Zisserman
+            vv = utils.getCrossProductMatrix(self.intrinsic1.dot(self.R.T).dot(self.T))
+            self.F = (np.linalg.inv(self.intrinsic2).T).dot(self.R).dot(self.intrinsic1.T).dot(vv)
                 
         return self.F
     

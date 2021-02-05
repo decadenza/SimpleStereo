@@ -595,6 +595,8 @@ def generateChessboardSVG(chessboardSize, filepath, squareSize=20):
         f.write('<path fill="#000" d="{}"/></svg>'.format(d))
     
     
+
+
     
 def getFundamentalMatrixFromProjections(P1,P2):
     """
