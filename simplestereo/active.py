@@ -424,31 +424,6 @@ class StereoFTP:
         # Return frequency
         return 1/Tc    
     
-    @staticmethod
-    def unwrapBasic(phase, axis=-1):
-        """
-        Basic unwrapping method chosen as default.
-        
-        This is simply a wrapper of `np.unwrap()`.
-        You can use other unwrapping strategies passing your
-        custom `unwrappingMethod` to :meth:`simplestereo.StereoFTP.scan`.
-        It must accept the same arguments (if your method does not need
-        the axis argument, use a dummy one).
-        
-        Parameters
-        ----------
-        phase : numpy.ndarray
-            Wrapped phase matrix.
-        axis : int, optional
-            Axis along which unwrap will operate, default is the last axis.
-        
-        Returns
-        -------
-        numpy.ndarray
-            Unwrapped phase of same input dimensions.
-        """
-        return np.unwrap(phase, discont=np.pi, axis=axis)
-    
     def scan(self, image, fc=None, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
         """
         Process an image and get the point cloud.
@@ -466,8 +441,8 @@ class StereoFTP:
             Region of interest in the format (x,y,width,height)
             where x,y is the upper left corner. Default to None.
         unwrappingMethod : function, optional
-            Pointer to chosen unwrapping function. Default is
-            :staticmethod:`StereoFTP.unwrapBasic`.
+            Pointer to chosen unwrapping function. It must take the phase
+            as argument. If None (default) `np.unwrap`is used.
             
         Returns
         -------
@@ -476,7 +451,7 @@ class StereoFTP:
         
         .. todo::
             If `roi`, `fc` and `radius_factor` are left unchanged, the
-            reference image filtering is uselessly done each time.
+            reference image cut and filtering is uselessly done each time.
         
         """
         
@@ -579,14 +554,6 @@ class StereoFTP:
             G[fmaxIndex+1:,:] = 0
             ghat = np.fft.ifft(G,axis=0)
             
-            # Build the new signal
-            newSignal = ghat * np.conjugate(g0hat)
-            # Do complex log and select phase
-            #phase = np.log(newSignal).imag     # Equivalent to
-            phase = np.angle(newSignal)
-            #phaseUnwrapped = np.unwrap(phase, discont=discont, axis=0)
-            phaseUnwrapped = unwrappingMethod(phase, axis=0)
-            
         else:   
             # Reference image filtering
             G0[:,:fminIndex] = 0
@@ -598,18 +565,16 @@ class StereoFTP:
             G[:,fmaxIndex+1:] = 0
             ghat = np.fft.ifft(G,axis=1)
             
-            #cv2.imshow('Reference filtered', g0hat.real)
-            #cv2.imshow('Object filtered', ghat.real)
-            #cv2.waitKey(0)
-            
-            # Build a new complex signal
-            newSignal = ghat * np.conjugate(g0hat)
-            # Select phase only
-            phase = np.angle(newSignal)
-            #phaseUnwrapped = np.unwrap(phase, discont=discont, axis=1)
-            phaseUnwrapped = unwrappingMethod(phase, axis=1)
         
-            
+        # Build the new signal and get its phase
+        newSignal = ghat * np.conjugate(g0hat)
+        phase = np.angle(newSignal)
+        
+        if unwrappingMethod is None:
+            phaseUnwrapped = np.unwrap(phase)
+        else:
+            phaseUnwrapped = unwrappingMethod(phase)
+              
         if plot:
             if self.horizontal:
                 plt.title("Middle column phase")
