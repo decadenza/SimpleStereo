@@ -238,13 +238,7 @@ class StereoFTP:
         self.fringeStripe = cs.reshape(-1,2)
         
         ### Get epipole on projector
-        # We may get the fundamental matrix
-        # F = stereoRig.getFundamentalMatrix()
-        # and get epipole on projector image plane like
-        # ep = null_space(F.T).ravel()
-        # ep = ep/ep[2]
-        # Alternatively, we can project the camera position onto projector
-        # image plane. Since the camera is in origin, it is easier:
+        # Project camera position (0,0,0) onto projector image plane.
         ep = self.stereoRig.intrinsic2.dot(self.stereoRig.T)
         self.ep = ep/ep[2]
     
@@ -429,9 +423,33 @@ class StereoFTP:
         
         # Return frequency
         return 1/Tc    
+    
+    @staticmethod
+    def unwrapBasic(phase, axis=-1):
+        """
+        Basic unwrapping method chosen as default.
         
+        This is simply a wrapper of `np.unwrap()`.
+        You can use other unwrapping strategies passing your
+        custom `unwrappingMethod` to :meth:`simplestereo.StereoFTP.scan`.
+        It must accept the same arguments (if your method does not need
+        the axis argument, use a dummy one).
         
-    def scan(self, image, fc=None, radius_factor=0.5, roi=None, discont=1.9*np.pi, plot=False):
+        Parameters
+        ----------
+        phase : numpy.ndarray
+            Wrapped phase matrix.
+        axis : int, optional
+            Axis along which unwrap will operate, default is the last axis.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Unwrapped phase of same input dimensions.
+        """
+        return np.unwrap(phase, discont=np.pi, axis=axis)
+    
+    def scan(self, image, fc=None, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
         """
         Process an image and get the point cloud.
         
@@ -439,29 +457,38 @@ class StereoFTP:
         ----------
         image : numpy.ndarray
             BGR image acquired by the camera.
-        fc : float
+        fc : float, optional
             Fundamental frequency from the camera. If None,
             it is calculated automatically. Default to None.
-        radius_factor : float
+        radius_factor : float, optional
             Radius factor of the pass-band filter. Default to 0.5.
-        roi : tuple
+        roi : tuple, optional
             Region of interest in the format (x,y,width,height)
             where x,y is the upper left corner. Default to None.
-        discont : float
-            Threshold for a gap to be considered a discontinuity.
-            See `np.unwrap` for details. Default to 1.9*np.pi.
-        
+        unwrappingMethod : function, optional
+            Pointer to chosen unwrapping function. Default is
+            :staticmethod:`StereoFTP.unwrapBasic`.
+            
         Returns
         -------
         Point cloud with shape (height,width,2), with height and width 
         same as the input image or selected `roi`.
+        
+        .. todo::
+            If `roi`, `fc` and `radius_factor` are left unchanged, the
+            reference image filtering is uselessly done each time.
+        
         """
+        
         # Check that is a color image
         if image.ndim != 3:
             raise ValueError("image must be a BGR color image!")
         
         if fc is None:
             fc = self.fc
+        
+        if unwrappingMethod is None:
+            unwrappingMethod = self.unwrapBasic
             
         widthC, heightC = self.stereoRig.res1 # Camera resolution
         imgR = self.reference
@@ -557,7 +584,8 @@ class StereoFTP:
             # Do complex log and select phase
             #phase = np.log(newSignal).imag     # Equivalent to
             phase = np.angle(newSignal)
-            phaseUnwrapped = np.unwrap(phase, discont=discont, axis=0)
+            #phaseUnwrapped = np.unwrap(phase, discont=discont, axis=0)
+            phaseUnwrapped = unwrappingMethod(phase, axis=0)
             
         else:   
             # Reference image filtering
@@ -578,7 +606,8 @@ class StereoFTP:
             newSignal = ghat * np.conjugate(g0hat)
             # Select phase only
             phase = np.angle(newSignal)
-            phaseUnwrapped = np.unwrap(phase, discont=discont, axis=1)
+            #phaseUnwrapped = np.unwrap(phase, discont=discont, axis=1)
+            phaseUnwrapped = unwrappingMethod(phase, axis=1)
         
             
         if plot:
