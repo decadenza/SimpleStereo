@@ -461,9 +461,6 @@ class StereoFTP:
         
         if fc is None:
             fc = self.fc
-        
-        if unwrappingMethod is None:
-            unwrappingMethod = self.unwrapBasic
             
         widthC, heightC = self.stereoRig.res1 # Camera resolution
         imgR = self.reference
