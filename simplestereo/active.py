@@ -568,7 +568,8 @@ class StereoFTP:
         phase = np.angle(newSignal)
         
         if unwrappingMethod is None:
-            phaseUnwrapped = np.unwrap(phase)
+            # Unwrap along the direction perpendicular to the fringe
+            phaseUnwrapped = np.unwrap(phase, axis=0 if self.horizontal else 1)
         else:
             phaseUnwrapped = unwrappingMethod(phase)
               
