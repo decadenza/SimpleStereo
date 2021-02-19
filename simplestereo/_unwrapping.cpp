@@ -63,6 +63,10 @@ PyObject *infiniteImpulseResponse(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_ValueError, "Wrong phase dimensions!");
         return NULL;
         }    
+    if (tau<0 || tau>1){
+        PyErr_SetString(PyExc_ValueError, "Wrong tau value!");
+        return NULL;
+        }
     
     //Retrieve dims
     int h = PyArray_DIM(phase,0);

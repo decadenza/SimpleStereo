@@ -11,16 +11,31 @@ import cv2
 from simplestereo import _unwrapping
 
 def infiniteImpulseResponse(phase, tau=1):
-    # FUNZIONA! In teoria deve essere tau<1.
-    # Loro usano tau=0.4 ma ho avuto risultati non buoni.
-    # Al contrario di come dicono, secondo me t=1 significa poco noise.
-    # E piccolo (es. 0.4) compensa per forte noise.
-    # 2D simultaneous phase unwrapping and filtering: A review and comparison
-    # DOI: 10.1364/OE.19.005126 (https://doi.org/10.1364/OE.19.005126)
-    # DOI: https://doi.org/10.1016/j.optlaseng.2012.01.008
-    # TODO: Lento, da implementare come estensione C++!!!
-    # VEDERE CODICE ORIGINALE LINK NEL PAPER
-    # N.B. Può essere lanciato più volte a cascata con t piccolo.
+    """
+    Unwrap a 2D phase map. 
+    
+    Uses the method from "Noise robust linear dynamic system for 
+    phase unwrapping and smoothing", Estrata et al, 2011,
+    DOI: 10.1364/OE.19.005126
+    
+    Parameters
+    ----------
+    phase : ndarray
+        A 2D array containing the wrapped phase values.
+    tau : float, optional
+        Noise regularization parameter. Accept values from 0 to 1.
+        Lower values used for higher error. 
+        Default to 1.
+    
+    Returns
+    -------
+    ndarray
+        Unwrapped phase with same dimensions and type of `phase`.
+        
+    See Also
+    --------
+    https://doi.org/10.1016/j.optlaseng.2012.01.008
+    """
     unwrapped = _unwrapping.infiniteImpulseResponse(phase, tau)
     return unwrapped
         
