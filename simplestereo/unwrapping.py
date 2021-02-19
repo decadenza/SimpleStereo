@@ -36,6 +36,5 @@ def infiniteImpulseResponse(phase, tau=1):
     --------
     https://doi.org/10.1016/j.optlaseng.2012.01.008
     """
-    unwrapped = _unwrapping.infiniteImpulseResponse(phase, tau)
-    return unwrapped
+    return _unwrapping.infiniteImpulseResponse(phase, tau)
         
