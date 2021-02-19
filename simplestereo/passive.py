@@ -5,12 +5,12 @@ Contains different passive stereo algorithms to build disparity maps.
 
 Simpler algorithms, like StereoBM and StereoSGBM, are already implemented in OpenCV.
 """
-import ctypes
+#import ctypes
 
 import numpy as np
 import cv2
 
-from simplestereo import passiveExt
+from simplestereo import _passive
 
 
 class StereoASW():
@@ -40,7 +40,7 @@ class StereoASW():
         Default to False.
         
     ..warning::
-        It may get very slow for high resolution images or with high *winSize* or *maxDisparity* values.
+        It gets very slow for high resolution images or with high *winSize* or *maxDisparity* values.
     
     ..todo::
         Alternative version can be written like this: compute disparity map on every other pixel
@@ -83,7 +83,7 @@ class StereoASW():
         """
         
         # Send to C++ extension
-        disparityMap = passiveExt.computeASW(img1, img2, self.winSize,
+        disparityMap = _passive.computeASW(img1, img2, self.winSize,
                                              self.maxDisparity, self.minDisparity,
                                              self.gammaC, self.gammaP, self.consistent)
                                              
@@ -94,27 +94,26 @@ class StereoASW():
 
 
 
-################## TO BE COMPLETED...
 class StereoGSW():
     """
-    *Tentative* implementation of "Local stereo matching using geodesic support weights",
+    *Incomplete* implementation of "Local stereo matching using geodesic support weights",
     Asmaa Hosni, Michael Bleyer, Margrit Gelautz and Christoph Rhemann (2009).
     
     Parameters
     ----------
-    winSize : int
+    winSize : int, optional
         Side of the square window. Must be an odd positive number.
-    maxDisparity: int
+    maxDisparity: int, optional
         Maximum accepted disparity. Default is 16.
-    minDisparity: int
+    minDisparity: int, optional
         Minimum valid disparity, usually set to zero. Default is 0.
-    gamma : int
+    gamma : int, optional
         Gamma parameter. If increased, it increases the geodesic weight influence. Default is 10.
-    fMax : int or float
+    fMax : int or float, optional
         Color difference is capped to this value. Default is 120.
-    iterations : int
+    iterations : int, optional
         Number of iteration for geodesic distances estimation. Default is 3.
-    bins : int
+    bins : int, optional
         Number of bins for histograms (currently not used, needed for Mutual Information). Default is 20.
         
     ..warning::
@@ -149,7 +148,7 @@ class StereoGSW():
         """
         
         # Send to C++ extension
-        disparityMap = passiveExt.computeGSW(img1, img2, self.winSize,
+        disparityMap = _passive.computeGSW(img1, img2, self.winSize,
                                              self.maxDisparity, self.minDisparity,
                                              self.gamma,self.fMax, self.iterations,
                                              self.bins)

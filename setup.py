@@ -12,7 +12,8 @@ if __name__ == '__main__':
           author_email='decadenza@protonmail.com',
           url='',
           packages=['simplestereo'],
-          ext_modules=[Extension('simplestereo.passiveExt', ['./simplestereo/passiveExt.cpp'])],
+          ext_modules=[Extension('simplestereo._passive', ['./simplestereo/_passive.cpp']),
+                       Extension('simplestereo._unwrapping', ['./simplestereo/_unwrapping.cpp'])],
           install_requires=[
                             'numpy>=1.19',
                             'opencv-contrib-python>=4.5',
