@@ -47,6 +47,7 @@ std::vector<Coord> neighbours(int y, int x, npy_intp *dims)
 }
 
 
+//Main IIR function
 PyObject *infiniteImpulseResponse(PyObject *self, PyObject *args)
 {
     PyArrayObject *phase;
@@ -123,7 +124,7 @@ PyObject *infiniteImpulseResponse(PyObject *self, PyObject *args)
         PyArray_SETITEM(unwrapped, PyArray_GETPTR2(unwrapped,y,x), Py_BuildValue("f", (S>0)? temp/S : cur) );
         }    
     
-    // Main loop over the whole image
+    // Main loop over the whole image 
     for(y=0;y<h;++y)
     {
         for(x=0;x<w;++x)

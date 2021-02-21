@@ -26,7 +26,7 @@ def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSiz
     Parameters
     ----------
     images : list or tuple       
-        A list (or tuple) of 2 dimensional tuples (ordered left and right) of image paths, e.g. [("oneL.png","oneR.png"), ("twoL.png","twoR.png"), ...]
+        A list (or tuple) of image paths, e.g. ["one.png", "two.png", ...]
     chessboardSize: tuple
         Chessboard *internal* dimensions as (width, height). Dimensions should be different to avoid ambiguity.
         Default to (7,6).

@@ -1,7 +1,7 @@
 """
 active
 ======
-Contains different active stereo algorithms and relative utilities.
+Contains classes to manage active stereo algorithms and helper functions.
 """
 import os
 
@@ -14,12 +14,13 @@ import matplotlib.pyplot as plt
 
 import simplestereo as ss
 
-def generateGrayCodeImgs(targetDir, resolution, addHorizontal=True):
+def generateGrayCodeImgs(targetDir, resolution):
     """
     Generate Gray Codes and save it to PNG images.
     
-    Starts from the couple of images *0.png* and *1.png* (one is the inverse of the other) containing vertical stripes.
+    Starts from the couple of images *0.png* and *1.png* (one is the inverse of the other).
     Then 2.png is coupled with 3.png and so on.
+    First half contains vertical stripes, followed by horizontal.
     The function stores also a *black.png* and *white.png* images for threshold calibration.
     
     Parameters
@@ -28,22 +29,16 @@ def generateGrayCodeImgs(targetDir, resolution, addHorizontal=True):
         Path to the directory where to save Gray codes. Directory is created if not exists.
     resolution : tuple
         Pixel dimensions of the images as (width, height) tuple (to be matched with projector resolution).
-    addHorizontal : bool, optional
-        Whether append also horizontal patterns after the vertical ones. Default to True.
     
     Returns
     -------
     int
         Number of generated patterns (black and white are *not* considered in this count).
-        If `addHorizontal` is True, the first half contains vertical stripes, followed by horizontal ones.
     """
     width, height = resolution
     graycode = cv2.structured_light_GrayCodePattern.create(width, height)
     
-    num_patterns = graycode.getNumberOfPatternImages() # Surely a even number
-    
-    if not addHorizontal:
-        num_patterns = int(num_patterns/2) # Consider vertical stripes only (first half)
+    num_patterns = graycode.getNumberOfPatternImages() # Surely an even number
     
     # Generate patterns    
     exp_patterns = graycode.generate()[1]
@@ -190,6 +185,8 @@ class StereoFTP:
     """
     Manager of the Stereo Fourier Transform Profilometry.
     
+    Parameters
+    ----------
     stereoRig : simplestereo.StereoRig object
         A stereo rig object with camera in position 1 (world origin) and projector in
         position 2.
@@ -201,8 +198,12 @@ class StereoFTP:
         Image of the original projected fringe. 
     period : float
         Period of the fringe (in pixels).
-    horizontal : bool
+    horizontal : bool, optional
         Fringe orientation. Default to False (vertical stripes).
+    stripeColor : tuple, optional
+        BGR color used for the central stripe. Default to (0,0,255) (red).
+    stripeThreshold : int, optional
+        Threshold to find the stripe. See :func:`findCentralStripe()`.
     """
     
     def __init__(self, stereoRig, lc, fringe, period, horizontal=False,
@@ -222,7 +223,8 @@ class StereoFTP:
         # Initialization data
         self.projCoords, self.reference = self._getProjectorMapping()
         self.reference_gray = self.convertGrayscale(self.reference)
-        self.Rectify1, self.Rectify2, self.Rotation = self._getRectification()
+        self.Rectify1, self.Rectify2, self.Rotation = ss.rectification._lowLevelRectify(stereoRig)
+        #self.Rectify1, self.Rectify2, self.Rotation = self._getRectification()
         self.fc = self._calculateCameraFrequency()
         
         ### Find central stripe on fringe image
@@ -261,40 +263,6 @@ class StereoFTP:
             Grayscale image.
         """
         return np.max(img,axis=2)
-    
-    
-    def _getRectification(self):
-        """
-        Get basic rectification using Fusiello et al.
-        for *internal* purposes only.
-        
-        This assumes that camera is in world origin.
-        Please refer to the rectification module for general
-        image rectification.
-        
-        See Also
-        --------
-        :meth:`simplestereo.rectification.fusielloRectify`
-        """
-        
-        # Get baseline vector
-        _, B = self.stereoRig.getCenters()
-        # Find new directions
-        v1 = B                          # New x direction
-        v2 = np.cross([0,0,1], v1)      # New y direction
-        v3 = np.cross(v1,v2)            # New z direction
-        # Normalize
-        v1 = v1 / np.linalg.norm(v1)    # Normalize x
-        v2 = v2 / np.linalg.norm(v2)    # Normalize y
-        v3 = v3 / np.linalg.norm(v3)    # Normalize z
-        # Create rotation matrix
-        R = np.array( [ v1, v2, v3 ] )
-        
-        # Build rectification transforms
-        R1 = ( R ).dot( np.linalg.inv(self.stereoRig.intrinsic1) )
-        R2 = ( R ).dot( np.linalg.inv(self.stereoRig.R) ).dot( np.linalg.inv(self.stereoRig.intrinsic2) )
-        
-        return R1, R2, R
     
     
     def _getProjectorMapping(self, interpolation = cv2.INTER_CUBIC):
@@ -669,6 +637,11 @@ class StereoFTP:
         
         ### Triangulation
         
+        ### Get inverse common orientation and extend to 4x4 transform
+        R_inv = np.linalg.inv(self.Rotation)
+        R_inv = np.hstack( ( np.vstack( (R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
+        R_inv[3,3] = 1
+        
         # Build grid of indexes and apply rectification (undistorted camera points)
         pc = np.mgrid[0:widthC,0:heightC].T
         pc = pc[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w].reshape(-1,1,2).astype(np.float64)
@@ -696,3 +669,103 @@ class StereoFTP:
         finalPoints = finalPoints.reshape(roi_h,roi_w,3)
             
         return finalPoints
+
+
+
+class GrayCode:
+    """
+    Wrapper for the Gray code method from OpenCV.
+    
+    Parameters
+    ----------
+    rig : StereoRig
+        An object of the StereoRig class.
+    """
+    def __init__(self, rig):
+        self.rig = rig
+        self.graycode = cv2.structured_light_GrayCodePattern.create(rig.res2[0], rig.res2[1]) # Projector resolution
+        self.num_patterns = self.graycode.getNumberOfPatternImages()
+        self.Rectify1, self.Rectify2, self.Rotation = ss.rectification._lowLevelRectify(rig)
+        
+    def scan(self, images):
+        """
+        Perform the scan and 3D point calculation from a list of images.
+        
+        Parameters
+        ----------
+        images : list or tuple       
+            A list of lists (one per set) of image *paths* acquired by the camera.
+            Each set must be ordered like all the Gray code patterns (see ``cv2.structured_light_GrayCodePattern``).
+            Any following image (es. full white) will be ignored.
+        """
+        w, h = self.rig.res1 # Camera resolution
+        imgs = []
+        # Store coord as (x,y). Default (-1,-1) means invalid.
+        H = np.full((h,w,2), -1, dtype=np.float64) 
+        #mask = np.ones((h,w), dtype=np.bool)
+        
+        # Extract images
+        for fname in images[:self.num_patterns]: # Exclude following images (es. white, black)
+            img = cv2.imread(fname, cv2.IMREAD_GRAYSCALE)
+            if img.shape != (h,w):
+                raise ValueError(f'Image size of {fname} is mismatch!')
+            imgs.append(img)
+        
+        
+        # Find corresponding points
+        for y in range(h):
+            for x in range(w):
+                err, proj_pix = self.graycode.getProjPixel(imgs, x, y)
+                if not err:
+                    H[y,x] = [proj_pix[0],proj_pix[1]]
+                    #mask[y,x] = False
+        
+        # Now we have solved the stereo correspondence problem.
+        # To do triangulation easily, it is better to rectify.
+        
+        # Desidered point is H(Xh,Yh)
+        H = H.reshape(-1,1,2)
+        
+        # Remove invalid
+        mask = H[:,:,0].ravel() == -1
+        H = np.delete(H, mask, axis=0) # Remove invalid
+        
+        # Apply lens distortion to H (as it's a projector)
+        # A projector is considered as an inversed pinhole camera
+        # H is on the original imgFringe. Passing through the projector lenses,
+        # it gets distortion, so it does not coincide with real world point.
+        # Remove intrinsic, undistort and put same intrinsic back.
+        pp = cv2.undistortPoints(H, self.rig.intrinsic2, self.rig.distCoeffs2, P=self.rig.intrinsic2)
+        
+        # Apply rectification to projector points.
+        # Rectify2 cancels the intrinsics and applies new rotation.
+        # No new intrinsics here.
+        pp = cv2.perspectiveTransform(pp, self.Rectify2)
+        pp = pp.reshape(-1,2)
+        
+        # Build grid of indexes and apply rectification (undistorted camera points)
+        pc = np.mgrid[0:w,0:h].T
+        pc = pc.reshape(-1,1,2).astype(np.float64)
+        
+        # Consider pixel center
+        pc = pc + 0.5
+        pc = cv2.perspectiveTransform(pc, self.Rectify1).reshape(-1,2) # Apply rectification
+        # Add ones as third coordinate
+        pc = np.hstack( (pc,np.ones((w*h,1),dtype=np.float64)) )
+        pc = np.delete(pc, mask, axis=0) # Remove correspondent to invalid
+        
+        # Get world points
+        disparity = np.abs(pp[:,[0]] - pc[:,[0]])
+        pw = self.rig.getBaseline()*(pc/disparity)
+        
+        ### Get inverse common orientation and extend to 4x4 transform
+        R_inv = np.linalg.inv(self.Rotation)
+        R_inv = np.hstack( ( np.vstack( (R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
+        R_inv[3,3] = 1
+        
+        # Cancel common orientation applied to first camera
+        # to bring points into camera coordinate system
+        finalPoints = cv2.perspectiveTransform(pw.reshape(-1,1,3), R_inv)
+        
+        return finalPoints
+        

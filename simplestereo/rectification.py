@@ -204,16 +204,15 @@ def fusielloRectify(rig):
     Parameters
     ----------
     rig : StereoRig
-        An object of the StereoRig class
+        An object of the StereoRig class. Camera must be position 1 (origin), projector in position 2.
         
     Returns
     -------
     rectifiedStereoRigObj : RectifiedStereoRig
         An object of the RectifiedStereoRig class containing the rectifying homographies.
     """
-    C1, C2 = rig.getCenters()  # Get cameras' centers
-    B = C2 - C1                         # Baseline vector
-    
+    # Get baseline vector
+    _, B = rig.getCenters() # First camera is always in origin
     
     # Find new directions
     v1 = np.squeeze(B)                      # New x direction
@@ -240,6 +239,40 @@ def fusielloRectify(rig):
     
     return rectStereoRig
 
+
+
+def _lowLevelRectify(rig):
+    """
+    Get basic rectification using Fusiello et al.
+    for *internal* purposes only.
+    
+    This assumes that camera is in world origin.
+    Please refer to the rectification module for general
+    image rectification.
+    
+    See Also
+    --------
+    :func:`simplestereo.rectification.fusielloRectify`
+    """
+    
+    # Get baseline vector
+    _, B = rig.getCenters()
+    # Find new directions
+    v1 = B                          # New x direction
+    v2 = np.cross([0,0,1], v1)      # New y direction
+    v3 = np.cross(v1,v2)            # New z direction
+    # Normalize
+    v1 = v1 / np.linalg.norm(v1)    # Normalize x
+    v2 = v2 / np.linalg.norm(v2)    # Normalize y
+    v3 = v3 / np.linalg.norm(v3)    # Normalize z
+    # Create rotation matrix
+    R = np.array( [ v1, v2, v3 ] )
+    
+    # Build rectification transforms
+    R1 = ( R ).dot( np.linalg.inv(rig.intrinsic1) )
+    R2 = ( R ).dot( np.linalg.inv(rig.R) ).dot( np.linalg.inv(rig.intrinsic2) )
+    
+    return R1, R2, R
 
 
 def loopRectify(rig):
