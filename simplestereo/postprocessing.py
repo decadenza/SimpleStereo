@@ -9,20 +9,16 @@ def exportPoints(points3D, filepath, referenceImage=None):
     """
     Export raw point cloud to PLY file.
     
-    Assuming camera z-axis to be horizontal (parallel to ground), old z-axis
-    is mapped to new y-axis for easy visualization on point cloud softwares.
-    X-axis remains the same, and new z-axis is oriented as standard cartesian
-    coordinate system.
-    
     Parameters
     ----------
     points3D : numpy.ndarray
-        3D points with shape (height, width, 3) where last dimension contains ordered x,y,z coordinates.
+        Array of 3D points. The last dimension must contain ordered x,y,z coordinates.
     filepath : str
         File path for the PLY file (absolute or relative).
     referenceImage : numpy.ndarray
         Reference image to extract color from. It must contain the same
-        number of points of `points3D`. BGR and grayscale accepted.
+        number of points of `points3D`. Last dimension must be either
+        1 (grayscale) or 3 (BGR).
         Default to None.
     
     Notes
