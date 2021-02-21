@@ -158,7 +158,10 @@ def findCentralStripe(fringe, color, threshold=100, horizontal=False):
         s = [1] * img.ndim
         s[axis] = -1
         i = np.arange(n).reshape(s)
-        return np.sum(img * i, axis=axis) / np.sum(img, axis=axis)
+        with np.errstate(divide='ignore',invalid='ignore'):
+            # Some NaN expected.
+            out = np.sum(img * i, axis=axis) / np.sum(img, axis=axis)
+        return out
     
     if horizontal:
         y = getCenters(fringe,axis=0)
@@ -566,15 +569,6 @@ class StereoFTP:
         Dp = self.stereoRig.distCoeffs2
         ep = self.ep
         
-        # Two rectification homographies and new common orientation
-        # were calculated during initialization
-        # self.Rectify1, self.Rectify2, self.Rotation
-        
-        ### Get inverse common orientation and extend to 4x4 transform
-        R_inv = np.linalg.inv(self.Rotation)
-        R_inv = np.hstack( ( np.vstack( (R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
-        R_inv[3,3] = 1
-        
         ### Find k values from central stripe
         # Triangulation can be done directly between left and right red stripe
         # and then compare with the phase value, but, as a quicker method
@@ -632,10 +626,9 @@ class StereoFTP:
         # the distortion coefficients)
         # H is on the original imgFringe. Passing through the projector lenses,
         # it gets distortion, so it does not coincide with real world point.
-        # But we want points to be an exact projection of the world points.
+        # But we want rays going exactly towards world points.
         # Remove intrinsic, undistort and put same intrinsic back.
         H = cv2.undistortPoints(H, Ap, Dp, P=Ap)
-        
         
         ### Triangulation
         
@@ -654,7 +647,7 @@ class StereoFTP:
         pc = np.hstack( (pc,np.ones((roi_w*roi_h,1),dtype=np.float64)) )
         
         # Apply rectification to projector points.
-        # Rectify2 cancels the intrinsics and applies new rotation.
+        # Rectify2 cancels the intrinsic and applies new rotation.
         # No new intrinsics here.
         pp = cv2.perspectiveTransform(H, self.Rectify2).reshape(-1,2)
         
@@ -665,9 +658,6 @@ class StereoFTP:
         # Cancel common orientation applied to first camera
         # to bring points into camera coordinate system
         finalPoints = cv2.perspectiveTransform(pw.reshape(-1,1,3), R_inv)
-        
-        # Reshape
-        finalPoints = finalPoints.reshape(roi_h,roi_w,3)
             
         return finalPoints
 
@@ -681,10 +671,23 @@ class GrayCode:
     ----------
     rig : StereoRig
         An object of the StereoRig class.
+    black_thr : int, optional
+       Black threshold is a number between 0-255 that represents the minimum brightness
+       difference required for valid pixels, between the fully illuminated (white) and
+       the not illuminated images (black); used in computeShadowMasks method.
+       Default to 40.
+    white_thr : int, optional
+        White threshold is a number between 0-255 that represents the minimum brightness difference
+        required for valid pixels, between the graycode pattern and its inverse images; used in
+        getProjPixel method.
+        Default to 5.
     """
-    def __init__(self, rig):
+    def __init__(self, rig, black_thr=40, white_thr=5):
         self.rig = rig
-        self.graycode = cv2.structured_light_GrayCodePattern.create(rig.res2[0], rig.res2[1]) # Projector resolution
+        # Build graycode using projector resolution
+        self.graycode = cv2.structured_light_GrayCodePattern.create(rig.res2[0], rig.res2[1])
+        self.graycode.setBlackThreshold(black_thr)
+        self.graycode.setWhiteThreshold(white_thr)
         self.num_patterns = self.graycode.getNumberOfPatternImages()
         self.Rectify1, self.Rectify2, self.Rotation = ss.rectification._lowLevelRectify(rig)
         
@@ -701,8 +704,6 @@ class GrayCode:
         """
         w, h = self.rig.res1 # Camera resolution
         imgs = []
-        # Store coord as (x,y). Default (-1,-1) means invalid.
-        H = np.full((h,w,2), -1, dtype=np.float64) 
         
         # Extract images
         for fname in images[:self.num_patterns]: # Exclude eventual extra images (es. white, black)
@@ -712,46 +713,48 @@ class GrayCode:
             img = cv2.undistort(img, self.rig.intrinsic1, self.rig.distCoeffs1)
             imgs.append(img)
         
+        pc = []
+        pp = []
+        
         # Find corresponding points
+        # TODO: Speed up
         for y in range(h):
             for x in range(w):
                 err, proj_pix = self.graycode.getProjPixel(imgs, x, y)
                 if not err:
-                    H[y,x] = [proj_pix[0],proj_pix[1]]
+                    pp.append(proj_pix)
+                    pc.append((x,y))
         
         # Now we have solved the stereo correspondence problem.
         # To do triangulation easily, it is better to rectify.
         
-        # Desidered point is H(Xh,Yh)
-        H = H.reshape(-1,1,2)
+        # Convert
+        pc = np.asarray(pc).astype(np.float64).reshape(-1,1,2)
+        pp = np.asarray(pp).astype(np.float64).reshape(-1,1,2)
         
-        # Remove invalid
-        mask = H[:,:,0].ravel() == -1
-        H = np.delete(H, mask, axis=0) # Remove invalid
         
-        # *Apply* lens distortion to H.
+        # Consider pixel center (negligible difference, anyway...)
+        pc = pc + 0.5
+        pp = pp + 0.5
+        
+        
+        # *Apply* lens distortion to pp.
         # A projector is considered as an inversed pinhole camera (and so are
         # the distortion coefficients)
         # H is on the original imgFringe. Passing through the projector lenses,
         # it gets distortion, so it does not coincide with real world point.
         # But we want points to be an exact projection of the world points.
         # Remove intrinsic, undistort and put same intrinsic back.
-        #H = cv2.undistortPoints(H, self.rig.intrinsic2, self.rig.distCoeffs2, P=self.rig.intrinsic2)
+        pp = cv2.undistortPoints(pp, self.rig.intrinsic2, self.rig.distCoeffs2, P=self.rig.intrinsic2)
         
-        # Apply rectification to projector points.
-        # Rectify2 cancels the intrinsics and applies new rotation.
-        # No new intrinsics here.
-        pp = cv2.perspectiveTransform(H, self.Rectify2).reshape(-1,2)
         
-        # Build grid of indexes and apply rectification (undistorted camera points)
-        pc = np.mgrid[0:w,0:h].T
-        pc = pc.reshape(-1,1,2).astype(np.float64)
-        # Consider pixel center
-        pc = pc + 0.5
-        pc = cv2.perspectiveTransform(pc, self.Rectify1).reshape(-1,2) # Apply rectification
+        # Apply rectification
+        pc = cv2.perspectiveTransform(pc, self.Rectify1).reshape(-1,2)
+        pp = cv2.perspectiveTransform(pp, self.Rectify2).reshape(-1,2)
+        
         # Add ones as third coordinate
-        pc = np.hstack( (pc,np.ones((w*h,1),dtype=np.float64)) )
-        pc = np.delete(pc, mask, axis=0) # Remove correspondent to invalid
+        pc = np.hstack( (pc,np.ones((pc.shape[0],1),dtype=np.float64)) )
+        
         
         # Get world points
         disparity = np.abs(pp[:,[0]] - pc[:,[0]])
@@ -765,6 +768,7 @@ class GrayCode:
         # Cancel common orientation applied to first camera
         # to bring points into camera coordinate system
         finalPoints = cv2.perspectiveTransform(pw.reshape(-1,1,3), R_inv)
+        
         
         return finalPoints
         

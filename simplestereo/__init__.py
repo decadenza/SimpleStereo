@@ -487,7 +487,7 @@ class RectifiedStereoRig(StereoRig):
         
         return img1_rect, img2_rect
     
-    def get3DPoints(self,disparityMap):
+    def get3DPoints(self, disparityMap):
         """
         Get the 3D points in the space from the disparity map.
         

@@ -204,7 +204,7 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
     
     # Gray Code setup
     gc_width, gc_height = projectorResolution
-    graycode = cv2.structured_light_GrayCodePattern.create(gc_width, gc_height)
+    graycode = cv2.structured_light_GrayCodePattern.create(width=gc_width, height=gc_height)
     graycode.setBlackThreshold(black_thr)
     graycode.setWhiteThreshold(white_thr)
     
@@ -304,7 +304,7 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
     # Calibrate camera only if intrinsic parameters are not given
     if camIntrinsic is None:
         cam_rms, cam_int, cam_dist, cam_rvecs, cam_tvecs = cv2.calibrateCamera(
-            cam_objps_list, cam_corners_list, cam_shape, None, None, None, None)
+            cam_objps_list, cam_corners_list, cam_shape[::-1], None, None, None, None)
     else:
         for objp, corners in zip(cam_objps_list, cam_corners_list):
             cam_rms, cam_rvec, cam_tvec = cv2.solvePnP(objp, corners, camIntrinsic, camDistCoeffs) 
@@ -322,7 +322,7 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
         proj_objps_list, cam_corners_list2, proj_corners_list, cam_int, cam_dist, proj_int, proj_dist, None, flags=cv2.CALIB_FIX_INTRINSIC)
     
     # Build StereoRig object
-    stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution[::-1], intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
+    stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
     
     return stereoRigObj
 
@@ -379,7 +379,7 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
     
     
     # Gray Code setup
-    graycode = cv2.structured_light_GrayCodePattern.create(projectorResolution[0], projectorResolution[1])
+    graycode = cv2.structured_light_GrayCodePattern.create(width=projectorResolution[0], height=projectorResolution[1])
     
     # CALCULATE black_threshold and white_threshold as in paper
     # TODO
@@ -429,8 +429,9 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
         
     # Do camera calibration if needed
     if camIntrinsic is None:
+        # OpenCV prefers (width,height) as resolution
         cam_rms, cam_int, cam_dist, cam_rvecs, cam_tvecs = cv2.calibrateCamera(
-            cam_objps_list, cam_corners_list, cam_shape, None, None, None, None)
+            cam_objps_list, cam_corners_list, cam_shape[::-1], None, None, None, None)
     else:
         for objp, corners in zip(cam_objps_list, cam_corners_list):
             cam_rms, cam_rvec, cam_tvec = cv2.solvePnP(objp, corners, camIntrinsic, camDistCoeffs) 
@@ -559,7 +560,7 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
     
     
     # Build StereoRig object
-    stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution[::-1], intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
+    stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
     
     return stereoRigObj
 
