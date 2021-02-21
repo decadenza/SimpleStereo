@@ -627,10 +627,12 @@ class StereoFTP:
         # Desidered point is H(Xh,Yh)
         H = np.hstack((Xh,Yh)).reshape(-1,1,2).astype(np.float64)
         
-        # Apply lens distortion to H (as it's a projector)
-        # A projector is considered as an inversed pinhole camera
+        # *Apply* lens distortion to H.
+        # A projector is considered as an inversed pinhole camera (and so are
+        # the distortion coefficients)
         # H is on the original imgFringe. Passing through the projector lenses,
         # it gets distortion, so it does not coincide with real world point.
+        # But we want points to be an exact projection of the world points.
         # Remove intrinsic, undistort and put same intrinsic back.
         H = cv2.undistortPoints(H, Ap, Dp, P=Ap)
         
@@ -654,8 +656,7 @@ class StereoFTP:
         # Apply rectification to projector points.
         # Rectify2 cancels the intrinsics and applies new rotation.
         # No new intrinsics here.
-        pp = cv2.perspectiveTransform(H, self.Rectify2)
-        pp = pp.reshape(-1,2)
+        pp = cv2.perspectiveTransform(H, self.Rectify2).reshape(-1,2)
         
         # Get world points
         disparity = np.abs(pp[:,[0]] - pc[:,[0]])
@@ -694,23 +695,22 @@ class GrayCode:
         Parameters
         ----------
         images : list or tuple       
-            A list of lists (one per set) of image *paths* acquired by the camera.
+            A list of image *paths* acquired by the camera.
             Each set must be ordered like all the Gray code patterns (see ``cv2.structured_light_GrayCodePattern``).
-            Any following image (es. full white) will be ignored.
+            Any following extra image will be ignored (es. full white).
         """
         w, h = self.rig.res1 # Camera resolution
         imgs = []
         # Store coord as (x,y). Default (-1,-1) means invalid.
         H = np.full((h,w,2), -1, dtype=np.float64) 
-        #mask = np.ones((h,w), dtype=np.bool)
         
         # Extract images
-        for fname in images[:self.num_patterns]: # Exclude following images (es. white, black)
+        for fname in images[:self.num_patterns]: # Exclude eventual extra images (es. white, black)
             img = cv2.imread(fname, cv2.IMREAD_GRAYSCALE)
             if img.shape != (h,w):
                 raise ValueError(f'Image size of {fname} is mismatch!')
+            img = cv2.undistort(img, self.rig.intrinsic1, self.rig.distCoeffs1)
             imgs.append(img)
-        
         
         # Find corresponding points
         for y in range(h):
@@ -718,7 +718,6 @@ class GrayCode:
                 err, proj_pix = self.graycode.getProjPixel(imgs, x, y)
                 if not err:
                     H[y,x] = [proj_pix[0],proj_pix[1]]
-                    #mask[y,x] = False
         
         # Now we have solved the stereo correspondence problem.
         # To do triangulation easily, it is better to rectify.
@@ -730,23 +729,23 @@ class GrayCode:
         mask = H[:,:,0].ravel() == -1
         H = np.delete(H, mask, axis=0) # Remove invalid
         
-        # Apply lens distortion to H (as it's a projector)
-        # A projector is considered as an inversed pinhole camera
+        # *Apply* lens distortion to H.
+        # A projector is considered as an inversed pinhole camera (and so are
+        # the distortion coefficients)
         # H is on the original imgFringe. Passing through the projector lenses,
         # it gets distortion, so it does not coincide with real world point.
+        # But we want points to be an exact projection of the world points.
         # Remove intrinsic, undistort and put same intrinsic back.
-        pp = cv2.undistortPoints(H, self.rig.intrinsic2, self.rig.distCoeffs2, P=self.rig.intrinsic2)
+        #H = cv2.undistortPoints(H, self.rig.intrinsic2, self.rig.distCoeffs2, P=self.rig.intrinsic2)
         
         # Apply rectification to projector points.
         # Rectify2 cancels the intrinsics and applies new rotation.
         # No new intrinsics here.
-        pp = cv2.perspectiveTransform(pp, self.Rectify2)
-        pp = pp.reshape(-1,2)
+        pp = cv2.perspectiveTransform(H, self.Rectify2).reshape(-1,2)
         
         # Build grid of indexes and apply rectification (undistorted camera points)
         pc = np.mgrid[0:w,0:h].T
         pc = pc.reshape(-1,1,2).astype(np.float64)
-        
         # Consider pixel center
         pc = pc + 0.5
         pc = cv2.perspectiveTransform(pc, self.Rectify1).reshape(-1,2) # Apply rectification
