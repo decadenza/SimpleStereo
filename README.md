@@ -10,29 +10,43 @@ SimpleStereo is a higher level framework for stereo vision applications. It is w
 * OpenCV
 * matplotlib (for data visualisation purposes)
 
-## General features
+## Installation
+Download the last version and unzip. Then, in the folder containing `setup.py`, run:
+```
+pip3 install .
+```
+
+*PyPi package coming soon...*
+
+## Features
+
+### General
 * StereoRig and RectifiedStereoRig classes to easily manage your stereo rigs and their geometry
 * Basic stereo capture using OpenCV `cv2.videoCapture`
 * Export raw point cloud to PLY file
  
-## Calibration algorithms
+### Calibration algorithms
 - [x] Chessboard calibration (single and double cameras)
 - [x] Camera-projector calibration adapted from [procam](https://github.com/kamino410/procam-calibration) (see `ss.calibration.chessboardProCam` and a derived version `ss.calibration.chessboardProCamWhite`)
 
-## Stereo rectification algorithms
+### Stereo rectification algorithms
 - [x] Fusiello et al.
 - [x] Loop and Zhang
 - [x] Lafiosca and Ceccaroni
 
-## Passive stereo matching algorithms
+### Passive stereo matching algorithms
 - [x] Adaptive Support Weight algorithm
 - [x] Geodesic Support Weight algorithm (*simplified implementation*)
 
-## Active stereo algorithm
+## Structured light algorithms
 - [x] Gray code
-- [x] StereoFTP algorithm (improvement of Fourier transform profilometry)
+- [ ] De Brujin
+- [x] StereoFTP (Fourier transform profilometry)
 
-## Basic examples
+### Active stereo algorithms
+- [ ] Adapt structured light algorithms to work with two cameras (*coming soon*)
+
+## Basic example
 SimpleStereo helps you with common tasks. You can calibrate a single camera as:
 
 ```python
