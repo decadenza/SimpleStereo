@@ -516,11 +516,13 @@ class RectifiedStereoRig(StereoRig):
         
         # Build the Q matrix as OpenCV requirement
         # to be used as input of ``cv2.reprojectImageTo3D``
-        # We need to cancel the final intrinsics (contained in self.K1 and self.K2)
+        # We need to cancel the final intrinsics (contained in self.K1
+        # and self.K2)
         
         # IMPLEMENTATION NOTES
-        # fx and fy are assumed the same for left and right
-        # Possibly there are different x-shearing term in self.K1[0,1] and self.K2[0,1] as a1 and a2
+        # fx and fy are assumed the same for left and right (after
+        # rectification, they should)
+        # Accepts different x-shear terms (generally not used)
         # cx1 is not the same of cx2
         # cy1 is equal cy2 (as images are rectified)
         
