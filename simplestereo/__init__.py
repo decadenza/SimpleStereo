@@ -230,9 +230,12 @@ class StereoRig:
         """
         Undistort two given images of the stereo rig.
         
-        This method wraps ``cv2.getOptimalNewCameraMatrix()`` followed by ``cv2.undistort()`` for both images.
-        If changeCameras is False, original camera matrices are used, otherwise all the parameters of ``cv2.getOptimalNewCameraMatrix()`` 
-        are considered when undistorting the images.
+        This method wraps `cv2.getOptimalNewCameraMatrix()` followed
+        by `cv2.undistort()` for both images.
+        If changeCameras is False, original camera matrices are used,
+        otherwise all the parameters of
+        `cv2.getOptimalNewCameraMatrix()` are considered when 
+        undistorting the images.
         
         Parameters
         ----------
@@ -293,11 +296,13 @@ class RectifiedStereoRig(StereoRig):
     Parameters
     ----------
     Rcommon : np.array
-        3x3 matrices representing the new common camera orientation after rectification.
+        3x3 matrices representing the new common camera orientation
+        after rectification.
     rectHomography1, rectHomography2 : np.array
         3x3 rectification homographies.
     StereoRig:
-        A StereoRig object or, *alternatively*, all the parameters of :meth:`simplestereo.StereoRig` (in the same order).
+        A StereoRig object or, *alternatively*, all the parameters of
+        :meth:`simplestereo.StereoRig` (in the same order).
     """
     def __init__(self, Rcommon, rectHomography1, rectHomography2, *args):
         
@@ -403,7 +408,7 @@ class RectifiedStereoRig(StereoRig):
         """
         C1, C2 = self.getCenters()
         P1 = self.K1.dot(self.Rcommon).dot( np.hstack( (np.eye(3), -C1[:,None]) ) )
-        P2 = self.K2.dot(self.Rcommon).dot( np.hstack( (np.eye(3), -C2[:,None]) ) ) # TBC
+        P2 = self.K2.dot(self.Rcommon).dot( np.hstack( (np.eye(3), -C2[:,None]) ) )
         return P1, P2  
     
     def computeRectificationMaps(self, destDims=None, zoom=1):
@@ -436,7 +441,7 @@ class RectifiedStereoRig(StereoRig):
         to compute the homography to be applied to the *image* in a pixel domain, not a rotation matrix R in 3D space.
         This library always refers to rectification transform as the ones in pixel domain.
         To adapt it to be used with OpenCV the transformation to be used in :func:`cv2.initUndistortRectifyMap()` (and other functions)
-        is given by ``rectHomography.dot(cameraMatrix)``.
+        is given by `rectHomography.dot(cameraMatrix)`.
         For each camera, the function computes homography H as the rectification transformation.
         """
         if destDims is None:

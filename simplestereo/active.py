@@ -687,7 +687,8 @@ class GrayCode:
     -----
     Projector distortion may be unaccurate, especially along border.
     If this is the case, you can ignore it setting
-    `rig.distCoeffs2 == None` before passing `rig` to the constructor.
+    `rig.distCoeffs2 == None` before passing `rig` to the constructor
+    or setting a narrow `roi`.
     
     ..todo::
         Conventional active stereo version (2 cameras).
@@ -701,7 +702,7 @@ class GrayCode:
         self.num_patterns = self.graycode.getNumberOfPatternImages()
         self.Rectify1, self.Rectify2, self.Rotation = ss.rectification._lowLevelRectify(rig)
         
-    def scan(self, images):
+    def scan(self, images, roi=None):
         """
         Perform the scan and 3D point calculation from a list of images.
         
@@ -712,14 +713,17 @@ class GrayCode:
             Each set must be ordered like all the Gray code patterns
             (see `cv2.structured_light_GrayCodePattern`).
             Any following extra image will be ignored (es. full white).
+        roi : tuple, optional
+            Region of interest in the format (x,y,width,height)
+            where x,y is the upper left corner. Default to None.
         """
-        w, h = self.rig.res1 # Camera resolution
+        widthC, heightC = self.rig.res1 # Camera resolution
         imgs = []
         
         # Extract images
         for fname in images[:self.num_patterns]: # Exclude eventual extra images (es. white, black)
             img = cv2.imread(fname, cv2.IMREAD_GRAYSCALE)
-            if img.shape != (h,w):
+            if img.shape != (heightC,widthC):
                 raise ValueError(f'Image size of {fname} is mismatch!')
             img = cv2.undistort(img, self.rig.intrinsic1, self.rig.distCoeffs1)
             imgs.append(img)
@@ -727,10 +731,15 @@ class GrayCode:
         pc = []
         pp = []
         
+        if roi is not None:
+            roi_x,roi_y,roi_w,roi_h = roi
+        else:
+            roi_x,roi_y,roi_w,roi_h = (0, 0, widthC, heightC)
+            
         # Find corresponding points
         # TODO: Speed up
-        for y in range(h):
-            for x in range(w):
+        for y in range(roi_y,roi_h):
+            for x in range(roi_x,roi_w):
                 err, proj_pix = self.graycode.getProjPixel(imgs, x, y)
                 if not err:
                     pp.append(proj_pix)
