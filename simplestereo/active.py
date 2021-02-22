@@ -20,8 +20,9 @@ def generateGrayCodeImgs(targetDir, resolution):
     
     Starts from the couple of images *0.png* and *1.png* (one is the inverse of the other).
     Then 2.png is coupled with 3.png and so on.
-    First half contains vertical stripes, followed by horizontal.
-    The function stores also a *black.png* and *white.png* images for threshold calibration.
+    First half contains vertical stripes, followed by horizontal ones.
+    The function stores also a *black.png* and *white.png* images for
+    threshold calibration.
     
     Parameters
     ----------
@@ -58,7 +59,7 @@ def generateGrayCodeImgs(targetDir, resolution):
     return num_patterns
 
 
-def buildFringe(period=10, dims=(1280,720), color=(0,0,255), dtype=np.uint8, horizontal=False):
+def buildFringe(period=10, dims=(1280,720), color=(0,0,255), dtype=np.uint8):
     """
     Build discrete sinusoidal fringe image.
     
@@ -74,49 +75,30 @@ def buildFringe(period=10, dims=(1280,720), color=(0,0,255), dtype=np.uint8, hor
     dtype: numpy.dtype
         Image is scaled in the range 0 - max value to match `dtype`.
         Default np.uint8 (max 255).
-    horizontal : bool
-        If True, the fringe is done with horizontal stripes.
-        Default to False (vertical stripes).
         
     Returns
     -------
     numpy.ndarray
         Fringe image.
     """
+        
+    row = np.iinfo(dtype).max * ((1 + np.sin(2*np.pi*(1/period)*np.arange(dims[0], dtype=float)))/2)[np.newaxis,:]
     
-    if horizontal:
+    if color is not None:
+        row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
+        left = int( period * ( int(dims[0]/(2*period)) - 0.25 ) )
+        right = int(left+period)
+        row[0, left:right, 0] *= color[0]/255
+        row[0, left:right, 1] *= color[1]/255 
+        row[0, left:right, 2] *= color[2]/255 
         
-        col = np.iinfo(dtype).max * ( (1 + np.sin(2*np.pi*(1/period)*np.arange(dims[1], dtype=float)))/2 )[:,np.newaxis]
-        
-        if color is not None:
-            col = np.repeat(col[:, :, np.newaxis], 3, axis=2)
-            top = int( period * ( int(dims[1]/(2*period)) - 0.25 ) )
-            bottom = int(top+period)
-            col[top:bottom, 0, 0] *= color[0]/255
-            col[top:bottom, 0, 1] *= color[1]/255 
-            col[top:bottom, 0, 2] *= color[2]/255 
-            
-        fullFringe = np.repeat(col.astype(dtype), dims[0], axis=1)
-        
-    else:
-        
-        row = np.iinfo(dtype).max * ((1 + np.sin(2*np.pi*(1/period)*np.arange(dims[0], dtype=float)))/2)[np.newaxis,:]
-        
-        if color is not None:
-            row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
-            left = int( period * ( int(dims[0]/(2*period)) - 0.25 ) )
-            right = int(left+period)
-            row[0, left:right, 0] *= color[0]/255
-            row[0, left:right, 1] *= color[1]/255 
-            row[0, left:right, 2] *= color[2]/255 
-            
-        fullFringe = np.repeat(row.astype(dtype), dims[1], axis=0)
+    fullFringe = np.repeat(row.astype(dtype), dims[1], axis=0)
         
     return fullFringe
 
 
     
-def findCentralStripe(fringe, color, threshold=100, horizontal=False):
+def findCentralStripe(fringe, color, threshold=100):
     """
     Find coordinates of a colored stripe in the image.
     
@@ -131,8 +113,6 @@ def findCentralStripe(fringe, color, threshold=100, horizontal=False):
         BGR color of the original stripe.
     threshold : int
         Threshold for color matching in 0-255 range.
-    horizontal : bool
-        Fringe orientation. Default to False (vertical fringe).
     
     Returns
     -------
@@ -163,19 +143,11 @@ def findCentralStripe(fringe, color, threshold=100, horizontal=False):
             out = np.sum(img * i, axis=axis) / np.sum(img, axis=axis)
         return out
     
-    if horizontal:
-        y = getCenters(fringe,axis=0)
-        x = np.arange(0.5,w,1)  # Consider pixel center, as first is in x=0.5
-        mask = ~np.isnan(y)                   # Remove coords with NaN
-        f = interp1d(x[mask],y[mask],kind="nearest",fill_value="extrapolate") # Interpolate
-        y = f(x)
-        
-    else:
-        x = getCenters(fringe,axis=1)
-        y = np.arange(0.5,h,1)                # Consider pixel center, as first is in y=0.5
-        mask = ~np.isnan(x)                   # Remove coords with NaN
-        f = interp1d(y[mask],x[mask],kind="nearest",fill_value="extrapolate") # Interpolate
-        x = f(y)
+    x = getCenters(fringe,axis=1)
+    y = np.arange(0.5,h,1)                # Consider pixel center, as first is in y=0.5
+    mask = ~np.isnan(x)                   # Remove coords with NaN
+    f = interp1d(y[mask],x[mask],kind="nearest",fill_value="extrapolate") # Interpolate
+    x = f(y)
     
     return np.vstack((x, y)).T
 
@@ -201,15 +173,13 @@ class StereoFTP:
         Image of the original projected fringe. 
     period : float
         Period of the fringe (in pixels).
-    horizontal : bool, optional
-        Fringe orientation. Default to False (vertical stripes).
     stripeColor : tuple, optional
         BGR color used for the central stripe. Default to (0,0,255) (red).
     stripeThreshold : int, optional
         Threshold to find the stripe. See :func:`findCentralStripe()`.
     """
     
-    def __init__(self, stereoRig, lc, fringe, period, horizontal=False,
+    def __init__(self, stereoRig, lc, fringe, period,
                  stripeColor=(0,0,255), stripeThreshold=100):
         
         if fringe.ndim != 3:
@@ -218,7 +188,6 @@ class StereoFTP:
         self.stereoRig = stereoRig
         self.fringe = fringe
         self.fp = 1/period
-        self.horizontal = horizontal
         self.lc = lc
         self.stripeColor = stripeColor
         self.stripeThreshold = stripeThreshold
@@ -227,19 +196,18 @@ class StereoFTP:
         self.projCoords, self.reference = self._getProjectorMapping()
         self.reference_gray = self.convertGrayscale(self.reference)
         self.Rectify1, self.Rectify2, self.Rotation = ss.rectification._lowLevelRectify(stereoRig)
-        #self.Rectify1, self.Rectify2, self.Rotation = self._getRectification()
         self.fc = self._calculateCameraFrequency()
         
         ### Find central stripe on fringe image
         cs = ss.active.findCentralStripe(self.fringe,
-                                stripeColor, stripeThreshold, horizontal)
+                                stripeColor, stripeThreshold)
         cs = cs.reshape(-1,1,2).astype(np.float64)
         cs = cv2.undistortPoints(cs,               # Consider distortion
                         self.stereoRig.intrinsic2,
                         self.stereoRig.distCoeffs2,
                         P=self.stereoRig.intrinsic2)
         # One pixel spaced (x,y) coords of the stripe
-        # over the projector image height (width if horizontal is True)
+        # over the projector image height
         self.fringeStripe = cs.reshape(-1,2)
         
         ### Get epipole on projector
@@ -347,14 +315,9 @@ class StereoFTP:
         # Find two points at distance Tp (period on projector)
         halfPeriodP = (1/self.fp)/2
         
-        if self.horizontal:
-            topP = pCenter[0,0,1] - halfPeriodP
-            bottomP = pCenter[0,0,1] + halfPeriodP
-            points = np.array([[pCenter[0,0,0],topP], [pCenter[0,0,0],bottomP]])
-        else:
-            leftP = pCenter[0,0,0] - halfPeriodP
-            rightP = pCenter[0,0,0] + halfPeriodP
-            points = np.array([[leftP,pCenter[0,0,1]], [rightP,pCenter[0,0,1]]])
+        leftP = pCenter[0,0,0] - halfPeriodP
+        rightP = pCenter[0,0,0] + halfPeriodP
+        points = np.array([[leftP,pCenter[0,0,1]], [rightP,pCenter[0,0,1]]])
         
         # Un-distort points for the projector means to distort
         # as the pinhole camera model is made for cameras
@@ -366,8 +329,8 @@ class StereoFTP:
         invARp = np.linalg.inv(Ap.dot(R))
         M = np.array([[self.lc-Op[2],0,Op[0]],[0,self.lc-Op[2],Op[1]], [0,0,self.lc]],dtype=np.object)
         
-        wLeft = invARp.dot(np.append(distortedPoints[0,0,:], [1]))  # Top for horizontal case
-        wRight = invARp.dot(np.append(distortedPoints[1,0,:], [1])) # Bottom for horizontal case
+        wLeft = invARp.dot(np.append(distortedPoints[0,0,:], [1]))  # Left point
+        wRight = invARp.dot(np.append(distortedPoints[1,0,:], [1])) # Right point
         
         # Normalize
         wLeft = wLeft/wLeft[2]
@@ -387,11 +350,8 @@ class StereoFTP:
         # Now we have 2 points on the camera that differ
         # exactly one projector period from each other
         # as seen by the camera
-        if self.horizontal:
-            Tc = ((b[0,0,1] - b[1,0,1])**2 + (b[0,0,0] - b[1,0,0])**2)/abs(b[0,0,1]-b[1,0,1])
-        else:
-            # Use the first Euclid theorem to get the wanted period
-            Tc = ((b[0,0,0] - b[1,0,0])**2 + (b[0,0,1] - b[1,0,1])**2)/abs(b[0,0,0]-b[1,0,0])
+        # Use the first Euclid theorem to get the wanted period
+        Tc = ((b[0,0,0] - b[1,0,0])**2 + (b[0,0,1] - b[1,0,1])**2)/abs(b[0,0,0]-b[1,0,0])
         
         # Return frequency
         return 1/Tc    
@@ -454,17 +414,9 @@ class StereoFTP:
         imgObj_gray = self.convertGrayscale(imgObj)
         
         ### Phase analysis
-        
-        if self.horizontal:
-            G0 = np.fft.fft(imgR_gray, axis=0)     # FFT on y dimension
-            G = np.fft.fft(imgObj_gray, axis=0)
-            # Get frequencies associated to each value
-            # (depends only on lenght of input, with step=1)
-            freqs = np.fft.fftfreq(roi_h)
-        else:
-            G0 = np.fft.fft(imgR_gray, axis=1)     # FFT on x dimension
-            G = np.fft.fft(imgObj_gray, axis=1)
-            freqs = np.fft.fftfreq(roi_w)
+        G0 = np.fft.fft(imgR_gray, axis=1)     # FFT on x dimension
+        G = np.fft.fft(imgObj_gray, axis=1)
+        freqs = np.fft.fftfreq(roi_w)
         
         # Pass-band filter
         radius = radius_factor*fc
@@ -484,24 +436,14 @@ class StereoFTP:
             cv2.waitKey(0)
             cv2.destroyAllWindows()
             
-            if self.horizontal:
-                plt.suptitle("Middle column absolute phase")
-                # Show module of FFTs
-                plt.plot(freqs[:roi_h//2], np.absolute(G0[:roi_h//2,roi_w//2-1]), label="|G0|", linestyle='--', color='red')
-                plt.plot(freqs[:roi_h//2], np.absolute(G[:roi_h//2,roi_w//2-1]), label="|G|", linestyle='-', color='blue')
-                # Show filtered band
-                plt.axvline(x=freqs[fIndex], linestyle='-', color='black')
-                plt.axvline(x=freqs[fminIndex], linestyle='dotted', color='black')
-                plt.axvline(x=freqs[fmaxIndex], linestyle='dotted', color='black')
-            else:
-                plt.suptitle("Middle row absolute phase")
-                # Show module of FFTs
-                plt.plot(freqs[:roi_w//2], np.absolute(G0[roi_h//2-1,:roi_w//2]), label="|G0|", linestyle='--', color='red')
-                plt.plot(freqs[:roi_w//2], np.absolute(G[roi_h//2-1,:roi_w//2]), label="|G|", linestyle='-', color='blue')
-                # Show filtered band
-                plt.axvline(x=freqs[fIndex], linestyle='-', color='black')
-                plt.axvline(x=freqs[fminIndex], linestyle='dotted', color='black')
-                plt.axvline(x=freqs[fmaxIndex], linestyle='dotted', color='black')
+            plt.suptitle("Middle row absolute phase")
+            # Show module of FFTs
+            plt.plot(freqs[:roi_w//2], np.absolute(G0[roi_h//2-1,:roi_w//2]), label="|G0|", linestyle='--', color='red')
+            plt.plot(freqs[:roi_w//2], np.absolute(G[roi_h//2-1,:roi_w//2]), label="|G|", linestyle='-', color='blue')
+            # Show filtered band
+            plt.axvline(x=freqs[fIndex], linestyle='-', color='black')
+            plt.axvline(x=freqs[fminIndex], linestyle='dotted', color='black')
+            plt.axvline(x=freqs[fmaxIndex], linestyle='dotted', color='black')
             
             plt.title(f"fc={fc}", size="small")    
             plt.legend()
@@ -513,26 +455,15 @@ class StereoFTP:
         # Larger the filter, more complex shape are followed, but
         # more noise is introduced (aliasing).
         
-        if self.horizontal:
-            # Reference image filtering
-            G0[:fminIndex,:] = 0
-            G0[fmaxIndex+1:,:] = 0
-            g0hat = np.fft.ifft(G0,axis=0)
-            # Object image filtering
-            G[:fminIndex,:] = 0
-            G[fmaxIndex+1:,:] = 0
-            ghat = np.fft.ifft(G,axis=0)
-            
-        else:   
-            # Reference image filtering
-            G0[:,:fminIndex] = 0
-            G0[:,fmaxIndex+1:] = 0
-            g0hat = np.fft.ifft(G0,axis=1)
-            
-            # Object image filtering
-            G[:,:fminIndex] = 0
-            G[:,fmaxIndex+1:] = 0
-            ghat = np.fft.ifft(G,axis=1)
+        # Reference image filtering
+        G0[:,:fminIndex] = 0
+        G0[:,fmaxIndex+1:] = 0
+        g0hat = np.fft.ifft(G0,axis=1)
+        
+        # Object image filtering
+        G[:,:fminIndex] = 0
+        G[:,fmaxIndex+1:] = 0
+        ghat = np.fft.ifft(G,axis=1)
             
         
         # Build the new signal and get its phase
@@ -541,19 +472,14 @@ class StereoFTP:
         
         if unwrappingMethod is None:
             # Unwrap along the direction perpendicular to the fringe
-            phaseUnwrapped = np.unwrap(phase, axis=0 if self.horizontal else 1)
+            phaseUnwrapped = np.unwrap(phase, axis=1)
         else:
             phaseUnwrapped = unwrappingMethod(phase)
               
         if plot:
-            if self.horizontal:
-                plt.title("Middle column phase")
-                plt.plot(np.arange(roi_h), phase[:,roi_w//2-1], label="Phase", linestyle='-.', color='red')
-                plt.plot(np.arange(roi_h), phaseUnwrapped[:,roi_w//2-1], label="Unwrapped phase", linestyle='-', color='blue')
-            else:
-                plt.title("Middle row phase")
-                plt.plot(np.arange(roi_w), phase[roi_h//2-1,:], label="Phase", linestyle='-.', color='red')
-                plt.plot(np.arange(roi_w), phaseUnwrapped[roi_h//2-1,:], label="Unwrapped phase", linestyle='-', color='blue')
+            plt.title("Middle row phase")
+            plt.plot(np.arange(roi_w), phase[roi_h//2-1,:], label="Phase", linestyle='-.', color='red')
+            plt.plot(np.arange(roi_w), phaseUnwrapped[roi_h//2-1,:], label="Unwrapped phase", linestyle='-', color='blue')
             plt.xlabel("Pixel position", fontsize=20)
             plt.ylabel("Phase", fontsize=20)
             plt.legend(fontsize=12)
@@ -578,7 +504,7 @@ class StereoFTP:
         
         # Find central line on the undistorted object image
         objStripe = ss.active.findCentralStripe(imgObj, self.stripeColor,
-                        self.stripeThreshold, self.horizontal)
+                        self.stripeThreshold)
         
         # Find integer indexes (round half down)
         # Accept loss of precision as k values must be rounded to integers
@@ -586,20 +512,12 @@ class StereoFTP:
         
         pointA = projCoords[cam_indexes[:,1],cam_indexes[:,0]] # As (x,y)
         
-        if self.horizontal:
-            # Find Hy and Ay coords and calculate vector k
-            pointA_x_rounded = np.ceil(pointA[:,0]-0.5).astype(np.int) # Round half down
-            pointH_y = self.fringeStripe[pointA_x_rounded,1] # Get all y stripe coords
-            theta = phaseUnwrapped[cam_indexes[:,1],cam_indexes[:,0]]
-            k = (pointH_y - pointA[:,1])*self.fp - theta/(2*np.pi)
-            k = np.rint(k).reshape(1,-1) # Banker's rounding + appropriate reshape
-        else:
-            # Find Hx and Ax coords and calculate vector k
-            pointA_y_rounded = np.ceil(pointA[:,1]-0.5).astype(np.int) # Round half down
-            pointH_x = self.fringeStripe[pointA_y_rounded,0] # Get all x stripe coords
-            theta = phaseUnwrapped[cam_indexes[:,1],cam_indexes[:,0]]
-            k = (pointH_x - pointA[:,0])*self.fp - theta/(2*np.pi)
-            k = np.rint(k).reshape(-1,1) # Banker's rounding + appropriate reshape
+        # Find Hx and Ax coords and calculate vector k
+        pointA_y_rounded = np.ceil(pointA[:,1]-0.5).astype(np.int) # Round half down
+        pointH_x = self.fringeStripe[pointA_y_rounded,0] # Get all x stripe coords
+        theta = phaseUnwrapped[cam_indexes[:,1],cam_indexes[:,0]]
+        k = (pointH_x - pointA[:,0])*self.fp - theta/(2*np.pi)
+        k = np.rint(k).reshape(-1,1) # Banker's rounding + appropriate reshape
         
         
         # Adjust phase using k values
@@ -610,14 +528,9 @@ class StereoFTP:
         Xa = projCoords[:,:,0].reshape(-1,1)
         Ya = projCoords[:,:,1].reshape(-1,1)
         
-        if self.horizontal:
-            Yh = Ya + phaseUnwrapped/(2*np.pi*self.fp)
-            # Find x coord on epipolar line
-            Xh = ( (Yh-ep[1])/(Ya-ep[1]) )*(Xa-ep[0]) + ep[0]
-        else:
-            Xh = Xa + phaseUnwrapped/(2*np.pi*self.fp)
-            # Find y coord on epipolar line
-            Yh = ( (Xh-ep[0])/(Xa-ep[0]) )*(Ya-ep[1]) + ep[1]
+        Xh = Xa + phaseUnwrapped/(2*np.pi*self.fp)
+        # Find y coord on epipolar line
+        Yh = ( (Xh-ep[0])/(Xa-ep[0]) )*(Ya-ep[1]) + ep[1]
             
         # Desidered point is H(Xh,Yh)
         H = np.hstack((Xh,Yh)).reshape(-1,1,2).astype(np.float64)

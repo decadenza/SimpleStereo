@@ -26,14 +26,14 @@ SimpleStereo is a higher level framework for stereo vision applications. It is w
 
 ## Passive stereo matching algorithms
 - [x] Adaptive Support Weight algorithm
-- [x] Geodesic Support Weight algorithm (*original Mutual Information implementation not completed*)
+- [x] Geodesic Support Weight algorithm (*simplified implementation*)
 
 ## Active stereo algorithm
 - [x] Gray code
 - [x] StereoFTP algorithm (improvement of Fourier transform profilometry)
 
-## Basic example
-SimpleStereo helps you with common tasks. Calibration is simply done as:
+## Basic examples
+SimpleStereo helps you with common tasks. You can calibrate a single camera as:
 
 ```python
 import simplestereo as ss
@@ -48,4 +48,4 @@ print("Centers:", rig.getCenters())
 print("Baseline:", rig.getBaseline())
 ```
     
-More examples available.
+More advanced examples available.
