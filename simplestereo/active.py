@@ -359,8 +359,9 @@ class StereoFTP:
         # Un-distort points for the projector means to distort
         # as the pinhole camera model is made for cameras
         # and we are projecting back to 3D world
-        distortedPoints = cv2.undistortPoints(points, np.eye(3), Dp)
-                                              
+        #print(points)
+        distortedPoints = cv2.undistortPoints(points, Ap, Dp, P=Ap)
+        
         # De-project points to reference plane
         invARp = np.linalg.inv(Ap.dot(R))
         M = np.array([[self.lc-Op[2],0,Op[0]],[0,self.lc-Op[2],Op[1]], [0,0,self.lc]],dtype=np.object)
@@ -672,15 +673,15 @@ class GrayCode:
     rig : StereoRig
         An object of the StereoRig class.
     black_thr : int, optional
-       Black threshold is a number between 0-255 that represents the minimum brightness
-       difference required for valid pixels, between the fully illuminated (white) and
-       the not illuminated images (black); used in computeShadowMasks method.
-       Default to 40.
+       Black threshold is a number between 0-255 that represents the
+       minimum brightness difference required for valid pixels, between
+       the fully illuminated (white) and the not illuminated images
+       (black); used in computeShadowMasks method. Default to 40.
     white_thr : int, optional
-        White threshold is a number between 0-255 that represents the minimum brightness difference
-        required for valid pixels, between the graycode pattern and its inverse images; used in
-        getProjPixel method.
-        Default to 5.
+        White threshold is a number between 0-255 that represents the
+        minimum brightness difference required for valid pixels, between
+        the graycode pattern and its inverse images; used in 
+        `getProjPixel` method. Default to 5.
     """
     def __init__(self, rig, black_thr=40, white_thr=5):
         self.rig = rig
@@ -691,7 +692,7 @@ class GrayCode:
         self.num_patterns = self.graycode.getNumberOfPatternImages()
         self.Rectify1, self.Rectify2, self.Rotation = ss.rectification._lowLevelRectify(rig)
         
-    def scan(self, images):
+    def scan(self, images, ignoreProjectorDistortion=False):
         """
         Perform the scan and 3D point calculation from a list of images.
         
@@ -699,8 +700,13 @@ class GrayCode:
         ----------
         images : list or tuple       
             A list of image *paths* acquired by the camera.
-            Each set must be ordered like all the Gray code patterns (see ``cv2.structured_light_GrayCodePattern``).
+            Each set must be ordered like all the Gray code patterns
+            (see `cv2.structured_light_GrayCodePattern`).
             Any following extra image will be ignored (es. full white).
+        ignoreProjectorDistortion : bool, optional
+            Projector distortion may be unaccurate, especially along
+            border. You can ignore it setting this parameter to True.
+            Default to False.
         """
         w, h = self.rig.res1 # Camera resolution
         imgs = []
@@ -732,21 +738,19 @@ class GrayCode:
         pc = np.asarray(pc).astype(np.float64).reshape(-1,1,2)
         pp = np.asarray(pp).astype(np.float64).reshape(-1,1,2)
         
-        
         # Consider pixel center (negligible difference, anyway...)
         pc = pc + 0.5
         pp = pp + 0.5
         
-        
-        # *Apply* lens distortion to pp.
-        # A projector is considered as an inversed pinhole camera (and so are
-        # the distortion coefficients)
-        # H is on the original imgFringe. Passing through the projector lenses,
-        # it gets distortion, so it does not coincide with real world point.
-        # But we want points to be an exact projection of the world points.
-        # Remove intrinsic, undistort and put same intrinsic back.
-        pp = cv2.undistortPoints(pp, self.rig.intrinsic2, self.rig.distCoeffs2, P=self.rig.intrinsic2)
-        
+        if not ignoreProjectorDistortion:
+            # *Apply* lens distortion to pp.
+            # A projector is considered as an inversed pinhole camera (and so are
+            # the distortion coefficients)
+            # H is on the original imgFringe. Passing through the projector lenses,
+            # it gets distortion, so it does not coincide with real world point.
+            # But we want points to be an exact projection of the world points.
+            # Remove intrinsic, undistort and put same intrinsic back.
+            pp = cv2.undistortPoints(pp, self.rig.intrinsic2, self.rig.distCoeffs2, P=self.rig.intrinsic2)
         
         # Apply rectification
         pc = cv2.perspectiveTransform(pc, self.Rectify1).reshape(-1,2)
@@ -754,7 +758,6 @@ class GrayCode:
         
         # Add ones as third coordinate
         pc = np.hstack( (pc,np.ones((pc.shape[0],1),dtype=np.float64)) )
-        
         
         # Get world points
         disparity = np.abs(pp[:,[0]] - pc[:,[0]])
@@ -768,7 +771,6 @@ class GrayCode:
         # Cancel common orientation applied to first camera
         # to bring points into camera coordinate system
         finalPoints = cv2.perspectiveTransform(pw.reshape(-1,1,3), R_inv)
-        
         
         return finalPoints
         
