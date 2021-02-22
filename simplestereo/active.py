@@ -671,7 +671,7 @@ class GrayCode:
     Parameters
     ----------
     rig : StereoRig
-        An object of the StereoRig class.
+        An object of the StereoRig class relative to camera-projector.
     black_thr : int, optional
        Black threshold is a number between 0-255 that represents the
        minimum brightness difference required for valid pixels, between
@@ -682,6 +682,15 @@ class GrayCode:
         minimum brightness difference required for valid pixels, between
         the graycode pattern and its inverse images; used in 
         `getProjPixel` method. Default to 5.
+    
+    Notes
+    -----
+    Projector distortion may be unaccurate, especially along border.
+    If this is the case, you can ignore it setting
+    `rig.distCoeffs2 == None` before passing `rig` to the constructor.
+    
+    ..todo::
+        Conventional active stereo version (2 cameras).
     """
     def __init__(self, rig, black_thr=40, white_thr=5):
         self.rig = rig
@@ -692,7 +701,7 @@ class GrayCode:
         self.num_patterns = self.graycode.getNumberOfPatternImages()
         self.Rectify1, self.Rectify2, self.Rotation = ss.rectification._lowLevelRectify(rig)
         
-    def scan(self, images, ignoreProjectorDistortion=False):
+    def scan(self, images):
         """
         Perform the scan and 3D point calculation from a list of images.
         
@@ -703,10 +712,6 @@ class GrayCode:
             Each set must be ordered like all the Gray code patterns
             (see `cv2.structured_light_GrayCodePattern`).
             Any following extra image will be ignored (es. full white).
-        ignoreProjectorDistortion : bool, optional
-            Projector distortion may be unaccurate, especially along
-            border. You can ignore it setting this parameter to True.
-            Default to False.
         """
         w, h = self.rig.res1 # Camera resolution
         imgs = []
@@ -742,15 +747,14 @@ class GrayCode:
         pc = pc + 0.5
         pp = pp + 0.5
         
-        if not ignoreProjectorDistortion:
-            # *Apply* lens distortion to pp.
-            # A projector is considered as an inversed pinhole camera (and so are
-            # the distortion coefficients)
-            # H is on the original imgFringe. Passing through the projector lenses,
-            # it gets distortion, so it does not coincide with real world point.
-            # But we want points to be an exact projection of the world points.
-            # Remove intrinsic, undistort and put same intrinsic back.
-            pp = cv2.undistortPoints(pp, self.rig.intrinsic2, self.rig.distCoeffs2, P=self.rig.intrinsic2)
+        # *Apply* lens distortion to pp.
+        # A projector is considered as an inversed pinhole camera (and so are
+        # the distortion coefficients)
+        # H is on the original imgFringe. Passing through the projector lenses,
+        # it gets distortion, so it does not coincide with real world point.
+        # But we want points to be an exact projection of the world points.
+        # Remove intrinsic, undistort and put same intrinsic back.
+        pp = cv2.undistortPoints(pp, self.rig.intrinsic2, self.rig.distCoeffs2, P=self.rig.intrinsic2)
         
         # Apply rectification
         pc = cv2.perspectiveTransform(pc, self.Rectify1).reshape(-1,2)
