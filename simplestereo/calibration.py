@@ -38,7 +38,12 @@ def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSiz
     
     Returns
     -------
-    Same values of `cv2.calibrateCamera` (retval, cameraMatrix, distCoeffs, rvecs, tvecs).
+    retval : bool
+        Same values of `cv2.calibrateCamera`.
+    cameraMatrix : numpy.ndarray
+    distCoeffs : numpy.ndarray
+    rvecs : numpy.ndarray
+    tvecs : numpy.ndarray
     """
     
     # Prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...
@@ -80,7 +85,9 @@ def chessboardStereo(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSiz
     Parameters
     ----------
     images : list or tuple       
-        A list (or tuple) of 2 dimensional tuples (ordered left and right) of image paths, e.g. [("oneL.png","oneR.png"), ("twoL.png","twoR.png"), ...]
+        A list (or tuple) of 2 dimensional tuples (ordered left and
+        right) of image paths, e.g. [("oneL.png","oneR.png"),
+        ("twoL.png","twoR.png"), ...]
     chessboardSize: tuple
         Chessboard *internal* dimensions as (width, height). Dimensions should be different to avoid ambiguity.
         Default to (7,6).

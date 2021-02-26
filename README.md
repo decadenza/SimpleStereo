@@ -40,7 +40,7 @@ pip3 install .
 
 ## Structured light algorithms
 - [x] Gray code
-- [ ] De Brujin
+- [ ] De Brujin (*coming soon*)
 - [x] StereoFTP (Fourier transform profilometry)
 
 ### Active stereo algorithms

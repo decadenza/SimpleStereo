@@ -1,7 +1,10 @@
 """
 active
 ======
-Contains classes to manage active stereo algorithms and helper functions.
+Contains classes to manage active stereo algorithms and helper
+functions.
+This module contains both conventional active stereo (2 cameras +
+projector) and structured-light (1 camera + projector) methods.
 """
 import os
 
@@ -162,7 +165,7 @@ class StereoFTP:
     
     Parameters
     ----------
-    stereoRig : simplestereo.StereoRig object
+    stereoRig : StereoRig
         A stereo rig object with camera in position 1 (world origin) and projector in
         position 2.
     lc : float
@@ -356,7 +359,7 @@ class StereoFTP:
         # Return frequency
         return 1/Tc    
     
-    def scan(self, image, fc=None, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
+    def getCloud(self, image, fc=None, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
         """
         Process an image and get the point cloud.
         
@@ -374,7 +377,7 @@ class StereoFTP:
             where x,y is the upper left corner. Default to None.
         unwrappingMethod : function, optional
             Pointer to chosen unwrapping function. It must take the phase
-            as argument. If None (default) `np.unwrap`is used.
+            as the only argument. If None (default), `np.unwrap`is used.
             
         Returns
         -------
@@ -581,10 +584,14 @@ class GrayCode:
     """
     Wrapper for the Gray code method from OpenCV.
     
+    Structured-light implementation using camera-projector
+    calibrated rig.
+    
     Parameters
     ----------
     rig : StereoRig
-        An object of the StereoRig class relative to camera-projector.
+        A stereo rig object with camera in position 1 (world origin) and projector in
+        position 2.
     black_thr : int, optional
        Black threshold is a number between 0-255 that represents the
        minimum brightness difference required for valid pixels, between
@@ -602,9 +609,6 @@ class GrayCode:
     If this is the case, you can ignore it setting
     `rig.distCoeffs2 == None` before passing `rig` to the constructor
     or setting a narrow `roi`.
-    
-    ..todo::
-        Conventional active stereo version (2 cameras).
     """
     def __init__(self, rig, black_thr=40, white_thr=5):
         self.rig = rig
@@ -613,11 +617,15 @@ class GrayCode:
         self.graycode.setBlackThreshold(black_thr)
         self.graycode.setWhiteThreshold(white_thr)
         self.num_patterns = self.graycode.getNumberOfPatternImages()
-        self.Rectify1, self.Rectify2, self.Rotation = ss.rectification._lowLevelRectify(rig)
+        self.Rectify1, self.Rectify2, commonRotation = ss.rectification._lowLevelRectify(rig)
+        # Get inverse common orientation and extend to 4x4 transform
+        self.R_inv = np.linalg.inv(commonRotation)
+        self.R_inv = np.hstack( ( np.vstack( (self.R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
+        self.R_inv[3,3] = 1
         
-    def scan(self, images, roi=None):
+    def getCloud(self, images, roi=None):
         """
-        Perform the scan and 3D point calculation from a list of images.
+        Perform the 3D point calculation from a list of images.
         
         Parameters
         ----------
@@ -629,12 +637,17 @@ class GrayCode:
         roi : tuple, optional
             Region of interest in the format (x,y,width,height)
             where x,y is the upper left corner. Default to None.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Points with shape (n,1,3)
         """
         widthC, heightC = self.rig.res1 # Camera resolution
         imgs = []
         
-        # Extract images
-        for fname in images[:self.num_patterns]: # Exclude eventual extra images (es. white, black)
+        # Load images
+        for fname in images[:self.num_patterns]: # Exclude any extra images (es. white, black)
             img = cv2.imread(fname, cv2.IMREAD_GRAYSCALE)
             if img.shape != (heightC,widthC):
                 raise ValueError(f'Image size of {fname} is mismatch!')
@@ -650,7 +663,8 @@ class GrayCode:
             roi_x,roi_y,roi_w,roi_h = (0, 0, widthC, heightC)
             
         # Find corresponding points
-        # TODO: Speed up
+        # Since we are jumping some points, there is no correspondence
+        # with any BGR image used for color in the final PLY file.
         for y in range(roi_y,roi_h):
             for x in range(roi_x,roi_w):
                 err, proj_pix = self.graycode.getProjPixel(imgs, x, y)
@@ -689,14 +703,159 @@ class GrayCode:
         disparity = np.abs(pp[:,[0]] - pc[:,[0]])
         pw = self.rig.getBaseline()*(pc/disparity)
         
-        ### Get inverse common orientation and extend to 4x4 transform
-        R_inv = np.linalg.inv(self.Rotation)
-        R_inv = np.hstack( ( np.vstack( (R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
-        R_inv[3,3] = 1
-        
         # Cancel common orientation applied to first camera
         # to bring points into camera coordinate system
-        finalPoints = cv2.perspectiveTransform(pw.reshape(-1,1,3), R_inv)
+        finalPoints = cv2.perspectiveTransform(pw.reshape(-1,1,3), self.R_inv)
         
         return finalPoints
         
+
+# Alias for single camera version
+GrayCodeSingle = GrayCode
+
+class GrayCodeDouble:
+    """
+    Wrapper for the Gray code method from OpenCV.
+    
+    Conventional active stereo implementation, i.e. using two calibrated cameras and
+    one uncalibrated projector.
+    
+    Parameters
+    ----------
+    rig : StereoRig
+        A stereo rig object with two cameras.
+    projRes : tuple
+        Projector resolution as (width, height).
+    black_thr : int, optional
+       Black threshold is a number between 0-255 that represents the
+       minimum brightness difference required for valid pixels, between
+       the fully illuminated (white) and the not illuminated images
+       (black); used in computeShadowMasks method. Default to 40.
+    white_thr : int, optional
+        White threshold is a number between 0-255 that represents the
+        minimum brightness difference required for valid pixels, between
+        the graycode pattern and its inverse images; used in 
+        `getProjPixel` method. Default to 5.
+    
+    Notes
+    -----
+    Projector distortion may be unaccurate, especially along border.
+    If this is the case, you can ignore it setting
+    `rig.distCoeffs2 == None` before passing `rig` to the constructor
+    or setting a narrow `roi`.
+    """
+    def __init__(self, rig, projRes, black_thr=40, white_thr=5):
+        self.rig = rig
+        self.projRes = projRes
+        # Build graycode using projector resolution
+        self.graycode = cv2.structured_light_GrayCodePattern.create(projRes[0], projRes[1])
+        self.graycode.setBlackThreshold(black_thr)
+        self.graycode.setWhiteThreshold(white_thr)
+        self.num_patterns = self.graycode.getNumberOfPatternImages()
+        self.Rectify1, self.Rectify2, commonRotation = ss.rectification._lowLevelRectify(rig)
+        ### Get inverse common orientation and extend to 4x4 transform
+        self.R_inv = np.linalg.inv(commonRotation)
+        self.R_inv = np.hstack( ( np.vstack( (self.R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
+        self.R_inv[3,3] = 1
+        
+    def getCloud(self, images, roi1=None, roi2=None):
+        """
+        Perform the 3D point calculation from a list of images.
+        
+        Parameters
+        ----------
+        images : list or tuple       
+            A list (or tuple) of 2 dimensional tuples (ordered left and
+            right) of image paths, e.g. [("oneL.png","oneR.png"),
+            ("twoL.png","twoR.png"), ...]
+            Each set must be ordered like all the Gray code patterns
+            (see `cv2.structured_light_GrayCodePattern`).
+            Any following extra image will be ignored (es. full white).
+        roi1 : tuple, optional
+            Region of interest on camera 1 in the format
+            (x,y,width,height) where x,y is the upper left corner.
+            Default to None.
+        roi2 : tuple, optional
+            As `roi1`, but for camera 2.
+        
+        Returns
+        -------
+        numpy.ndarray
+            Points with shape (n,1,3)
+        """
+        w1, h1 = self.rig.res1 # Camera 1 resolution
+        w2, h2 = self.rig.res2 # Camera 1 resolution
+        # Contains at proj indexes, both camera correspondences as (x1,y1,x2,y2)
+        corresp = np.full((self.projRes[1], self.projRes[0], 4), -1, dtype=np.intp)
+        
+        # Load images
+        imgs1 = []
+        imgs2 = []
+        for fname1, fname2 in images[:self.num_patterns]: # Exclude any extra images (es. white, black)
+            img1 = cv2.imread(fname1, cv2.IMREAD_GRAYSCALE)
+            if img1.shape != (h1,w1):
+                raise ValueError(f'Image size of {fname1} is mismatch!')
+            img2 = cv2.imread(fname2, cv2.IMREAD_GRAYSCALE)
+            if img2.shape != (h2,w2):
+                raise ValueError(f'Image size of {fname2} is mismatch!')
+            img1 = cv2.undistort(img1, self.rig.intrinsic1, self.rig.distCoeffs1)
+            img2 = cv2.undistort(img2, self.rig.intrinsic2, self.rig.distCoeffs2)
+            imgs1.append(img1)
+            imgs2.append(img2)
+        
+        if roi1 is not None:
+            roi1_x,roi1_y,roi1_w,roi1_h = roi1
+        else:
+            roi1_x,roi1_y,roi1_w,roi1_h = (0, 0, w1, h1)
+            
+        # Find corresponding points
+        for y in range(roi1_y,roi1_h):
+            for x in range(roi1_x,roi1_w):
+                err, proj_pix = self.graycode.getProjPixel(imgs1, x, y)
+                if not err:
+                    corresp[y,x,0] = proj_pix[0]
+                    corresp[y,x,1] = proj_pix[1]
+        
+        if roi2 is not None:
+            roi2_x,roi2_y,roi2_w,roi2_h = roi2
+        else:
+            roi2_x,roi2_y,roi2_w,roi2_h = (0, 0, w2, h2)
+            
+        # Find corresponding points
+        for y in range(roi2_y,roi2_h):
+            for x in range(roi2_x,roi2_w):
+                err, proj_pix = self.graycode.getProjPixel(imgs2, x, y)
+                if not err:
+                    corresp[y,x,2] = proj_pix[0]
+                    corresp[y,x,3] = proj_pix[1]
+        
+        # Filter out missing correspondences
+        corresp = corresp[(corresp>-1).any(axis=2)]
+        
+        # Consider pixel center (negligible difference, anyway...)
+        corresp += 0.5
+        
+        
+        # Now we have solved the stereo correspondence problem.
+        # To do triangulation easily, it is better to rectify.
+        
+        # Convert
+        p1 = corresp[:,:,:2].astype(np.float64).reshape(-1,1,2)
+        p2 = corresp[:,:,2:4].astype(np.float64).reshape(-1,1,2)
+        
+        # Apply rectification
+        p1 = cv2.perspectiveTransform(p1, self.Rectify1).reshape(-1,2)
+        p2 = cv2.perspectiveTransform(p2, self.Rectify2).reshape(-1,2)
+        
+        # Add ones as third coordinate
+        p1 = np.hstack( (p1,np.ones((pc.shape[0],1),dtype=np.float64)) )
+        
+        # Get world points
+        disparity = np.abs(p1[:,[0]] - p2[:,[0]])
+        pw = self.rig.getBaseline()*(p1/disparity)
+        
+        # Cancel common orientation applied to first camera
+        # to bring points into camera coordinate system
+        finalPoints = cv2.perspectiveTransform(pw.reshape(-1,1,3), self.R_inv)
+        
+        return finalPoints
