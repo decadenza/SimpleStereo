@@ -24,6 +24,11 @@ from . import points
 from . import utils
 
 
+### VERSION INFO
+import pkg_resources # part of setuptools
+__version__ = pkg_resources.require("SimpleStereo")[0].version
+
+
 
 class StereoRig:
     """ 

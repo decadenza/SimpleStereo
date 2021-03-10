@@ -381,7 +381,7 @@ class StereoFTP:
             
         Returns
         -------
-        Point cloud with shape (height,width,2), with height and width 
+        Point cloud with shape (height,width,3), with height and width 
         same as the input image or selected `roi`.
         
         .. todo::
@@ -575,8 +575,9 @@ class StereoFTP:
         # Cancel common orientation applied to first camera
         # to bring points into camera coordinate system
         finalPoints = cv2.perspectiveTransform(pw.reshape(-1,1,3), R_inv)
-            
-        return finalPoints
+        
+        # Reshape as original image    
+        return finalPoints.reshape(roi_h,roi_w,3)
 
 
 
@@ -642,6 +643,10 @@ class GrayCode:
         -------
         numpy.ndarray
             Points with shape (n,1,3)
+        
+        ..todo::
+            Add possibility to return point cloud in same image/roi
+            shape with NaN in invalid locations.
         """
         widthC, heightC = self.rig.res1 # Camera resolution
         imgs = []
@@ -859,3 +864,78 @@ class GrayCodeDouble:
         finalPoints = cv2.perspectiveTransform(pw.reshape(-1,1,3), self.R_inv)
         
         return finalPoints
+
+
+def computeROI(img, blackThreshold=10, extraMargin=0):
+    """
+    Exclude black regions along borders.
+    
+    Usually the projector does not illuminate the whole image area.
+    This function attempts to find the region of interest as a rectangle
+    inside the biggest contour.
+    
+    Parameters
+    ----------
+    img : numpy.ndarray
+        Camera image with black borders.
+    blackThreshold : int, optional
+        Threshold for the black regions between 0 and 255.
+        Default to 10.
+    extraMargin : int, optional
+        Extra safety margin to reduce to ROI. Default to 0.
+    Returns
+    -------
+    tuple
+        ROI as tuple of integers (x,y,w,h).
+     
+    """
+    if img.ndim>2:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    height,width = img.shape
+    _, img_thresh = cv2.threshold(img, blackThreshold, 255, cv2.THRESH_BINARY)
+    contours, hierarchy = cv2.findContours(img_thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    # Select biggest contour
+    best_cnt = max(contours, key = cv2.contourArea)
+    # Find bounding rectangle
+    x,y,w,h = cv2.boundingRect(best_cnt)
+    
+    # Look around rect borders and start shinking until is all inside
+    x2,y2,w2,h2 = x,y,w,h
+    while(True):
+        allInside = True
+        # TOP
+        for j in range(x2,x2+w2):
+            if cv2.pointPolygonTest(best_cnt, (j,y2), False)<0: # Point is outside
+                y2+=1
+                allInside = False
+                break
+        # RIGHT
+        for i in range(y2,y2+h2):
+            if cv2.pointPolygonTest(best_cnt, (x2+w2,i), False)<0:
+                w2-=1
+                allInside = False
+                break
+        # BOTTOM
+        for j in range(x2,x2+w2):
+            if cv2.pointPolygonTest(best_cnt, (j,y2+h2), False)<0:
+                h2-=1
+                allInside = False
+                break
+        # LEFT
+        for i in range(y2,y2+h2):
+            if cv2.pointPolygonTest(best_cnt, (x2,i), False)<0:
+                x2+=1
+                allInside = False
+                break
+        
+        if allInside: # all the rect borders are within the contour
+            break
+    
+    # Reduce ROI further.
+    x2 += extraMargin
+    y2 += extraMargin
+    w2 -= extraMargin
+    h2 -= extraMargin
+        
+    return (x2,y2,w2,h2)
