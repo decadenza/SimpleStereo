@@ -5,7 +5,7 @@ Functions to manage disparity maps and point clouds.
 '''
 import numpy as np
 
-def exportPoints(points3D, filepath, referenceImage=None, precision=6):
+def exportPLY(points3D, filepath, referenceImage=None, precision=6):
     """
     Export raw point cloud to PLY file.
     
