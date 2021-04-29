@@ -54,7 +54,7 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
                         referenceImage[i,2], referenceImage[i,1], referenceImage[i,0], p=precision)) # Invert BGR to RGB
             else:
                 # GRAYSCALE (n*m or n*m*1 shape assumed)
-                f.write("property uchar gray\n")
+                f.write("property uchar intensity\n")
                 f.write("end_header\n")
                 referenceImage = np.ravel(referenceImage)
                 for i in range(n):
