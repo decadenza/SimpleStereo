@@ -42,10 +42,10 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
             for x,y,z in points3D:
                 f.write("{:.6f} {:.6f} {:.6f}\n".format(x, y, z))
         else:
-            f.write("property uchar red\nproperty uchar green\nproperty uchar blue\n")
-            f.write("end_header\n")
             if referenceImage.ndim == 3:
                 # BGR
+                f.write("property uchar red\nproperty uchar green\nproperty uchar blue\n")
+                f.write("end_header\n")
                 referenceImage = referenceImage.reshape(-1,3)
                 for i in range(n):
                     # Precision limited to p decimal places.
@@ -53,13 +53,15 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
                         points3D[i,0], points3D[i,1], points3D[i,2], 
                         referenceImage[i,2], referenceImage[i,1], referenceImage[i,0], p=precision)) # Invert BGR to RGB
             else:
-                # GRAYSCALE
-                referenceImage = referenceImage.reshape(-1,1)
+                # GRAYSCALE (n*m or n*m*1 shape assumed)
+                f.write("property uchar gray\n")
+                f.write("end_header\n")
+                referenceImage = np.ravel(referenceImage)
                 for i in range(n):
                     # Precision limited to p decimal places.
-                    f.write("{:.{p}f} {:.{p}f} {:.{p}f} {:d} {:d} {:d}\n".format(
+                    f.write("{:.{p}f} {:.{p}f} {:.{p}f} {:d}\n".format(
                         points3D[i,0], points3D[i,1], points3D[i,2], 
-                        referenceImage[i], referenceImage[i], referenceImage[i], p=precision)) # Grayscale
+                        referenceImage[i], p=precision)) # Grayscale
     
 
 def importPoints(filename, x=0, y=1, z=2):
