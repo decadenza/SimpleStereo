@@ -24,9 +24,6 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
         Decimal places to save coordinates with. Higher precision causes
         bigger file size.
         Default to 6.
-    Notes
-    -----
-    *points3D* should be calculated from cv2.reprojectImageTo3D(disparityMap, Q).
     """
     
     points3D = points3D.reshape(-1,3)
@@ -42,8 +39,8 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
             for x,y,z in points3D:
                 f.write("{:.6f} {:.6f} {:.6f}\n".format(x, y, z))
         else:
-            if referenceImage.ndim == 3:
-                # BGR
+            if referenceImage.size == points3D.size:
+                # Assuming BGR image (OpenCV compatible) (3 color values)
                 f.write("property uchar red\nproperty uchar green\nproperty uchar blue\n")
                 f.write("end_header\n")
                 referenceImage = referenceImage.reshape(-1,3)
@@ -53,7 +50,7 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
                         points3D[i,0], points3D[i,1], points3D[i,2], 
                         referenceImage[i,2], referenceImage[i,1], referenceImage[i,0], p=precision)) # Invert BGR to RGB
             else:
-                # GRAYSCALE (n*m or n*m*1 shape assumed)
+                # Assuming grayscale image (1 color value)
                 f.write("property uchar intensity\n")
                 f.write("end_header\n")
                 referenceImage = np.ravel(referenceImage)

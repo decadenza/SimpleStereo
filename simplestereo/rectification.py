@@ -302,21 +302,24 @@ def loopRectify(rig):
     def findInitialGuess(A1, B1, A2, B2): # Internal use function
         # Find initial guess for optimization
         try:
-            D1 = cholesky(A1, lower=False) # Upper triangle so that A1 = D1.T.dot(D1)
-            D2 = cholesky(A2, lower=False)
-        except np.linalg.LinAlgError as e:
+            D1 = cholesky(A1, lower=True) # Upper triangle so that A1 = D1.T.dot(D1)
+            D2 = cholesky(A2, lower=True)
+        except:
+            raise
+            '''
             # If factorization fails because of negative eigenvalues
-            # Try to manage with it...
-            # Add a small value to diagonal elements
+            # you may try to manage with it...
+            # Eg. try to add a small value to diagonal elements
+            # BUT THIS IS NOT GUARANTEED
             A1 += 1e-10 * np.eye(3) 
             A2 += 1e-10 * np.eye(3)
             try:
-                D1 = cholesky(A1, lower=False)
-                D2 = cholesky(A2, lower=False)
+                D1 = cholesky(A1, lower=True)
+                D2 = cholesky(A2, lower=True)
             except np.linalg.LinAlgError:
                 # If fails again, raise the original error
                 raise e
-                
+            '''    
         # Calculate the eigenvector associated to the maximum eigenvalue of np.linalg.inv(D1).T.dot(B1).dot(np.linalg.inv(D1))
         D1_inv = np.linalg.inv(D1)
         eval1, evec1 = np.linalg.eig(D1_inv.T.dot(B1).dot(D1_inv))   # Calculate corresponding eigenvectors/values
@@ -644,7 +647,7 @@ def directRectify(rig):
         
         
         def getDistortion(s):
-            # Inner function as compact version of getLoopZhangDistortionValue()
+            # Inner function as compact version of Loop and Zhang distortion
             w1, w2, _ = evaluateSolution(s)    
             dist1 = float( w1.dot(P1).dot(w1)/w1.dot(Pc1).dot(w1) )
             dist2 = float( w2.dot(P2).dot(w2)/w2.dot(Pc2).dot(w2) )

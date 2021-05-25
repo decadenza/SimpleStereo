@@ -214,6 +214,7 @@ def getCrossProductMatrix(v):
     numpy.ndarray
         A 3x3 matrix representing the cross product with the input vector.
     """
+    v = v.ravel()
     return np.array( [ [0, -v[2], v[1]], \
                        [v[2], 0, -v[0]], \
                        [-v[1], v[0], 0] ] , dtype=np.float)
