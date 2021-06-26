@@ -252,7 +252,7 @@ def drawCorrespondingEpipolarLines(img1, img2, F, x1=[], x2=[], color=(0,0,255),
     
     Notes
     -----
-    This function does not manage distortion on images.
+    This function needs *undistorted* images.
     """
     def drawLineOnImg1(line):
         nonlocal img1
@@ -276,7 +276,6 @@ def drawCorrespondingEpipolarLines(img1, img2, F, x1=[], x2=[], color=(0,0,255),
         cv2.line(img2, (line_from[0],line_from[1]), (line_to[0],line_to[1]) , color=color, thickness=thickness )
         return ((line_from[0]+line_to[0])/2,(line_from[1]+line_to[1])/2)
         
-    # cv2.computeCorrespondingEpilines may be also used here.
     # Compute lines corresponding to x1 points
     for x in x1:
         p = np.array([ [x[0]], [x[1]], [1]])

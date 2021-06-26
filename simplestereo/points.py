@@ -4,6 +4,7 @@ postprocessing
 Functions to manage disparity maps and point clouds.
 '''
 import numpy as np
+import cv2
 
 def exportPLY(points3D, filepath, referenceImage=None, precision=6):
     """
@@ -95,3 +96,58 @@ def importPoints(filename, x=0, y=1, z=2):
             points.append([ float(prop[x]), float(prop[y]), float(prop[z]) ])
         
     return np.asarray(points, dtype=float)
+
+
+
+def getAdimensional3DPoints(disparityMap):
+    """
+    Get adimensional 3D points from the disparity map.
+    
+    This is the adimensional version of
+    `RectifiedStereoRig.get3DPoints()`.
+    Useful to reconstruct non-metric 3D models from any disparity map
+    when the stereo rig object is not known.
+    It may lead to incorrect proportions.
+    
+    Parameters
+    ----------
+    disparityMap : numpy.ndarray
+        A dense disparity map having same height and width of images.
+    
+    Returns
+    -------
+    numpy.ndarray
+        Array of points having shape *(height,width,3)*, where at each y,x coordinates
+        a *(x,y,z)* point is associated.
+    
+    See Also
+    --------
+    :meth:`RectifiedStereoRig.get3DPoints`
+    """
+    height, width = disparityMap.shape[:2]
+    
+    b   = 1
+    fx  = width
+    fy  = width
+    cx1 = width/2
+    cx2 = width/2
+    a1  = 0
+    a2  = 0
+    cy  = height/2
+    
+    Q = np.eye(4, dtype='float64')
+    
+    Q[0,1] = -a1/fy
+    Q[0,3] = a1*cy/fy - cx1
+    
+    Q[1,1] = fx/fy
+    Q[1,3] = -cy*fx/fy
+                             
+    Q[2,2] = 0
+    Q[2,3] = -fx
+    
+    Q[3,1] = (a2-a1)/(fy*b)
+    Q[3,2] = 1/b                        
+    Q[3,3] = ((a1-a2)*cy+(cx2-cx1)*fy)/(fy*b)    
+    
+    return cv2.reprojectImageTo3D(disparityMap, Q)
