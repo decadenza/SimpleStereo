@@ -62,7 +62,7 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
                         referenceImage[i], p=precision)) # Grayscale
     
 
-def importPoints(filename, x=0, y=1, z=2):
+def importPLY(filename, x=0, y=1, z=2):
     """
     Import 3D coordinates from PLY file.
     
