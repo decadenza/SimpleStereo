@@ -92,7 +92,7 @@ def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColo
     if vertical is True:
         dims = (dims[1], dims[0]) # Swap dimensions
         
-    row = np.iinfo(dtype).max * ((1 + np.cos(2*np.pi*(1/period)*np.arange(dims[0], dtype=float)))/2)[np.newaxis,:]
+    row = np.iinfo(dtype).max * ((1 + np.cos(2*np.pi*(1/period)*(np.arange(dims[0], dtype=float) + shift)))/2)[np.newaxis,:]
     
     if centralColor is not None:
         row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
