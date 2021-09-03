@@ -62,7 +62,7 @@ def generateGrayCodeImgs(targetDir, resolution):
     return num_patterns
 
 
-def buildFringe(period=10, dims=(1280,720), color=(0,0,255), dtype=np.uint8):
+def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColor=None, dtype=np.uint8):
     """
     Build discrete sinusoidal fringe image.
     
@@ -70,11 +70,15 @@ def buildFringe(period=10, dims=(1280,720), color=(0,0,255), dtype=np.uint8):
     ----------
     period : float
         Fringe period along x axis, in pixels.
+    shift : float
+        Shift to apply. Default to 0.
     dims : tuple
         Image dimensions as (width, height).
-    color : tuple
-        BGR color for the central stripe. If none, no stripe is drawn and
-        a grayscale image is returned. Default to red (0,0,255).
+    vertical : bool
+        If True, fringe is build along vertical. Default to False (horizontal).
+    centralColor : tuple
+        BGR color for the central stripe. If None (default), no stripe is drawn and
+        a grayscale image is returned.
     dtype: numpy.dtype
         Image is scaled in the range 0 - max value to match `dtype`.
         Default np.uint8 (max 255).
@@ -84,18 +88,25 @@ def buildFringe(period=10, dims=(1280,720), color=(0,0,255), dtype=np.uint8):
     numpy.ndarray
         Fringe image.
     """
-        
-    row = np.iinfo(dtype).max * ((1 + np.sin(2*np.pi*(1/period)*np.arange(dims[0], dtype=float)))/2)[np.newaxis,:]
     
-    if color is not None:
+    if vertical is True:
+        dims = (dims[1], dims[0]) # Swap dimensions
+        
+    row = np.iinfo(dtype).max * ((1 + np.cos(2*np.pi*(1/period)*np.arange(dims[0], dtype=float)))/2)[np.newaxis,:]
+    
+    if centralColor is not None:
         row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
         left = int( period * ( int(dims[0]/(2*period)) - 0.25 ) )
         right = int(left+period)
-        row[0, left:right, 0] *= color[0]/255
-        row[0, left:right, 1] *= color[1]/255 
-        row[0, left:right, 2] *= color[2]/255 
+        row[0, left:right, 0] *= centralColor[0]/255
+        row[0, left:right, 1] *= centralColor[1]/255 
+        row[0, left:right, 2] *= centralColor[2]/255 
         
     fullFringe = np.repeat(row.astype(dtype), dims[1], axis=0)
+    
+    if vertical is True:
+        # Left->Right becomes Top->Bottom
+        fullFringe = np.rot90(fullFringe, k=3, axes=(0,1))
         
     return fullFringe
 
