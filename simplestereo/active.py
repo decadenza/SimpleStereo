@@ -193,7 +193,7 @@ class StereoFTP:
         Threshold to find the stripe. See :func:`findCentralStripe()`.
     """
     
-    def __init__(self, stereoRig, lc, fringe, period,
+    def __init__(self, stereoRig, fringeDims, period,
                  stripeColor=(0,0,255), stripeThreshold=100):
         
         if fringe.ndim != 3:
@@ -206,23 +206,14 @@ class StereoFTP:
         self.stripeColor = stripeColor
         self.stripeThreshold = stripeThreshold
         
+        
         # Initialization data
         self.projCoords, self.reference = self._getProjectorMapping()
         self.reference_gray = self.convertGrayscale(self.reference)
         self.Rectify1, self.Rectify2, self.Rotation = ss.rectification._lowLevelRectify(stereoRig)
         self.fc = self._calculateCameraFrequency()
         
-        ### Find central stripe on fringe image
-        cs = ss.active.findCentralStripe(self.fringe,
-                                stripeColor, stripeThreshold)
-        cs = cs.reshape(-1,1,2).astype(np.float64)
-        cs = cv2.undistortPoints(cs,               # Consider distortion
-                        self.stereoRig.intrinsic2,
-                        self.stereoRig.distCoeffs2,
-                        P=self.stereoRig.intrinsic2)
-        # One pixel spaced (x,y) coords of the stripe
-        # over the projector image height
-        self.fringeStripe = cs.reshape(-1,2)
+        
         
         ### Get epipole on projector
         # Project camera position (0,0,0) onto projector image plane.
@@ -249,7 +240,7 @@ class StereoFTP:
         """
         return np.max(img,axis=2)
     
-    
+    '''
     def _getProjectorMapping(self, interpolation = cv2.INTER_CUBIC):
         """
         Find projector image points corresponding to each camera pixel
@@ -369,6 +360,7 @@ class StereoFTP:
         
         # Return frequency
         return 1/Tc    
+    '''
     
     def getCloud(self, image, fc=None, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
         """
@@ -405,8 +397,25 @@ class StereoFTP:
         if image.ndim != 3:
             raise ValueError("image must be a BGR color image!")
         
-        if fc is None:
-            fc = self.fc
+        
+        
+        ### Find central stripe on camera image
+        cs = ss.active.findCentralStripe(image,
+                                self.stripeColor, self.stripeThreshold)
+        cs = cs.reshape(-1,1,2).astype(np.float64)
+        cs = cv2.undistortPoints(cs,               # Consider distortion
+                        self.stereoRig.intrinsic2,
+                        self.stereoRig.distCoeffs2,
+                        P=self.stereoRig.intrinsic2)
+        stripe = cs.reshape(-1,2)
+        
+        
+        
+        
+        
+        
+        
+        
             
         widthC, heightC = self.stereoRig.res1 # Camera resolution
         imgR = self.reference
