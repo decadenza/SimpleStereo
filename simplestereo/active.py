@@ -62,6 +62,15 @@ def generateGrayCodeImgs(targetDir, resolution):
     return num_patterns
 
 
+def _getCentralPeak(w, period, shift):
+    """
+    Get peak of intensity around central fringe value.
+    """
+    k = (w/2)//period
+    
+    return period*(k - shift/(2*np.pi))
+    
+
 def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColor=None, dtype=np.uint8):
     """
     Build discrete sinusoidal fringe image.
@@ -96,8 +105,8 @@ def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColo
     
     if centralColor is not None:
         row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
-        k = (dims[0]/2)//period
-        left = int( period*(k - shift/(2*np.pi) - 0.5) )
+        peak = _getCentralPeak(dims[0], period, shift)
+        left = int( peak - period/2 )
         right = int(left+period)
         row[0, left:right, 0] *= centralColor[0]/255
         row[0, left:right, 1] *= centralColor[1]/255 
@@ -190,32 +199,19 @@ class StereoFTP:
         Threshold to find the stripe. See :func:`findCentralStripe()`.
     """
     
-    def __init__(self, stereoRig, fringeDims, period,
+    def __init__(self, stereoRig, fringeDims, period, shift=0,
                  stripeColor=(0,0,255), stripeThreshold=100):
-        
-        if fringe.ndim != 3:
-            raise ValueError("fringe must be a BGR color image!")
         
         self.stereoRig = stereoRig
         self.fringeDims = fringeDims
         self.fp = 1/period
         self.stripeColor = stripeColor
         self.stripeThreshold = stripeThreshold
-        
-        '''
-        # Initialization data
-        self.projCoords, self.reference = self._getProjectorMapping()
-        self.reference_gray = self.convertGrayscale(self.reference)
-        self.Rectify1, self.Rectify2, self.Rotation = ss.rectification._lowLevelRectify(stereoRig)
-        self.fc = self._calculateCameraFrequency()
+        self.stripeCentralPeak = _getCentralPeak(fringeDims[0], period, shift)
+        self.F = self.stereoRig.getFundamentalMatrix()
+        self.Rectify1, self.Rectify2, _ = ss.rectification._lowLevelRectify(stereoRig)
         
         
-        
-        ### Get epipole on projector
-        # Project camera position (0,0,0) onto projector image plane.
-        ep = self.stereoRig.intrinsic2.dot(self.stereoRig.T)
-        self.ep = ep/ep[2]
-        '''
     
     @staticmethod
     def convertGrayscale(img):
@@ -294,9 +290,9 @@ class StereoFTP:
         return projCoords, virtualReferenceImg
     '''
     
-    def _calculateCameraFrequency(self, z):
+    def _calculateCameraFrequency(self, objPoints):
         """
-        Estimate fc from system geometry, fp and z value.
+        Estimate fc from system geometry, fp and object points value.
         
         Draw a plane at given z distance in front of the camera.
         Find period size on it and project that size on camera.
@@ -309,11 +305,14 @@ class StereoFTP:
         T = self.stereoRig.T
         Dp = self.stereoRig.distCoeffs2
         
-        Op = -np.linalg.inv(R).dot(T)
-        ObjCenter = np.array([[[0],[0],[z]]], dtype=np.float32)
+        Op = (-np.linalg.inv(R).dot(T)).flatten()
+        
+        #ObjCenter = np.array([[[0],[0],[z]]], dtype=np.float32)
+        objPoints = objPoints.reshape(-1,1,3).astype(np.float32)
+        n = objPoints.shape[0]
         
         # Send center of reference plane to projector
-        pCenter, _ = cv2.projectPoints(ObjCenter, R, T, 
+        pCenter, _ = cv2.projectPoints(objPoints, R, T, 
             self.stereoRig.intrinsic2, self.stereoRig.distCoeffs2)
         # Now we are in the projected image
         # Perfect fringe pattern. No distortion
@@ -321,53 +320,87 @@ class StereoFTP:
         # Find two points at distance Tp (period on projector)
         halfPeriodP = (1/self.fp)/2
         
-        leftP = pCenter[0,0,0] - halfPeriodP
-        rightP = pCenter[0,0,0] + halfPeriodP
-        points = np.array([[leftP,pCenter[0,0,1]], [rightP,pCenter[0,0,1]]])
+        leftX = pCenter[:,0,0] - halfPeriodP
+        rightX = pCenter[:,0,0] + halfPeriodP
         
+        points = np.vstack( ( np.hstack((leftX.reshape(-1,1), pCenter[:,0,1].reshape(-1,1))), np.hstack((rightX.reshape(-1,1), pCenter[:,0,1].reshape(-1,1))) ) )
+        points = points.reshape(-1,1,2) # Shape (2n, 1, 2)
+        
+        ### Deproject on world plane
         # Un-distort points for the projector means to distort
         # as the pinhole camera model is made for cameras
         # and we are projecting back to 3D world
-        #print(points)
-        distortedPoints = cv2.undistortPoints(points, Ap, Dp, P=Ap)
+        distortedPoints = cv2.undistortPoints(points, Ap, Dp, P=Ap) # Shape (2n, 1, 2)
         
-        # De-project points to reference plane
+        # De-project in homogeneous coordinates at known world z
+        # s * pp = Ap[R | T] * [pw 1].T
         invARp = np.linalg.inv(Ap.dot(R))
-        M = np.array([[z-Op[2],0,Op[0]],[0,z-Op[2],Op[1]], [0,0,z]],dtype=np.object)
-        
-        wLeft = invARp.dot(np.append(distortedPoints[0,0,:], [1]))  # Left point
-        wRight = invARp.dot(np.append(distortedPoints[1,0,:], [1])) # Right point
-        
-        # Normalize
-        wLeft = wLeft/wLeft[2]
-        wRight = wRight/wRight[2]
-        
-        # De-project
-        wLeft = M.dot(wLeft)
-        wRight = M.dot(wRight)
-        
-        # Put in shape (2,1,3)
-        wPoints = np.array([ [wLeft],[wRight] ],dtype=np.float32)
+        pp = np.hstack( ( distortedPoints.reshape(-1,2), np.ones((2*n,1), dtype=objPoints.dtype) ) ) # Shape (2n, 3)
+        z = np.tile(objPoints[:,0,2].reshape(-1,1), (2,1)) # Shape (2n, 1)
+        h = (invARp.dot(pp.T)).T # Shape (2n, 3)
+        s = (z - Op[2])/h[:,[2]] # Shape (2n, )
+        pw = s * h + Op.reshape(1,3)
         
         # Project on camera image plane (also applying lens distortion).
-        # b points are like seen by the camera!
-        b, _ = cv2.projectPoints(wPoints, np.eye(3), np.zeros((3,1)), Ac, Dc)
-        
-        # Now we have 2 points on the camera that differ
+        # b points are seen by the camera (from world origin)
+        pc, _ = cv2.projectPoints(pw.reshape(-1,1,3), np.eye(3), np.zeros((3,1)), Ac, Dc) # Shape (2n, 1, 2)
+        pc = pc.reshape(-1, 2)
+        a = pc[:n]
+        b = pc[n:]
+        # Now we have couples of 2 points on the camera that differ
         # exactly one projector period from each other
         # as seen by the camera
-        # Use the first Euclid theorem to get the wanted period
-        Tc = ((b[0,0,0] - b[1,0,0])**2 + (b[0,0,1] - b[1,0,1])**2)/abs(b[0,0,0]-b[1,0,0])
+        # Use the first Euclid theorem to get the effective period
+        Tc = ((a[:,0] - b[:,0])**2 + (a[:,1] - b[:,1])**2)/np.abs(a[:,0]-b[:,0])
         
         # Return frequency
         return 1/Tc    
     
-    def _triangulate(self, c_x, c_y, p_x):
+    def _triangulate(self, camPoints, p_x, roi):
         """
-        Given camera point (c_x, c_y) and projector x value p_x
-        find 3D point.
+        For each camera undistorted point (c_x, c_y) and corresponding 
+        projector x-value p_x, find 3D point using Fundamental matrix.
         """
-        pass
+        camPoints = camPoints.reshape(-1,2)
+        n = camPoints.shape[0]
+        
+        camPoints[:,0] += roi[0] # Add coordinate x shift
+        camPoints[:,1] += roi[1] # Add coordinate y shift
+        
+        ones = np.ones((n,1), dtype=camPoints.dtype)
+        epipolarLinesP = np.hstack( (camPoints, ones) ).dot(self.F.T) # Shape (n, 3)
+        
+        #ones = np.ones((1,n), dtype=camPoints.dtype)
+        #epipolarLinesP = self.F.dot( np.vstack((camPoints.T, ones)) ) # Shape (3, n)
+        #epipolarLinesP = epipolarLinesP.T # Shape (n, 3)
+        
+        # Get p_y values
+        if np.isscalar(p_x):
+            p_x = np.full((n,), p_x, dtype=camPoints.dtype)
+        p_x = p_x.flatten()
+        
+        p_y = -(epipolarLinesP[:,0]*p_x + epipolarLinesP[:,2])/epipolarLinesP[:,1]
+        p_y = p_y.reshape(-1,1)
+        projPoints = np.hstack((p_x.reshape(-1,1), p_y)) # Shape (n, 2)
+        
+        ### Triangulate
+        # Apply rectification to cam (already undistorted)
+        pc = cv2.perspectiveTransform(camPoints.reshape(-1,1,2), self.Rectify1)
+        
+        # Apply lens correction to projector and rectify
+        Ap = self.stereoRig.intrinsic2
+        Dp = self.stereoRig.distCoeffs2
+        pp = cv2.undistortPoints(projPoints.reshape(-1,1,2), Ap, Dp, P=Ap)
+        pp = cv2.perspectiveTransform(pp, self.Rectify2)
+        
+        disparity = np.abs(pp[:,0,[0]] - pc[:,0,[0]])
+        
+        pc = np.hstack( (pc.reshape(-1,2), np.ones((n,1), dtype=camPoints.dtype)) ) # Shape (n, 3)
+        pw = self.stereoRig.getBaseline()*(pc/disparity) # Shape (n, 3)
+        
+        return pw
+        
+        
     
     def getCloud(self, imgObj, fc=None, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
         """
@@ -399,15 +432,17 @@ class StereoFTP:
         if imgObj.ndim != 3:
             raise ValueError("image must be a BGR color image!")
         
-        
         widthC, heightC = self.stereoRig.res1 # Camera resolution
+        
+        # Undistort camera image
+        imgObj = cv2.undistort(imgObj, self.stereoRig.intrinsic1, self.stereoRig.distCoeffs1)
         
         if roi is not None:
             # Cut image to given roi
             roi_x, roi_y, roi_w, roi_h = roi
             imgObj = imgObj[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
         else:
-            roi_x,roi_y,roi_w,roi_h = (0,0,widthC,heightC)
+            roi = (0,0,widthC,heightC)
             
         
         if fc is None:
@@ -424,13 +459,58 @@ class StereoFTP:
             stripe = cs.reshape(-1,2) # x, y camera points
             
             ### Find world points corresponding to stripe
+            pw = self._triangulate(stripe, self.stripeCentralPeak, roi)
             
+            # For each point (= for each row) estimate fc
+            fc = self._calculateCameraFrequency(pw)
             
+        
+        # Preprocess image for phase analysis
+        imgObj_gray = self.convertGrayscale(imgObj)
+        
+        # FFT
+        G = np.fft.fft(imgObj_gray, axis=1)
+        freqs = np.fft.fftfreq(roi_w)
+        
+        # Pass-band filter parameters
+        radius = radius_factor*fc
+        fmin = fc - radius
+        fmax = fc + radius
+        
+        
+        
+        
+        if plot:
+            cv2.namedWindow('Object',cv2.WINDOW_NORMAL)
+            cv2.imshow("Object", imgObj)
+            print("Press a key over the images to continue...")
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
             
+            # Get discrete indexes of frequencies
+            #fIndex = np.argmin( np.abs(freqs.reshape(1,-1) - fc.reshape(-1,1)), axis=1 ) # Shape (roi_h, )
+            #fminIndex = np.argmin( np.abs(freqs.reshape(1,-1) - fmin.reshape(-1,1)), axis=1 ) # Shape (roi_h, )
+            #fmaxIndex = np.argmin( np.abs(freqs.reshape(1,-1) - fmax.reshape(-1,1)), axis=1 ) # Shape (roi_h, )
+            fIndex = min(range(len(freqs)), key=lambda i: abs(freqs[i]-fc[roi_w//2]))
+            fminIndex = min(range(len(freqs)), key=lambda i: abs(freqs[i]-fmin[roi_w//2]))
+            fmaxIndex = min(range(len(freqs)), key=lambda i: abs(freqs[i]-fmax[roi_w//2]))
+                
+            plt.suptitle("Middle row FFT module")
+            # Show module of FFTs
+            plt.plot(freqs[:roi_w//2], np.absolute(G[roi_h//2-1,:roi_w//2]), label="|G|", linestyle='-', color='blue')
+            # Show filtered band
+            plt.axvline(x=freqs[fIndex], linestyle='-', color='black')
+            plt.axvline(x=freqs[fminIndex], linestyle='dotted', color='black')
+            plt.axvline(x=freqs[fmaxIndex], linestyle='dotted', color='black')
+            
+            plt.title(f"fc={fc[roi_w//2]}", size="small")    
+            plt.legend()
+            plt.show()
+            plt.close()
         
-        
-        
-        
+        # Phase filtering
+        G[ (freqs.reshape(1,-1) - fmin.reshape(-1,1)) < 0 ] = 0
+        G[ (freqs.reshape(1,-1) - fmax.reshape(-1,1)) > 0 ] = 0
         
         
         '''
@@ -797,9 +877,9 @@ class GrayCodeDouble:
         self.num_patterns = self.graycode.getNumberOfPatternImages()
         self.Rectify1, self.Rectify2, commonRotation = ss.rectification._lowLevelRectify(rig)
         ### Get inverse common orientation and extend to 4x4 transform
-        self.R_inv = np.linalg.inv(commonRotation)
-        self.R_inv = np.hstack( ( np.vstack( (self.R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
-        self.R_inv[3,3] = 1
+        #self.R_inv = np.linalg.inv(commonRotation)
+        #self.R_inv = np.hstack( ( np.vstack( (self.R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
+        #self.R_inv[3,3] = 1
         
     def getCloud(self, images, roi1=None, roi2=None):
         """

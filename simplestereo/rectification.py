@@ -246,7 +246,7 @@ def _lowLevelRectify(rig):
     Get basic rectification using Fusiello et al.
     for *internal* purposes only.
     
-    This assumes that camera is in world origin.
+    This assumes that camera is coincident with world origin.
     Please refer to the rectification module for general
     image rectification.
     
@@ -269,8 +269,10 @@ def _lowLevelRectify(rig):
     R = np.array( [ v1, v2, v3 ] )
     
     # Build rectification transforms
-    R1 = ( R ).dot( np.linalg.inv(rig.intrinsic1) )
-    R2 = ( R ).dot( np.linalg.inv(rig.R) ).dot( np.linalg.inv(rig.intrinsic2) )
+    #R1 = ( R ).dot( np.linalg.inv(rig.intrinsic1) )
+    R1 = np.linalg.inv(rig.intrinsic1)
+    #R2 = ( R ).dot( np.linalg.inv(rig.R) ).dot( np.linalg.inv(rig.intrinsic2) )
+    R2 = ( np.linalg.inv(rig.R) ).dot( np.linalg.inv(rig.intrinsic2) )
     
     return R1, R2, R
 
