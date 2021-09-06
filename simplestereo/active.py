@@ -96,7 +96,8 @@ def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColo
     
     if centralColor is not None:
         row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
-        left = int( period * ( int(dims[0]/(2*period)) - 0.25 ) )
+        k = (dims[0]/2)//period
+        left = int( period*(k - shift/(2*np.pi) - 0.5) )
         right = int(left+period)
         row[0, left:right, 0] *= centralColor[0]/255
         row[0, left:right, 1] *= centralColor[1]/255 
@@ -179,12 +180,8 @@ class StereoFTP:
     stereoRig : StereoRig
         A stereo rig object with camera in position 1 (world origin) and projector in
         position 2.
-    lc : float
-        Approximate distance from the reference plane (in world units). This does not affect 3D points
-        but the reference image. You should ensure that no black border appears on your
-        region of interest (ROI).
-    fringe : numpy.ndarray
-        Image of the original projected fringe. 
+    fringeDims : tuple
+        Dimensions of projector image as (width, height).
     period : float
         Period of the fringe (in pixels).
     stripeColor : tuple, optional
@@ -200,13 +197,12 @@ class StereoFTP:
             raise ValueError("fringe must be a BGR color image!")
         
         self.stereoRig = stereoRig
-        self.fringe = fringe
+        self.fringeDims = fringeDims
         self.fp = 1/period
-        self.lc = lc
         self.stripeColor = stripeColor
         self.stripeThreshold = stripeThreshold
         
-        
+        '''
         # Initialization data
         self.projCoords, self.reference = self._getProjectorMapping()
         self.reference_gray = self.convertGrayscale(self.reference)
@@ -219,6 +215,7 @@ class StereoFTP:
         # Project camera position (0,0,0) onto projector image plane.
         ep = self.stereoRig.intrinsic2.dot(self.stereoRig.T)
         self.ep = ep/ep[2]
+        '''
     
     @staticmethod
     def convertGrayscale(img):
@@ -295,10 +292,14 @@ class StereoFTP:
         virtualReferenceImg = cv2.remap(self.fringe, mapx, mapy, interpolation);
         
         return projCoords, virtualReferenceImg
+    '''
     
-    def _calculateCameraFrequency(self):
+    def _calculateCameraFrequency(self, z):
         """
-        Estimate fc from system geometry and fp.
+        Estimate fc from system geometry, fp and z value.
+        
+        Draw a plane at given z distance in front of the camera.
+        Find period size on it and project that size on camera.
         """
         Ac = self.stereoRig.intrinsic1
         Dc = self.stereoRig.distCoeffs1
@@ -309,7 +310,7 @@ class StereoFTP:
         Dp = self.stereoRig.distCoeffs2
         
         Op = -np.linalg.inv(R).dot(T)
-        ObjCenter = np.array([[[0],[0],[self.lc]]], dtype=np.float32)
+        ObjCenter = np.array([[[0],[0],[z]]], dtype=np.float32)
         
         # Send center of reference plane to projector
         pCenter, _ = cv2.projectPoints(ObjCenter, R, T, 
@@ -332,7 +333,7 @@ class StereoFTP:
         
         # De-project points to reference plane
         invARp = np.linalg.inv(Ap.dot(R))
-        M = np.array([[self.lc-Op[2],0,Op[0]],[0,self.lc-Op[2],Op[1]], [0,0,self.lc]],dtype=np.object)
+        M = np.array([[z-Op[2],0,Op[0]],[0,z-Op[2],Op[1]], [0,0,z]],dtype=np.object)
         
         wLeft = invARp.dot(np.append(distortedPoints[0,0,:], [1]))  # Left point
         wRight = invARp.dot(np.append(distortedPoints[1,0,:], [1])) # Right point
@@ -360,15 +361,21 @@ class StereoFTP:
         
         # Return frequency
         return 1/Tc    
-    '''
     
-    def getCloud(self, image, fc=None, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
+    def _triangulate(self, c_x, c_y, p_x):
+        """
+        Given camera point (c_x, c_y) and projector x value p_x
+        find 3D point.
+        """
+        pass
+    
+    def getCloud(self, imgObj, fc=None, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
         """
         Process an image and get the point cloud.
         
         Parameters
         ----------
-        image : numpy.ndarray
+        imgObj : numpy.ndarray
             BGR image acquired by the camera.
         fc : float, optional
             Fundamental frequency from the camera. If None,
@@ -386,36 +393,47 @@ class StereoFTP:
         -------
         Point cloud with shape (height,width,3), with height and width 
         same as the input image or selected `roi`.
-        
-        .. todo::
-            If `roi`, `fc` and `radius_factor` are left unchanged, the
-            reference image cut and filtering is uselessly done each time.
-        
         """
         
         # Check that is a color image
-        if image.ndim != 3:
+        if imgObj.ndim != 3:
             raise ValueError("image must be a BGR color image!")
         
         
+        widthC, heightC = self.stereoRig.res1 # Camera resolution
         
-        ### Find central stripe on camera image
-        cs = ss.active.findCentralStripe(image,
-                                self.stripeColor, self.stripeThreshold)
-        cs = cs.reshape(-1,1,2).astype(np.float64)
-        cs = cv2.undistortPoints(cs,               # Consider distortion
-                        self.stereoRig.intrinsic2,
-                        self.stereoRig.distCoeffs2,
-                        P=self.stereoRig.intrinsic2)
-        stripe = cs.reshape(-1,2)
+        if roi is not None:
+            # Cut image to given roi
+            roi_x, roi_y, roi_w, roi_h = roi
+            imgObj = imgObj[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
+        else:
+            roi_x,roi_y,roi_w,roi_h = (0,0,widthC,heightC)
+            
+        
+        if fc is None:
+            # If filtering frequency is not given, estimate from red line.
+            
+            # Find central stripe on camera image
+            cs = ss.active.findCentralStripe(imgObj,
+                                    self.stripeColor, self.stripeThreshold)
+            cs = cs.reshape(-1,1,2).astype(np.float64)
+            cs = cv2.undistortPoints(cs,               # Consider distortion
+                            self.stereoRig.intrinsic2,
+                            self.stereoRig.distCoeffs2,
+                            P=self.stereoRig.intrinsic2)
+            stripe = cs.reshape(-1,2) # x, y camera points
+            
+            ### Find world points corresponding to stripe
+            
+            
+            
         
         
         
         
         
         
-        
-        
+        '''
             
         widthC, heightC = self.stereoRig.res1 # Camera resolution
         imgR = self.reference
@@ -599,7 +617,7 @@ class StereoFTP:
         # Reshape as original image    
         return finalPoints.reshape(roi_h,roi_w,3)
 
-
+        '''
 
 class GrayCode:
     """
