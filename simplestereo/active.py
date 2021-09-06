@@ -512,84 +512,9 @@ class StereoFTP:
         G[ (freqs.reshape(1,-1) - fmin.reshape(-1,1)) < 0 ] = 0
         G[ (freqs.reshape(1,-1) - fmax.reshape(-1,1)) > 0 ] = 0
         
-        
-        '''
-            
-        widthC, heightC = self.stereoRig.res1 # Camera resolution
-        imgR = self.reference
-        imgR_gray = self.reference_gray
-        projCoords = self.projCoords
-        imgObj = cv2.undistort(image, self.stereoRig.intrinsic1, self.stereoRig.distCoeffs1)
-        
-        if roi is not None:
-            roi_x,roi_y,roi_w,roi_h = roi
-            # Cut images to roi
-            imgObj = imgObj[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
-            imgR = imgR[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
-            imgR_gray = imgR_gray[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
-            projCoords = projCoords[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
-        else:
-            roi_x,roi_y,roi_w,roi_h = (0,0,widthC,heightC)
-            
-        # Preprocess image for phase analysis
-        imgObj_gray = self.convertGrayscale(imgObj)
-        
-        ### Phase analysis
-        G0 = np.fft.fft(imgR_gray, axis=1)     # FFT on x dimension
-        G = np.fft.fft(imgObj_gray, axis=1)
-        freqs = np.fft.fftfreq(roi_w)
-        
-        # Pass-band filter
-        radius = radius_factor*fc
-        fmin = fc - radius
-        fmax = fc + radius
-        
-        fIndex = min(range(len(freqs)), key=lambda i: abs(freqs[i]-fc))
-        fminIndex = min(range(len(freqs)), key=lambda i: abs(freqs[i]-fmin))
-        fmaxIndex = min(range(len(freqs)), key=lambda i: abs(freqs[i]-fmax))
-        
-        if plot:
-            cv2.namedWindow('Virtual reference',cv2.WINDOW_NORMAL)
-            cv2.namedWindow('Object',cv2.WINDOW_NORMAL)
-            cv2.imshow("Virtual reference", imgR)
-            cv2.imshow("Object", imgObj)
-            print("Press a key over the images to continue...")
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-            
-            plt.suptitle("Middle row absolute phase")
-            # Show module of FFTs
-            plt.plot(freqs[:roi_w//2], np.absolute(G0[roi_h//2-1,:roi_w//2]), label="|G0|", linestyle='--', color='red')
-            plt.plot(freqs[:roi_w//2], np.absolute(G[roi_h//2-1,:roi_w//2]), label="|G|", linestyle='-', color='blue')
-            # Show filtered band
-            plt.axvline(x=freqs[fIndex], linestyle='-', color='black')
-            plt.axvline(x=freqs[fminIndex], linestyle='dotted', color='black')
-            plt.axvline(x=freqs[fmaxIndex], linestyle='dotted', color='black')
-            
-            plt.title(f"fc={fc}", size="small")    
-            plt.legend()
-            plt.show()
-            plt.close()
-        
-        ### Phase filtering
-        # The band-pass filter introduces some systematic error.
-        # Larger the filter, more complex shape are followed, but
-        # more noise is introduced (aliasing).
-        
-        # Reference image filtering
-        G0[:,:fminIndex] = 0
-        G0[:,fmaxIndex+1:] = 0
-        g0hat = np.fft.ifft(G0,axis=1)
-        
-        # Object image filtering
-        G[:,:fminIndex] = 0
-        G[:,fmaxIndex+1:] = 0
+        # Inverse FFT
         ghat = np.fft.ifft(G,axis=1)
-            
-        
-        # Build the new signal and get its phase
-        newSignal = ghat * np.conjugate(g0hat)
-        phase = np.angle(newSignal)
+        phase = np.angle(ghat)
         
         if unwrappingMethod is None:
             # Unwrap along the direction perpendicular to the fringe
@@ -598,7 +523,7 @@ class StereoFTP:
             phaseUnwrapped = unwrappingMethod(phase)
               
         if plot:
-            plt.title("Middle row phase")
+            plt.title("Middle row unwrapped phase")
             plt.plot(np.arange(roi_w), phase[roi_h//2-1,:], label="Phase", linestyle='-.', color='red')
             plt.plot(np.arange(roi_w), phaseUnwrapped[roi_h//2-1,:], label="Unwrapped phase", linestyle='-', color='blue')
             plt.xlabel("Pixel position", fontsize=20)
@@ -606,6 +531,10 @@ class StereoFTP:
             plt.legend(fontsize=12)
             plt.show()
             plt.close()
+        
+        
+            
+        '''
         
         ### Lazy shortcut for many values
         Ac = self.stereoRig.intrinsic1
