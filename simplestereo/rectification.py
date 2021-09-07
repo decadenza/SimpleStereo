@@ -269,10 +269,8 @@ def _lowLevelRectify(rig):
     R = np.array( [ v1, v2, v3 ] )
     
     # Build rectification transforms
-    #R1 = ( R ).dot( np.linalg.inv(rig.intrinsic1) )
-    R1 = np.linalg.inv(rig.intrinsic1)
-    #R2 = ( R ).dot( np.linalg.inv(rig.R) ).dot( np.linalg.inv(rig.intrinsic2) )
-    R2 = ( np.linalg.inv(rig.R) ).dot( np.linalg.inv(rig.intrinsic2) )
+    R1 = ( R ).dot( np.linalg.inv(rig.intrinsic1) )
+    R2 = ( R ).dot( np.linalg.inv(rig.R) ).dot( np.linalg.inv(rig.intrinsic2) )
     
     return R1, R2, R
 

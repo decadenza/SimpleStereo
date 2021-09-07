@@ -7,6 +7,7 @@ This module contains both conventional active stereo (2 cameras +
 projector) and structured-light (1 camera + projector) methods.
 """
 import os
+import math
 
 import numpy as np
 import cv2
@@ -122,7 +123,7 @@ def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColo
 
 
     
-def findCentralStripe(fringe, color, threshold=100):
+def findCentralStripe(fringe, color, threshold=100, interpolation='linear'):
     """
     Find coordinates of a colored stripe in the image.
     
@@ -137,7 +138,8 @@ def findCentralStripe(fringe, color, threshold=100):
         BGR color of the original stripe.
     threshold : int
         Threshold for color matching in 0-255 range.
-    
+    interpolation : str
+        See `scipy.interpolate.interp1d` `kind` parameter.
     Returns
     -------
     numpy.ndarray
@@ -170,7 +172,7 @@ def findCentralStripe(fringe, color, threshold=100):
     x = getCenters(fringe,axis=1)
     y = np.arange(0.5,h,1)                # Consider pixel center, as first is in y=0.5
     mask = ~np.isnan(x)                   # Remove coords with NaN
-    f = interp1d(y[mask],x[mask],kind="nearest",fill_value="extrapolate") # Interpolate
+    f = interp1d(y[mask],x[mask],kind=interpolation,fill_value="extrapolate") # Interpolate
     x = f(y)
     
     return np.vstack((x, y)).T
@@ -199,18 +201,29 @@ class StereoFTP:
         Threshold to find the stripe. See :func:`findCentralStripe()`.
     """
     
-    def __init__(self, stereoRig, fringeDims, period, shift=0,
+    def __init__(self, stereoRig, fringe, period, shift=0,
                  stripeColor=(0,0,255), stripeThreshold=100):
         
         self.stereoRig = stereoRig
-        self.fringeDims = fringeDims
+        self.fringe = self.convertGrayscale(fringe)
+        self.fringeDims = fringe.shape[:2][::-1] # (width, height)
         self.fp = 1/period
         self.stripeColor = stripeColor
         self.stripeThreshold = stripeThreshold
-        self.stripeCentralPeak = _getCentralPeak(fringeDims[0], period, shift)
+        self.stripeCentralPeak = _getCentralPeak(self.fringeDims[0], period, shift)
         self.F = self.stereoRig.getFundamentalMatrix()
-        self.Rectify1, self.Rectify2, _ = ss.rectification._lowLevelRectify(stereoRig)
+        self.Rectify1, self.Rectify2, commonR = ss.rectification._lowLevelRectify(stereoRig)
         
+        ### Get epipole on projector
+        # Project camera position (0,0,0) onto projector image plane.
+        ep = self.stereoRig.intrinsic2.dot(self.stereoRig.T)
+        self.ep = ep/ep[2]
+        
+        ### Get inverse common orientation and extend to 4x4 transform
+        R_inv = np.linalg.inv(commonR)
+        R_inv = np.hstack( ( np.vstack( (R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
+        R_inv[3,3] = 1
+        self.R_inv = R_inv
         
     
     @staticmethod
@@ -230,11 +243,15 @@ class StereoFTP:
         -------
         numpy.ndarray
             Grayscale image.
+        
+        Todo
+        ----
+        Gamma correction can be implemented as a parameter.
         """
         return np.max(img,axis=2)
     
-    '''
-    def _getProjectorMapping(self, interpolation = cv2.INTER_CUBIC):
+    
+    def _getProjectorMapping(self, z, interpolation = cv2.INTER_CUBIC):
         """
         Find projector image points corresponding to each camera pixel
         after projection on reference plane to build coordinates and
@@ -242,6 +259,13 @@ class StereoFTP:
         
         Points are processed and returned in row-major order.
         The center of each pixel is considered as point.
+        
+        Parameters
+        ----------
+        z : float
+            Desidered distance of the reference plane from the camera.
+        interpolation : int
+            See OpenCV interpolation constants. Default to `cv2.INTER_CUBIC`.
         
         Returns
         -------
@@ -274,7 +298,7 @@ class StereoFTP:
         # 1st half: To get exact projector coordinates from camera x,y coordinates (center of pixel)
         # 2d half: To build a virtual reference image (using *integer* pixel coordinates)
         pp, _ = cv2.projectPoints(doubleGrid,
-            self.lc*(self.stereoRig.R).dot(invAc), 
+            z*(self.stereoRig.R).dot(invAc), 
             self.stereoRig.T, self.stereoRig.intrinsic2,
             self.stereoRig.distCoeffs2)
         
@@ -288,7 +312,7 @@ class StereoFTP:
         virtualReferenceImg = cv2.remap(self.fringe, mapx, mapy, interpolation);
         
         return projCoords, virtualReferenceImg
-    '''
+    
     
     def _calculateCameraFrequency(self, objPoints):
         """
@@ -398,11 +422,13 @@ class StereoFTP:
         pc = np.hstack( (pc.reshape(-1,2), np.ones((n,1), dtype=camPoints.dtype)) ) # Shape (n, 3)
         pw = self.stereoRig.getBaseline()*(pc/disparity) # Shape (n, 3)
         
-        return pw
+        pw = cv2.perspectiveTransform(pw.reshape(-1,1,3), self.R_inv)
+        
+        return pw.reshape(-1,3)
         
         
     
-    def getCloud(self, imgObj, fc=None, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
+    def getCloud(self, imgObj, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
         """
         Process an image and get the point cloud.
         
@@ -410,9 +436,6 @@ class StereoFTP:
         ----------
         imgObj : numpy.ndarray
             BGR image acquired by the camera.
-        fc : float, optional
-            Fundamental frequency from the camera. If None,
-            it is calculated automatically. Default to None.
         radius_factor : float, optional
             Radius factor of the pass-band filter. Default to 0.5.
         roi : tuple, optional
@@ -445,30 +468,34 @@ class StereoFTP:
             roi = (0,0,widthC,heightC)
             
         
-        if fc is None:
-            # If filtering frequency is not given, estimate from red line.
-            
-            # Find central stripe on camera image
-            cs = ss.active.findCentralStripe(imgObj,
-                                    self.stripeColor, self.stripeThreshold)
-            cs = cs.reshape(-1,1,2).astype(np.float64)
-            cs = cv2.undistortPoints(cs,               # Consider distortion
-                            self.stereoRig.intrinsic2,
-                            self.stereoRig.distCoeffs2,
-                            P=self.stereoRig.intrinsic2)
-            stripe = cs.reshape(-1,2) # x, y camera points
-            
-            ### Find world points corresponding to stripe
-            pw = self._triangulate(stripe, self.stripeCentralPeak, roi)
-            
-            # For each point (= for each row) estimate fc
-            fc = self._calculateCameraFrequency(pw)
-            
+        ### Estimate camera carrier frequency fc    
+        # Find central stripe on camera image
+        objStripe = ss.active.findCentralStripe(imgObj,
+                                self.stripeColor, self.stripeThreshold)
+        # Process a copy for triangulation
+        cs = objStripe.reshape(-1,1,2).astype(np.float64)
+        cs = cv2.undistortPoints(cs,               # Consider distortion
+                        self.stereoRig.intrinsic1,
+                        self.stereoRig.distCoeffs1,
+                        P=self.stereoRig.intrinsic1)
+        stripe_cam = cs.reshape(-1,2) # x, y camera points
+        
+        ### Find world points corresponding to stripe
+        stripe_world = self._triangulate(stripe_cam, self.stripeCentralPeak, roi)
+        #return stripe_world
+        
+        # For each point (= for each row) estimate fc
+        fc = self._calculateCameraFrequency(stripe_world)
+        
+        ### Build virtual reference plane
+        min_z = np.min(stripe_world[:,2])
+        projCoords, imgR_gray = self._getProjectorMapping(min_z)
         
         # Preprocess image for phase analysis
         imgObj_gray = self.convertGrayscale(imgObj)
         
         # FFT
+        G0 = np.fft.fft(imgR_gray, axis=1)     # FFT on x dimension
         G = np.fft.fft(imgObj_gray, axis=1)
         freqs = np.fft.fftfreq(roi_w)
         
@@ -479,9 +506,10 @@ class StereoFTP:
         
         
         
-        
         if plot:
+            cv2.namedWindow('Virtual reference',cv2.WINDOW_NORMAL)
             cv2.namedWindow('Object',cv2.WINDOW_NORMAL)
+            cv2.imshow("Virtual reference", imgR_gray)
             cv2.imshow("Object", imgObj)
             print("Press a key over the images to continue...")
             cv2.waitKey(0)
@@ -497,6 +525,7 @@ class StereoFTP:
                 
             plt.suptitle("Middle row FFT module")
             # Show module of FFTs
+            plt.plot(freqs[:roi_w//2], np.absolute(G0[roi_h//2-1,:roi_w//2]), label="|G0|", linestyle='--', color='red')
             plt.plot(freqs[:roi_w//2], np.absolute(G[roi_h//2-1,:roi_w//2]), label="|G|", linestyle='-', color='blue')
             # Show filtered band
             plt.axvline(x=freqs[fIndex], linestyle='-', color='black')
@@ -509,16 +538,26 @@ class StereoFTP:
             plt.close()
         
         # Phase filtering
-        G[ (freqs.reshape(1,-1) - fmin.reshape(-1,1)) < 0 ] = 0
-        G[ (freqs.reshape(1,-1) - fmax.reshape(-1,1)) > 0 ] = 0
+        mask_low = (freqs.reshape(1,-1) - fmin.reshape(-1,1)) < 0
+        mask_high = (freqs.reshape(1,-1) - fmax.reshape(-1,1)) > 0
+        G[ mask_low ] = 0
+        G[ mask_high ] = 0
+        G0[ mask_low ] = 0
+        G0[ mask_high ] = 0
         
         # Inverse FFT
+        g0hat = np.fft.ifft(G0,axis=1)
         ghat = np.fft.ifft(G,axis=1)
-        phase = np.angle(ghat)
+        
+        # Build the new signal and get its phase
+        newSignal = ghat * np.conjugate(g0hat)
+        phase = np.angle(newSignal)
         
         if unwrappingMethod is None:
             # Unwrap along the direction perpendicular to the fringe
             phaseUnwrapped = np.unwrap(phase, axis=1)
+            # And remove jumps along other direction
+            phaseUnwrapped = np.unwrap(phaseUnwrapped, axis=0)            
         else:
             phaseUnwrapped = unwrappingMethod(phase)
               
@@ -533,8 +572,6 @@ class StereoFTP:
             plt.close()
         
         
-            
-        '''
         
         ### Lazy shortcut for many values
         Ac = self.stereoRig.intrinsic1
@@ -552,22 +589,21 @@ class StereoFTP:
         # we find approximated A and H points over projector image plane
         # and count the integer periods of shift between the two
         
-        # Find central line on the undistorted object image
-        objStripe = ss.active.findCentralStripe(imgObj, self.stripeColor,
-                        self.stripeThreshold)
-        
         # Find integer indexes (round half down)
         # Accept loss of precision as k values must be rounded to integers
         cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)
         
-        pointA = projCoords[cam_indexes[:,1],cam_indexes[:,0]] # As (x,y)
+        pointA = projCoords[cam_indexes[:,1],cam_indexes[:,0]] # As (x,y) on projector
         
-        # Find Hx and Ax coords and calculate vector k
-        pointA_y_rounded = np.ceil(pointA[:,1]-0.5).astype(np.int) # Round half down
-        pointH_x = self.fringeStripe[pointA_y_rounded,0] # Get all x stripe coords
+        # Calculate k for absolute phase
+        pointH_x = self.stripeCentralPeak
         theta = phaseUnwrapped[cam_indexes[:,1],cam_indexes[:,0]]
+        #k = (pointH_x - pointA[:,0])*self.fp - theta/(2*np.pi)
         k = (pointH_x - pointA[:,0])*self.fp - theta/(2*np.pi)
-        k = np.rint(k).reshape(-1,1) # Banker's rounding + appropriate reshape
+        #k = np.rint(k).reshape(-1,1) # Banker's rounding + appropriate reshape
+        # Phase is already unwrapped: use one k for all to move to correct absolute phase
+        k = np.mean(k)
+        k = np.ceil(k-0.5) #.reshape(-1,1) # Classic rounding
         
         
         # Adjust phase using k values
@@ -596,10 +632,7 @@ class StereoFTP:
         
         ### Triangulation
         
-        ### Get inverse common orientation and extend to 4x4 transform
-        R_inv = np.linalg.inv(self.Rotation)
-        R_inv = np.hstack( ( np.vstack( (R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
-        R_inv[3,3] = 1
+        
         
         # Build grid of indexes and apply rectification (undistorted camera points)
         pc = np.mgrid[0:widthC,0:heightC].T
@@ -617,16 +650,17 @@ class StereoFTP:
         
         # Get world points
         disparity = np.abs(pp[:,[0]] - pc[:,[0]])
-        pw = self.stereoRig.getBaseline()*(pc/disparity)
+        finalPoints = self.stereoRig.getBaseline()*(pc/disparity)
         
         # Cancel common orientation applied to first camera
         # to bring points into camera coordinate system
-        finalPoints = cv2.perspectiveTransform(pw.reshape(-1,1,3), R_inv)
+        # NOT NEEDED See `rectification._lowLevelRectify` 
+        finalPoints = cv2.perspectiveTransform(finalPoints.reshape(-1,1,3), self.R_inv)
         
         # Reshape as original image    
         return finalPoints.reshape(roi_h,roi_w,3)
 
-        '''
+        
 
 class GrayCode:
     """
