@@ -467,7 +467,6 @@ class StereoFTP:
         else:
             roi = (0,0,widthC,heightC)
             
-        
         ### Estimate camera carrier frequency fc    
         # Find central stripe on camera image
         objStripe = ss.active.findCentralStripe(imgObj,
@@ -475,8 +474,6 @@ class StereoFTP:
         
         # Process a copy for triangulation
         cs = objStripe.reshape(-1,1,2).astype(np.float64)
-        #cs[:,0,0] += roi_x
-        #cs[:,0,1] += roi_y
         cs = cv2.undistortPoints(cs,               # Consider distortion
                         self.stereoRig.intrinsic1,
                         self.stereoRig.distCoeffs1,
@@ -489,16 +486,18 @@ class StereoFTP:
         stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int) # As (x,y)
         
         
+        
         ### Find world points corresponding to stripe
         stripe_world = self._triangulate(stripe_cam, self.stripeCentralPeak, roi)
         #return stripe_world
         
-        ### Build virtual reference plane
+        ### Find z_min to build virtual reference plane
         min_z = np.min(stripe_world[:,2])
         
         # For each point (= for each row) estimate fc
         fc = self._calculateCameraFrequency(stripe_world)
         
+        ### Get projector mapping
         projCoords, imgR_gray = self._getProjectorMapping(min_z)
         imgR_gray = imgR_gray[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
         projCoords = projCoords[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
@@ -515,8 +514,6 @@ class StereoFTP:
         radius = radius_factor*fc
         fmin = fc - radius
         fmax = fc + radius
-        
-        
         
         if plot:
             cv2.namedWindow('Virtual reference',cv2.WINDOW_NORMAL)
@@ -1473,7 +1470,6 @@ class StereoFTP_Mapping:
             raise ValueError("image must be a BGR color image!")
         
         widthC, heightC = self.stereoRig.res1 # Camera resolution
-        widthP, heightP = self.stereoRig.res2 # Projector resolution
         
         # Undistort camera image
         imgObj = cv2.undistort(imgObj, self.stereoRig.intrinsic1, self.stereoRig.distCoeffs1)
@@ -1492,8 +1488,6 @@ class StereoFTP_Mapping:
                                 self.stripeColor, self.stripeThreshold)
         # Process a copy for triangulation
         cs = objStripe.reshape(-1,1,2).astype(np.float64)
-        #cs[:,0,0] += roi_x
-        #cs[:,0,1] += roi_y
         
         cs = cv2.undistortPoints(cs,               # Correct distortion
                         self.stereoRig.intrinsic1,
@@ -1511,14 +1505,14 @@ class StereoFTP_Mapping:
         #return stripe_world
         
         ### Build virtual reference plane
-        min_z = np.min(stripe_world[:,2])
+        #min_z = np.min(stripe_world[:,2])
         
         # For each camera stripe point (= for each row) estimate fc
         fc = self._calculateCameraFrequency(stripe_world)
         
-        projCoords, imgR_gray = self._getProjectorMapping(min_z)
-        #imgR_gray = imgR_gray[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
-        projCoords = projCoords[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w] # NEEDED ONLY FOR RED STRIPE
+        
+        #projCoords, _ = self._getProjectorMapping(min_z)
+        #projCoords = projCoords[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w] # NEEDED ONLY FOR RED STRIPE
         
         # Preprocess image for phase analysis
         imgObj_gray = self.convertGrayscale(imgObj)
@@ -1535,9 +1529,7 @@ class StereoFTP_Mapping:
         
         
         if plot:
-            cv2.namedWindow('Virtual reference',cv2.WINDOW_NORMAL)
             cv2.namedWindow('Object',cv2.WINDOW_NORMAL)
-            cv2.imshow("Virtual reference", imgR_gray)
             cv2.imshow("Object", imgObj)
             print("Press a key over the images to continue...")
             cv2.waitKey(0)
@@ -1571,7 +1563,6 @@ class StereoFTP_Mapping:
         G[ mask_high ] = 0
         
         # Inverse FFT
-        #g0hat = np.fft.ifft(G0,axis=1)
         ghat = np.fft.ifft(G,axis=1)
         
         phase = np.angle(ghat) # (-pi, pi]
@@ -1597,7 +1588,7 @@ class StereoFTP_Mapping:
             plt.close()
         
         
-        
+        '''
         ### Lazy shortcut for many values
         Ac = self.stereoRig.intrinsic1
         Dc = self.stereoRig.distCoeffs1
@@ -1609,14 +1600,8 @@ class StereoFTP_Mapping:
         ep = self.ep
         
         ### Find k values from central stripe
-        # Triangulation can be done directly between left and right red stripe
-        # and then compare with the phase value, but, as a quicker method
-        # we find approximated A and H points over projector image plane
-        # and count the integer periods of shift between the two
         
         
-        
-        '''
         pointA = projCoords[cam_indexes[:,1],cam_indexes[:,0]] # As (x,y) on projector
         # Calculate k for absolute phase MY METHOD
         pointH_x = self.stripeCentralPeak
@@ -1633,11 +1618,12 @@ class StereoFTP_Mapping:
         phaseUnwrapped = phaseUnwrapped.reshape(-1,1)
         
         '''
+        
         # Calculate absolute phase shift [S. Zhang 2006 Novel method...]
         theta_shift = phaseUnwrapped[stripe_indexes[:,1],stripe_indexes[:,0]]
         theta_shift = np.mean(theta_shift)
         
-        # Adjust phase using k values
+        # Adjust phase to get absolute phase
         phaseUnwrapped = phaseUnwrapped - theta_shift
         phaseUnwrapped = phaseUnwrapped.reshape(-1,1)
         
@@ -1646,8 +1632,8 @@ class StereoFTP_Mapping:
         p_x = self.stripeCentralPeak + (phaseUnwrapped)/(2*np.pi*self.fp)
         
         # Camera coordinates
-        camPoints = np.mgrid[roi_x:widthC,roi_y:heightC].T.reshape(-1,2).astype(np.float64)
-        
+        #camPoints = np.mgrid[roi_x:roi_x+roi_w,roi_y:roi_y+roi_h].T.reshape(-1,2).astype(np.float64)
+        camPoints = np.mgrid[0:roi_w,0:roi_h].T.reshape(-1,2).astype(np.float64)
         finalPoints = self._triangulate(camPoints, p_x, roi)
         
         # Reshape as original image    
