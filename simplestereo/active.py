@@ -1594,7 +1594,7 @@ class StereoFTP_Mapping:
         
         
         # Corresponding projector x values (add bias stripe + pixel center)
-        p_x = self.stripeCentralPeak + (phaseUnwrapped)/(2*np.pi*self.fp) + 0.5
+        p_x = self.stripeCentralPeak + (phaseUnwrapped)/(2*np.pi*self.fp)
         
         # Camera coordinates
         camPoints = np.mgrid[0:roi_w,0:roi_h].T.reshape(-1,2).astype(np.float64)
