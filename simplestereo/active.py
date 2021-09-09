@@ -478,7 +478,7 @@ class StereoFTP:
                         self.stereoRig.intrinsic1,
                         self.stereoRig.distCoeffs1,
                         P=self.stereoRig.intrinsic1)
-        stripe_cam = cs.reshape(-1,2) # x, y camera points
+        stripe_cam = cs.reshape(-1,2) # x, y camera points (undistorted)
         
         # Find integer indexes of stripe on camera (round half down)
         #cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)
@@ -1510,10 +1510,6 @@ class StereoFTP_Mapping:
         # For each camera stripe point (= for each row) estimate fc
         fc = self._calculateCameraFrequency(stripe_world)
         
-        
-        #projCoords, _ = self._getProjectorMapping(min_z)
-        #projCoords = projCoords[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w] # NEEDED ONLY FOR RED STRIPE
-        
         # Preprocess image for phase analysis
         imgObj_gray = self.convertGrayscale(imgObj)
         
@@ -1588,37 +1584,6 @@ class StereoFTP_Mapping:
             plt.close()
         
         
-        '''
-        ### Lazy shortcut for many values
-        Ac = self.stereoRig.intrinsic1
-        Dc = self.stereoRig.distCoeffs1
-        
-        Ap = self.stereoRig.intrinsic2
-        R = self.stereoRig.R
-        T = self.stereoRig.T
-        Dp = self.stereoRig.distCoeffs2
-        ep = self.ep
-        
-        ### Find k values from central stripe
-        
-        
-        pointA = projCoords[cam_indexes[:,1],cam_indexes[:,0]] # As (x,y) on projector
-        # Calculate k for absolute phase MY METHOD
-        pointH_x = self.stripeCentralPeak
-        theta = phaseUnwrapped[stripe_indexes[:,1],stripe_indexes[:,0]]
-        #k = (pointA[:,0]- pointH_x)*self.fp - theta/(2*np.pi)
-        k = (pointH_x - pointA[:,0])*self.fp - theta/(2*np.pi)
-        #k = np.rint(k).reshape(-1,1) # Banker's rounding + appropriate reshape
-        # Phase is already unwrapped: use one k for all to move to correct absolute phase
-        k = np.mean(k)
-        k = np.ceil(k-0.5) #.reshape(-1,1) # Classic rounding
-        
-        # Adjust phase using k values
-        phaseUnwrapped = phaseUnwrapped + k * 2*np.pi
-        phaseUnwrapped = phaseUnwrapped.reshape(-1,1)
-        
-        '''
-        
         # Calculate absolute phase shift [S. Zhang 2006 Novel method...]
         theta_shift = phaseUnwrapped[stripe_indexes[:,1],stripe_indexes[:,0]]
         theta_shift = np.mean(theta_shift)
@@ -1628,12 +1593,13 @@ class StereoFTP_Mapping:
         phaseUnwrapped = phaseUnwrapped.reshape(-1,1)
         
         
-        # Corresponding projector x values (add bias stripe + roi)
-        p_x = self.stripeCentralPeak + (phaseUnwrapped)/(2*np.pi*self.fp)
+        # Corresponding projector x values (add bias stripe + pixel center)
+        p_x = self.stripeCentralPeak + (phaseUnwrapped)/(2*np.pi*self.fp) + 0.5
         
         # Camera coordinates
-        #camPoints = np.mgrid[roi_x:roi_x+roi_w,roi_y:roi_y+roi_h].T.reshape(-1,2).astype(np.float64)
         camPoints = np.mgrid[0:roi_w,0:roi_h].T.reshape(-1,2).astype(np.float64)
+        camPoints += 0.5 # Consider pixel center
+        
         finalPoints = self._triangulate(camPoints, p_x, roi)
         
         # Reshape as original image    
