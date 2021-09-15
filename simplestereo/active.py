@@ -469,16 +469,18 @@ class StereoFTP:
             
         ### Estimate camera carrier frequency fc    
         # Find central stripe on camera image
-        objStripe = ss.active.findCentralStripe(imgObj,
+        stripe_cam = ss.active.findCentralStripe(imgObj,
                                 self.stripeColor, self.stripeThreshold)
         
+        '''
         # Process a copy for triangulation
         cs = objStripe.reshape(-1,1,2).astype(np.float64)
         cs = cv2.undistortPoints(cs,               # Consider distortion
                         self.stereoRig.intrinsic1,
                         self.stereoRig.distCoeffs1,
                         P=self.stereoRig.intrinsic1)
-        stripe_cam = cs.reshape(-1,2) # x, y camera points (undistorted)
+        '''
+        stripe_cam = stripe_cam.reshape(-1,2) # x, y camera points (already undistorted)
         
         # Find integer indexes of stripe on camera (round half down)
         #cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)
@@ -520,6 +522,11 @@ class StereoFTP:
             cv2.namedWindow('Object',cv2.WINDOW_NORMAL)
             cv2.imshow("Virtual reference", imgR_gray)
             cv2.imshow("Object", imgObj)
+            '''
+            temp = imgObj_gray-imgR_gray
+            temp = 255*(temp-np.min(temp))/np.ptp(temp)
+            cv2.imshow("DIFF", temp)
+            '''
             print("Press a key over the images to continue...")
             cv2.waitKey(0)
             cv2.destroyAllWindows()
@@ -559,6 +566,7 @@ class StereoFTP:
         ghat = np.fft.ifft(G,axis=1)
         
         # Build the new signal and get its phase
+        # NB Numerically this is not simple equivalent to the phase difference.
         newSignal = ghat * np.conjugate(g0hat)
         phase = np.angle(newSignal)
         
@@ -1198,6 +1206,7 @@ class GrayCode:
 class StereoFTP_Mapping:
     """
     Manager of the Stereo Fourier Transform Profilometry.
+    Classic method (does not use a virtual reference plane).
     
     Parameters
     ----------
@@ -1484,8 +1493,9 @@ class StereoFTP_Mapping:
         
         ### Estimate camera carrier frequency fc    
         # Find central stripe on camera image
-        objStripe = ss.active.findCentralStripe(imgObj,
+        stripe_cam = ss.active.findCentralStripe(imgObj,
                                 self.stripeColor, self.stripeThreshold)
+        '''
         # Process a copy for triangulation
         cs = objStripe.reshape(-1,1,2).astype(np.float64)
         
@@ -1493,7 +1503,8 @@ class StereoFTP_Mapping:
                         self.stereoRig.intrinsic1,
                         self.stereoRig.distCoeffs1,
                         P=self.stereoRig.intrinsic1)
-        stripe_cam = cs.reshape(-1,2) # x, y camera points
+        '''
+        stripe_cam = stripe_cam.reshape(-1,2) # x, y camera points (already undistorted)
         
         # Find integer indexes of stripe on camera (round half down)
         #cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)
@@ -1587,7 +1598,12 @@ class StereoFTP_Mapping:
         # Calculate absolute phase shift [S. Zhang 2006 Novel method...]
         theta_shift = phaseUnwrapped[stripe_indexes[:,1],stripe_indexes[:,0]]
         theta_shift = np.mean(theta_shift)
-        
+        '''
+        print("theta_shift", theta_shift)
+        print("divide", theta_shift/(2*np.pi))
+        print("rounded jumps*2pi", np.ceil(theta_shift/(2*np.pi) - 0.5))
+        theta_shift = 2*np.pi*(np.ceil(theta_shift/(2*np.pi) - 0.5) - 1)
+        '''
         # Adjust phase to get absolute phase
         phaseUnwrapped = phaseUnwrapped - theta_shift
         phaseUnwrapped = phaseUnwrapped.reshape(-1,1)

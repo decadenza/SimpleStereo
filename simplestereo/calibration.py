@@ -11,13 +11,16 @@ import warnings
 
 import numpy as np
 import cv2
+from scipy.ndimage import map_coordinates
 
 import simplestereo as ss
 
-# Constants definition
+
+# Constants definitions
 DEFAULT_CHESSBOARD_SIZE = (6,7) # As inner (rows, columns)
 DEFAULT_CORNERSUBPIX_WINSIZE = (11,11)
 DEFAULT_TERMINATION_CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-6)
+
 
 def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1, showImages=False):
     """
@@ -255,11 +258,8 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
         # Subpixel refinement
         cam_corners_sub = cv2.cornerSubPix(normal_img, cam_corners, DEFAULT_CORNERSUBPIX_WINSIZE, (-1,-1), DEFAULT_TERMINATION_CRITERIA)
         
-        
         cam_corners_list.append(cam_corners_sub)    
         cam_objps_list.append(objps)
-        
-        
         
         proj_objps = []
         proj_corners = []
@@ -333,12 +333,71 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
     
     return stereoRigObj
 
+
+def _getWhiteCenters(cam_corners_list, cam_int, cam_dist, chessboardSize, squareSize):
+    """
+    From ordered camera chessboard corners and camera intrinsics, get
+    world coordinate of the center of the squares.
+    
+    These areas are less affected by ambiguity and noise due to the absence of
+    high contrast pixel values.
+    """
+    
+    # Index of corners situated at the upper-left of white squares 
+    whiteUpperLeftIndexes = []
+    
+    for i in np.arange(1,chessboardSize[0]*(chessboardSize[1]-1)-1,2):
+        sel = i
+        r = (i+1)//chessboardSize[0]
+        if r%2==1 and chessboardSize[0]%2==0:
+            sel+=1
+        # Skip end of row
+        if (sel+1)%chessboardSize[0]==0:
+            continue   
+        whiteUpperLeftIndexes.append(sel)
+    
+    # Prepare white object points, like (1,0,0), (3,0,0), (5,0,0)
+    whiteObjps = np.zeros((len(whiteUpperLeftIndexes),3), dtype=np.float32)
+    for i,w in enumerate(whiteUpperLeftIndexes):
+        whiteObjps[i,0] = w//chessboardSize[0]*squareSize
+        whiteObjps[i,1] = w%chessboardSize[0]*squareSize
+    
+    
+    cam_whiteCorners_list = []
+    
+    # UNDISTORT CHESSBOARDS
+    for i,points in enumerate(cam_corners_list):
+        # Undistort points
+        points_undist = cv2.undistortPoints(points, cam_int, cam_dist)
+        whiteCenters_undist = []
+        # Given the upper left of valid white squares, find center
+        for w in whiteUpperLeftIndexes:
+            # As intersection of diagonals
+            xa,ya = points_undist[w,0]
+            xb,yb = points_undist[w+1,0]
+            xd,yd = points_undist[w+chessboardSize[0],0]
+            xc,yc = points_undist[w+chessboardSize[0]+1,0]
+            
+            xCenter = (xb*(yd-yb)*(xc-xa)+(ya-yb)*(xd-xb)*(xc-xa) - xa*(yc-ya)*(xd-xb)) / ((yd-yb)*(xc-xa)-(yc-ya)*(xd-xb))
+            yCenter = (yc-ya)*(xCenter-xa)/(xc-xa) + ya
+            
+            whiteCenters_undist.append([(xCenter,yCenter)])
+        
+        whiteCenters_dist = ss.utils.distortPoints(whiteCenters_undist,cam_dist)
+            
+        # Assign back camera intrinsics
+        whiteCenters = cv2.perspectiveTransform(whiteCenters_dist,cam_int)   
+        cam_whiteCorners_list.append(whiteCenters.astype(np.float32)) # List of [[x,y]]
+    
+    return cam_whiteCorners_list, whiteObjps
+    
     
 def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1, 
                      black_thr=40, white_thr=5, camIntrinsic=None, camDistCoeffs=None):
     """
     Performs stereo calibration between a camera (reference) and a projector.
     
+    Requires a chessboard with *black* top-left square.
     Adapted from the code available (MIT licence) at https://github.com/kamino410/procam-calibration
     and based on the paper of Daniel Moreno and Gabriel Taubin, "Simple, accurate, and
     robust projector-camera calibration", DOI: 10.1109/3DIMPVT.2012.77.
@@ -447,51 +506,9 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
         cam_int = camIntrinsic
         cam_dist = camDistCoeffs
     
-    # FIND MIDDLE-WHITE POINTS INDEXES
-    whiteUpperLeftIndexes = []
-    
-    for i in np.arange(1,chessboardSize[0]*(chessboardSize[1]-1)-1,2):
-        sel = i
-        r = (i+1)//chessboardSize[0]
-        if r%2==1 and chessboardSize[0]%2==0:
-            sel+=1
-        # Skip end of row
-        if (sel+1)%chessboardSize[0]==0:
-            continue   
-        whiteUpperLeftIndexes.append(sel)
-    
-    # Prepare white object points, like (1,0,0), (3,0,0), (5,0,0)
-    whiteObjps = np.zeros((len(whiteUpperLeftIndexes),3), dtype=np.float32)
-    for i,w in enumerate(whiteUpperLeftIndexes):
-        whiteObjps[i,0] = w//chessboardSize[0]*squareSize
-        whiteObjps[i,1] = w%chessboardSize[0]*squareSize
-    
-    
-    cam_whiteCorners_list = []
-    
-    # UNDISTORT CHESSBOARDS
-    for i,points in enumerate(cam_corners_list):
-        # Undistort points
-        points_undist = cv2.undistortPoints(points, cam_int, cam_dist)
-        whiteCenters_undist = []
-        # Given the upper left of valid white squares, find center
-        for w in whiteUpperLeftIndexes:
-            # As intersection of diagonals
-            xa,ya = points_undist[w,0]
-            xb,yb = points_undist[w+1,0]
-            xd,yd = points_undist[w+chessboardSize[0],0]
-            xc,yc = points_undist[w+chessboardSize[0]+1,0]
-            
-            xCenter = (xb*(yd-yb)*(xc-xa)+(ya-yb)*(xd-xb)*(xc-xa) - xa*(yc-ya)*(xd-xb)) / ((yd-yb)*(xc-xa)-(yc-ya)*(xd-xb))
-            yCenter = (yc-ya)*(xCenter-xa)/(xc-xa) + ya
-            
-            whiteCenters_undist.append([(xCenter,yCenter)])
-        
-        whiteCenters_dist = ss.utils.distortPoints(whiteCenters_undist,cam_dist)
-            
-        # Assign back camera intrinsics
-        whiteCenters = cv2.perspectiveTransform(whiteCenters_dist,cam_int)   
-        cam_whiteCorners_list.append(whiteCenters) # List of [[x,y]]
+    # From camera corners, get centers of white squares
+    cam_whiteCorners_list, whiteObjps = _getWhiteCenters(cam_corners_list,
+                        cam_int, cam_dist, chessboardSize, squareSize)
         
     # Iterate over sets of Gray code images
     for setnum, imageset in enumerate(images):
@@ -572,6 +589,353 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
     return stereoRigObj
 
 
+def phaseShift(periods, projectorResolution, cameraImages, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=1,
+               camIntrinsic=None, camDistCoeffs=None):
+    """
+    Calibrate camera and projector using phase shifting.
+    
+    Parameters
+    ----------
+    periods : list of lists
+        Periods of fringe used in the projector as list of lists.
+        First list is for the horizontal fringes, second for the vertical ones.
+        In descending order (e.g. 1280, 1024, 512, ...).
+    projectorResolution: tuple
+        Projector pixel resolution as (width, height).
+    cameraImages : list or tuple       
+        A list of lists (one per set) of image paths acquired by the camera.
+        Each set must be ordered, having 4 images for each period with
+        horizontal followed by vertical images.
+        In each set, last image is the one in normal light conditions.
+        At least 5-6 sets are suggested.
+    chessboardSize: tuple, optional
+        Chessboard *internal* dimensions as (cols, rows). Dimensions should be different to avoid ambiguity.
+        Default to (6,7).
+    squareSize : float, optional
+        If the square size is known, calibration can be in metric units. Default to 1.
+    camIntrinsic : numpy.ndarray, optional
+        A 3x3 matrix representing camera intrinsic parameters. If not given it will be calculated.
+    camIntrinsic : list, optional
+        Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).
+        If not given they will be calculated.
+        
+    Returns
+    -------
+    StereoRig
+        A StereoRig object
+    """
+    
+    
+    # Internal functions
+    def getPhase(imgPaths):
+        """
+        Get ordered images and retrieve wrapped phase map.
+        """
+        I = []
+        for p in imgPaths:
+            img = cv2.imread(p, cv2.IMREAD_GRAYSCALE)
+            I.append(img.astype(float))
+            
+        # cos(theta + i*pi/2) expected  
+        # Output values in [0, 2pi)
+        return np.mod( np.arctan2(I[3]-I[1], I[0]-I[2]), 2*np.pi)
+        
+    
+    def unwrap(theta0, theta1, T0, T1):
+        """
+        Given absolute phase `theta0`, wrapped phase `theta1` and their
+        respective periods `T0` and `T1`, unwrap `theta1`.
+        
+        Returned phase is normalized in [0, 2pi).
+        """
+        k = np.rint((theta0*T0/T1 - theta1)/(2*np.pi))
+        return (theta1 + 2*np.pi*k)*T1/T0
+    
+    
+    def getProjCoord(phase_x, phase_y):
+        """
+        Return projector coordinate corresponding to absolute phase values.
+        """
+        px = projectorResolution[0]*phase_x/(2*np.pi)
+        py = projectorResolution[1]*phase_y/(2*np.pi)
+        return np.hstack( (px, py) )
+    
+    
+    # Prepare camera object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...
+    objps = np.zeros((chessboardSize[0]*chessboardSize[1],3), np.float32)
+    objps[:,:2] = np.mgrid[0:chessboardSize[0],0:chessboardSize[1]].T.reshape(-1,2) * squareSize
+    
+    cam_shape = cv2.imread(cameraImages[0][0], cv2.IMREAD_GRAYSCALE).shape
+    cam_corners_list = []
+    cam_objps_list = []
+    proj_corners_list = []
+    proj_objps_list = []
+    
+    #### Camera calibration
+    cam_rvecs = []
+    cam_tvecs = []
+    
+    
+    for imageset in cameraImages:
+        
+        # Get corners from normal.png as [(x1,y1), (x2,y2), ...]
+        normal_img = cv2.imread(imageset[-1], cv2.IMREAD_GRAYSCALE)
+        res, cam_corners = cv2.findChessboardCorners(normal_img, chessboardSize)
+        
+        if not res:
+            raise ValueError(f'Chessboard not found in {imageset[-1]}!')
+        
+        # Subpixel refinement. Output as [(x1,y1), (x2,y2), ...]
+        cam_corners_sub = cv2.cornerSubPix(normal_img, cam_corners, DEFAULT_CORNERSUBPIX_WINSIZE, (-1,-1), DEFAULT_TERMINATION_CRITERIA)
+        
+        # Draw and display the corners
+        #img = cv2.drawChessboardCorners(normal_img, chessboardSize, cam_corners_sub, True)
+        #cv2.imshow('chessboard',img)
+        #cv2.waitKey(0)
+        
+        cam_corners_list.append(cam_corners_sub.astype(np.float32))
+        cam_objps_list.append(objps.astype(np.float32))
+    
+    
+        # Get absolute phase using all the acquired fringes
+        
+        i=0 # counter
+        phase = [None,None] # Horizontal and vertical absolute phases
+        for v in range(2):
+            for j,T in enumerate(periods[v]):
+                if j==0: # if it is the first (maximum period)
+                    phase[v] = getPhase(imageset[i:i+4])
+                else:
+                    phase2 = getPhase(imageset[i:i+4])
+                    phase[v] = unwrap(phase[v], phase2, periods[v][0], T)
+                    
+                i+=4 # update counter
+        
+                    
+        # Find camera-projector correspondences
+        #cam_corners_sub shape (n, 1, 2)
+        corners = cam_corners_sub.reshape(-1,2) # shape (n, 2) [[x1,y1], [x2,y2], ...]
+        corners = corners.T # (2, n)
+        corners = corners[[1,0]] # Swap x,y to get
+        
+        # Linear interpolation of non-integer coordinates
+        phase_x = map_coordinates(phase[0], corners, order=1).reshape(-1,1)
+        phase_y = map_coordinates(phase[1], corners, order=1).reshape(-1,1)
+        
+        # Get corresponding values on projector
+        proj_corners = getProjCoord(phase_x,phase_y) # Shape (n, 2)
+          
+        proj_corners_list.append(proj_corners.astype(np.float32))
+        proj_objps_list.append(objps.astype(np.float32))
+    
+    
+    # Call OpenCV calibrate
+    # Calibrate camera only if intrinsic parameters are not given
+    if camIntrinsic is None:
+        cam_rms, cam_int, cam_dist, cam_rvecs, cam_tvecs = cv2.calibrateCamera(
+            cam_objps_list, cam_corners_list, cam_shape[::-1], None, None, None, None)
+    else:
+        for objp, corners in zip(cam_objps_list, cam_corners_list):
+            cam_rms, cam_rvec, cam_tvec = cv2.solvePnP(objp, corners, camIntrinsic, camDistCoeffs) 
+            cam_rvecs.append(cam_rvec)
+            cam_tvecs.append(cam_tvec)
+        cam_int = camIntrinsic
+        cam_dist = camDistCoeffs
+    
+    # Calibrate projector
+    proj_rms, proj_int, proj_dist, proj_rvecs, proj_tvecs = cv2.calibrateCamera(
+        proj_objps_list, proj_corners_list, projectorResolution, None, None, None, None)
+    
+    # Stereo calibrate
+    retval, intrinsic1, distCoeffs1, intrinsic2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate(
+        proj_objps_list, cam_corners_list, proj_corners_list, cam_int, cam_dist, proj_int, proj_dist, None, flags=cv2.CALIB_FIX_INTRINSIC)
+    
+    # Build StereoRig object
+    stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
+    
+    return stereoRigObj
+    
+
+def phaseShiftWhite(periods, projectorResolution, cameraImages, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=1,
+               camIntrinsic=None, camDistCoeffs=None):
+    """
+    Calibrate camera and projector using phase shifting and using center
+    of white squares as reference.
+    
+    The center of a white square is well defined and less subject to
+    noise or uncertanty of the phase value.
+    
+    Parameters
+    ----------
+    periods : list of lists
+        Periods of fringe used in the projector as list of lists.
+        First list is for the horizontal fringes, second for the vertical ones.
+        In descending order (e.g. 1280, 1024, 512, ...).
+    projectorResolution: tuple
+        Projector pixel resolution as (width, height).
+    cameraImages : list or tuple       
+        A list of lists (one per set) of image paths acquired by the camera.
+        Each set must be ordered, having 4 images for each period with
+        horizontal followed by vertical images.
+        In each set, last image is the one in normal light conditions.
+        At least 5-6 sets are suggested.
+    chessboardSize: tuple, optional
+        Chessboard *internal* dimensions as (cols, rows). Dimensions should be different to avoid ambiguity.
+        Default to (6,7).
+    squareSize : float, optional
+        If the square size is known, calibration can be in metric units. Default to 1.
+    camIntrinsic : numpy.ndarray, optional
+        A 3x3 matrix representing camera intrinsic parameters. If not given it will be calculated.
+    camIntrinsic : list, optional
+        Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).
+        If not given they will be calculated.
+        
+    Returns
+    -------
+    StereoRig
+        A StereoRig object
+    """
+    
+    
+    # Internal functions
+    def getPhase(imgPaths):
+        """
+        Get ordered images and retrieve wrapped phase map.
+        """
+        I = []
+        for p in imgPaths:
+            img = cv2.imread(p, cv2.IMREAD_GRAYSCALE)
+            I.append(img.astype(float))
+            
+        # cos(theta + i*pi/2) expected  
+        # Output values in [0, 2pi)
+        return np.mod( np.arctan2(I[3]-I[1], I[0]-I[2]), 2*np.pi)
+        
+    
+    def unwrap(theta0, theta1, T0, T1):
+        """
+        Given absolute phase `theta0`, wrapped phase `theta1` and their
+        respective periods `T0` and `T1`, unwrap `theta1`.
+        
+        Returned phase is normalized in [0, 2pi).
+        """
+        k = np.rint((theta0*T0/T1 - theta1)/(2*np.pi))
+        return (theta1 + 2*np.pi*k)*T1/T0
+    
+    
+    def getProjCoord(phase_x, phase_y):
+        """
+        Return projector coordinate corresponding to absolute phase values.
+        """
+        px = projectorResolution[0]*phase_x/(2*np.pi)
+        py = projectorResolution[1]*phase_y/(2*np.pi)
+        return np.hstack( (px, py) )
+    
+    
+    # Prepare camera object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...
+    objps = np.zeros((chessboardSize[0]*chessboardSize[1],3), np.float32)
+    objps[:,:2] = np.mgrid[0:chessboardSize[0],0:chessboardSize[1]].T.reshape(-1,2) * squareSize
+    
+    cam_shape = cv2.imread(cameraImages[0][0], cv2.IMREAD_GRAYSCALE).shape
+    cam_corners_list = []
+    cam_objps_list = []
+    proj_corners_list = []
+    proj_objps_list = []
+    
+    #### Camera calibration
+    cam_rvecs = []
+    cam_tvecs = []
+    
+    # Loop 1
+    for imageset in cameraImages:
+        
+        # Get corners from normal.png as [(x1,y1), (x2,y2), ...]
+        normal_img = cv2.imread(imageset[-1], cv2.IMREAD_GRAYSCALE)
+        res, cam_corners = cv2.findChessboardCorners(normal_img, chessboardSize)
+        
+        if not res:
+            raise ValueError(f'Chessboard not found in {imageset[-1]}!')
+        
+        # Subpixel refinement. Output as [(x1,y1), (x2,y2), ...]
+        cam_corners_sub = cv2.cornerSubPix(normal_img, cam_corners, DEFAULT_CORNERSUBPIX_WINSIZE, (-1,-1), DEFAULT_TERMINATION_CRITERIA)
+        
+        # Draw and display the corners
+        #img = cv2.drawChessboardCorners(normal_img, chessboardSize, cam_corners_sub, True)
+        #cv2.imshow('chessboard',img)
+        #cv2.waitKey(0)
+        
+        cam_corners_list.append(cam_corners_sub.astype(np.float32))
+        cam_objps_list.append(objps.astype(np.float32))
+    
+    # Call OpenCV calibrate
+    # Calibrate camera only if intrinsic parameters are not given
+    if camIntrinsic is None:
+        cam_rms, cam_int, cam_dist, cam_rvecs, cam_tvecs = cv2.calibrateCamera(
+            cam_objps_list, cam_corners_list, cam_shape[::-1], None, None, None, None)
+    else:
+        for objp, corners in zip(cam_objps_list, cam_corners_list):
+            cam_rms, cam_rvec, cam_tvec = cv2.solvePnP(objp, corners, camIntrinsic, camDistCoeffs) 
+            cam_rvecs.append(cam_rvec)
+            cam_tvecs.append(cam_tvec)
+        cam_int = camIntrinsic
+        cam_dist = camDistCoeffs
+    
+    
+    # From camera corners, get centers of white squares
+    cam_whiteCorners_list, whiteObjps = _getWhiteCenters(cam_corners_list,
+                        cam_int, cam_dist, chessboardSize, squareSize)
+    
+    whiteObjps = whiteObjps.astype(np.float32)
+    cam_whiteObjps_list = [[whiteObjps] for _ in range(len(cam_whiteCorners_list))]
+    
+    # Loop 2
+    for setnum, imageset in enumerate(cameraImages):
+        # Get absolute phase using all the acquired fringes
+        i=0 # counter
+        phase = [None,None] # Horizontal and vertical absolute phases
+        for v in range(2):
+            for j,T in enumerate(periods[v]):
+                if j==0: # if it is the first (maximum period)
+                    phase[v] = getPhase(imageset[i:i+4])
+                else:
+                    phase2 = getPhase(imageset[i:i+4])
+                    phase[v] = unwrap(phase[v], phase2, periods[v][0], T)
+                
+                i+=4 # update counter
+        
+                    
+        ### Find camera-projector correspondences
+        #cam_corners_sub shape (n, 1, 2)
+        corners = cam_whiteCorners_list[setnum].reshape(-1,2) # shape (n, 2) [[x1,y1], [x2,y2], ...]
+        corners = corners.T # (2, n)
+        corners = corners[[1,0]] # Swap to get (y,x) coords
+        
+        # Linear interpolation of non-integer coordinates
+        phase_x = map_coordinates(phase[0], corners, order=1).reshape(-1,1)
+        phase_y = map_coordinates(phase[1], corners, order=1).reshape(-1,1)
+        
+        # Get corresponding (x,y) values on projector
+        proj_corners = getProjCoord(phase_x,phase_y) # Shape (n, 2)
+        
+        proj_corners_list.append(proj_corners.astype(np.float32))
+        proj_objps_list.append(whiteObjps)
+    
+    
+    
+    
+    # Calibrate projector
+    proj_rms, proj_int, proj_dist, proj_rvecs, proj_tvecs = cv2.calibrateCamera(
+        proj_objps_list, proj_corners_list, projectorResolution, None, None, None, None)
+    
+    # Stereo calibrate
+    retval, intrinsic1, distCoeffs1, intrinsic2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate(
+        proj_objps_list, cam_whiteCorners_list, proj_corners_list, cam_int, cam_dist, proj_int, proj_dist, None, flags=cv2.CALIB_FIX_INTRINSIC)
+    
+    # Build StereoRig object
+    stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
+    
+    return stereoRigObj
+
 
 def generateChessboardSVG(chessboardSize, filepath, squareSize=20):
     """
@@ -602,10 +966,9 @@ def generateChessboardSVG(chessboardSize, filepath, squareSize=20):
         d += 'm2 0'.join(['V{}h1V0z'.format(rows) for _ in range(cols//2)]) # Build cols
         f.write('<path fill="#000" d="{}"/></svg>'.format(d))
     
+    return
     
-
-
-    
+        
 def getFundamentalMatrixFromProjections(P1,P2):
     """
     Compute the fundamental matrix from two projection matrices.
