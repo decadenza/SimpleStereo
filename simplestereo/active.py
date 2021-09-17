@@ -493,14 +493,14 @@ class StereoFTP:
         stripe_world = self._triangulate(stripe_cam, self.stripeCentralPeak, roi)
         #return stripe_world
         
-        ### Find z_min to build virtual reference plane
-        min_z = np.min(stripe_world[:,2])
+        ### Find z to build virtual reference plane
+        z_plane = np.mean(stripe_world[:,2])
         
         # For each point (= for each row) estimate fc
         fc = self._calculateCameraFrequency(stripe_world)
         
         ### Get projector mapping
-        projCoords, imgR_gray = self._getProjectorMapping(min_z)
+        projCoords, imgR_gray = self._getProjectorMapping(z_plane)
         imgR_gray = imgR_gray[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
         projCoords = projCoords[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
         
@@ -998,8 +998,8 @@ class StereoFTP_PhaseOnly:
         fc = self._calculateCameraFrequency(stripe_world)
         
         ### Build virtual reference plane
-        min_z = np.min(stripe_world[:,2])
-        projCoords, imgR_gray = self._getProjectorMapping(min_z)
+        z_plane = np.min(stripe_world[:,2])
+        projCoords, imgR_gray = self._getProjectorMapping(z_plane)
         imgR_gray = imgR_gray[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
         projCoords = projCoords[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
         
@@ -1516,7 +1516,7 @@ class StereoFTP_Mapping:
         #return stripe_world
         
         ### Build virtual reference plane
-        #min_z = np.min(stripe_world[:,2])
+        #z_plane = np.min(stripe_world[:,2])
         
         # For each camera stripe point (= for each row) estimate fc
         fc = self._calculateCameraFrequency(stripe_world)

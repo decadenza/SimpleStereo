@@ -937,7 +937,7 @@ def phaseShiftWhite(periods, projectorResolution, cameraImages, chessboardSize=D
     return stereoRigObj
 
 
-def generateChessboardSVG(chessboardSize, filepath, squareSize=20):
+def generateChessboardSVG(chessboardSize, filepath, squareSize=20, border=10):
     """
     Write the desired chessboard to a SVG file.
     
@@ -958,7 +958,7 @@ def generateChessboardSVG(chessboardSize, filepath, squareSize=20):
     rows+=1
     with open(filepath, "w") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>')
-        f.write('<svg xmlns="http://www.w3.org/2000/svg" width="{}mm" height="{}mm" viewBox="0 0 {} {}" style="border: {}mm solid #FFF;">'.format(cols*squareSize, rows*squareSize, cols, rows, squareSize))
+        f.write(f'<svg xmlns="http://www.w3.org/2000/svg" width="{cols*squareSize}mm" height="{rows*squareSize}mm" viewBox="0 0 {cols} {rows}" style="border: {border}mm solid #FFF;">')
         f.write('<rect fill="#FFF" x="0" y="0" width="{}" height="{}"/>'.format(cols, rows))
         d = 'M0 0'
         d += 'm0 2'.join(['H{}v1H0z'.format(cols) for _ in range((rows+1)//2)]) # Build rows
