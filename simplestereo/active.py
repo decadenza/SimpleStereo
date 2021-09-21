@@ -12,6 +12,7 @@ import math
 import numpy as np
 import cv2
 from scipy.interpolate import interp1d
+from scipy.ndimage import map_coordinates
 import matplotlib                   # Temporary fix to avoid
 matplotlib.use('TkAgg')             # segmentation fault error
 import matplotlib.pyplot as plt
@@ -348,19 +349,19 @@ class StereoFTP:
         rightX = pCenter[:,0,0] + halfPeriodP
         
         points = np.vstack( ( np.hstack((leftX.reshape(-1,1), pCenter[:,0,1].reshape(-1,1))), np.hstack((rightX.reshape(-1,1), pCenter[:,0,1].reshape(-1,1))) ) )
-        points = points.reshape(-1,1,2) # Shape (2n, 1, 2)
+        points = points.reshape(-1,1,2) # Shape (2, 1, 2)
         
         ### Deproject on world plane
         # Un-distort points for the projector means to distort
         # as the pinhole camera model is made for cameras
         # and we are projecting back to 3D world
-        distortedPoints = cv2.undistortPoints(points, Ap, Dp, P=Ap) # Shape (2n, 1, 2)
+        distortedPoints = cv2.undistortPoints(points, Ap, Dp, P=Ap) # Shape (2, 1, 2)
         
         # De-project in homogeneous coordinates at known world z
         # s * pp = Ap[R | T] * [pw 1].T
         invARp = np.linalg.inv(Ap.dot(R))
-        pp = np.hstack( ( distortedPoints.reshape(-1,2), np.ones((2*n,1), dtype=objPoints.dtype) ) ) # Shape (2n, 3)
-        z = np.tile(objPoints[:,0,2].reshape(-1,1), (2,1)) # Shape (2n, 1)
+        pp = np.hstack( ( distortedPoints.reshape(-1,2), np.ones((2*n,1), dtype=objPoints.dtype) ) ) # Shape (2, 3)
+        z = np.tile(objPoints[:,0,2].reshape(-1,1), (2,1)) # Shape (2, 1)
         h = (invARp.dot(pp.T)).T # Shape (2n, 3)
         s = (z - Op[2])/h[:,[2]] # Shape (2n, )
         pw = s * h + Op.reshape(1,3)
@@ -566,15 +567,16 @@ class StereoFTP:
         ghat = np.fft.ifft(G,axis=1)
         
         # Build the new signal and get its phase
-        # NB Numerically this is not simple equivalent to the phase difference.
+        # NB Numerically this is not equivalent to the phase difference.
+        # https://stackoverflow.com/questions/69176709/numerical-differences-in-numpy-conjugate-and-angle/69178618#69178618
         newSignal = ghat * np.conjugate(g0hat)
         phase = np.angle(newSignal)
         
         if unwrappingMethod is None:
             # Unwrap along the direction perpendicular to the fringe
-            phaseUnwrapped = np.unwrap(phase, axis=1)
+            phaseUnwrapped = np.unwrap(phase, discont=np.pi, axis=1)
             # And remove jumps along other direction
-            phaseUnwrapped = np.unwrap(phaseUnwrapped, axis=0)            
+            phaseUnwrapped = np.unwrap(phaseUnwrapped, discont=np.pi, axis=0)            
         else:
             phaseUnwrapped = unwrappingMethod(phase)
               
@@ -1495,21 +1497,12 @@ class StereoFTP_Mapping:
         # Find central stripe on camera image
         stripe_cam = ss.active.findCentralStripe(imgObj,
                                 self.stripeColor, self.stripeThreshold)
-        '''
-        # Process a copy for triangulation
-        cs = objStripe.reshape(-1,1,2).astype(np.float64)
         
-        cs = cv2.undistortPoints(cs,               # Correct distortion
-                        self.stereoRig.intrinsic1,
-                        self.stereoRig.distCoeffs1,
-                        P=self.stereoRig.intrinsic1)
-        '''
         stripe_cam = stripe_cam.reshape(-1,2) # x, y camera points (already undistorted)
         
         # Find integer indexes of stripe on camera (round half down)
         #cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)
-        # Use undistorted values
-        stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int) # As (x,y)
+        
         
         ### Find world points corresponding to stripe
         stripe_world = self._triangulate(stripe_cam, self.stripeCentralPeak, roi)
@@ -1596,7 +1589,15 @@ class StereoFTP_Mapping:
         
         
         # Calculate absolute phase shift [S. Zhang 2006 Novel method...]
-        theta_shift = phaseUnwrapped[stripe_indexes[:,1],stripe_indexes[:,0]]
+        
+        # ALTERNATIVE
+        #stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int) # As (x,y)
+        #theta_shift = phaseUnwrapped[stripe_indexes[:,1],stripe_indexes[:,0]]
+        # Interpolation of phase values
+        
+        # Coordinates as [[list of y values...],[list of x values...]]
+        theta_shift = map_coordinates(phaseUnwrapped, np.flip(stripe_cam.T,axis=0), order=1)
+        
         theta_shift = np.mean(theta_shift)
         '''
         print("theta_shift", theta_shift)
@@ -1605,12 +1606,13 @@ class StereoFTP_Mapping:
         theta_shift = 2*np.pi*(np.ceil(theta_shift/(2*np.pi) - 0.5) - 1)
         '''
         # Adjust phase to get absolute phase
+        # Consider stripe as phase zero
         phaseUnwrapped = phaseUnwrapped - theta_shift
         phaseUnwrapped = phaseUnwrapped.reshape(-1,1)
         
         
         # Corresponding projector x values (add bias stripe + pixel center)
-        p_x = self.stripeCentralPeak + (phaseUnwrapped)/(2*np.pi*self.fp)
+        p_x = (phaseUnwrapped)/(2*np.pi*self.fp) + self.stripeCentralPeak + 0.5
         
         # Camera coordinates
         camPoints = np.mgrid[0:roi_w,0:roi_h].T.reshape(-1,2).astype(np.float64)

@@ -592,7 +592,8 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
 def phaseShift(periods, projectorResolution, cameraImages, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=1,
                camIntrinsic=None, camDistCoeffs=None):
     """
-    Calibrate camera and projector using phase shifting.
+    Calibrate camera and projector using phase shifting and the 
+    heterodyne principle [Reich 1997].
     
     Parameters
     ----------
@@ -759,8 +760,8 @@ def phaseShift(periods, projectorResolution, cameraImages, chessboardSize=DEFAUL
 def phaseShiftWhite(periods, projectorResolution, cameraImages, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=1,
                camIntrinsic=None, camDistCoeffs=None):
     """
-    Calibrate camera and projector using phase shifting and using center
-    of white squares as reference.
+    Calibrate camera and projector using phase shifting and heterodyne
+    principle [Reich 1997]. Using center of white squares as reference.
     
     The center of a white square is well defined and less subject to
     noise or uncertanty of the phase value.
