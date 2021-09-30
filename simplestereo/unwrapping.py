@@ -5,8 +5,8 @@ Contains different phase unwrapping strategies.
 """
 #import ctypes
 
-import numpy as np
-import cv2
+#import numpy as np
+#import cv2
 
 from simplestereo import _unwrapping
 
@@ -14,8 +14,8 @@ def infiniteImpulseResponse(phase, tau=1):
     """
     Unwrap a 2D phase map. 
     
-    Uses the method from "Noise robust linear dynamic system for 
-    phase unwrapping and smoothing", Estrata et al, 2011,
+    Method from "Noise robust linear dynamic system for 
+    phase unwrapping and smoothing", Estrada et al, 2011,
     DOI: 10.1364/OE.19.005126
     
     Parameters
@@ -35,6 +35,9 @@ def infiniteImpulseResponse(phase, tau=1):
     See Also
     --------
     https://doi.org/10.1016/j.optlaseng.2012.01.008
+    
+    .. todo::
+        If called twice, it does not work. To be fixed!
     """
     return _unwrapping.infiniteImpulseResponse(phase, tau)
         

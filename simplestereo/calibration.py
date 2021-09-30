@@ -337,7 +337,7 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
 def _getWhiteCenters(cam_corners_list, cam_int, cam_dist, chessboardSize, squareSize):
     """
     From ordered camera chessboard corners and camera intrinsics, get
-    world coordinate of the center of the squares.
+    world coordinate of the center of the white squares.
     
     These areas are less affected by ambiguity and noise due to the absence of
     high contrast pixel values.
@@ -359,9 +359,11 @@ def _getWhiteCenters(cam_corners_list, cam_int, cam_dist, chessboardSize, square
     # Prepare white object points, like (1,0,0), (3,0,0), (5,0,0)
     whiteObjps = np.zeros((len(whiteUpperLeftIndexes),3), dtype=np.float32)
     for i,w in enumerate(whiteUpperLeftIndexes):
-        whiteObjps[i,0] = w//chessboardSize[0]*squareSize
-        whiteObjps[i,1] = w%chessboardSize[0]*squareSize
+        whiteObjps[i,0] = (w//chessboardSize[0])*squareSize
+        whiteObjps[i,1] = (w%chessboardSize[0])*squareSize
     
+    # Not necessary, as origin is arbitrary
+    #whiteObjps[:,:2] += squareSize/2 # Shift wrt origin along x and y
     
     cam_whiteCorners_list = []
     
@@ -393,7 +395,7 @@ def _getWhiteCenters(cam_corners_list, cam_int, cam_dist, chessboardSize, square
     
     
 def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1, 
-                     black_thr=40, white_thr=5, camIntrinsic=None, camDistCoeffs=None):
+                     black_thr=40, white_thr=5, camIntrinsic=None, camDistCoeffs=None, extended=False):
     """
     Performs stereo calibration between a camera (reference) and a projector.
     
@@ -432,11 +434,16 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
     camIntrinsic : list, optional
         Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).
         If not given they will be calculated.
-                
+    extended: bool
+        If True, `perViewErrors` of the stereo calibration are returned. Default to False.
+        
     Returns
-    ----------
+    -------
     StereoRig
         A StereoRig object
+    perViewErrors
+        Returned only if `extended` is True. For each pattern view, the
+        RMS error of camera and projector is returned.
     """
     
     # Prepare camera object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...
@@ -586,7 +593,18 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
     # Build StereoRig object
     stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
     
-    return stereoRigObj
+    print("cam_rms", cam_rms)
+    print("proj_rms", proj_rms)
+    print("stereo_rms", retval)
+    
+    if extended:
+        _, _, _, _, _, _, _, _, _, perViewErrors = cv2.stereoCalibrateExtended(
+            proj_objps_list, cam_whiteCorners_list, proj_corners_list, cam_int, cam_dist, proj_int, proj_dist, None, R, T, flags=cv2.CALIB_FIX_INTRINSIC)
+        
+        return stereoRigObj, perViewErrors
+    
+    else:
+        return stereoRigObj
 
 
 def phaseShift(periods, projectorResolution, cameraImages, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=1,
@@ -757,11 +775,12 @@ def phaseShift(periods, projectorResolution, cameraImages, chessboardSize=DEFAUL
     return stereoRigObj
     
 
-def phaseShiftWhite(periods, projectorResolution, cameraImages, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=1,
-               camIntrinsic=None, camDistCoeffs=None):
+def phaseShiftWhite(periods, projectorResolution, cameraImages, chessboardSize=DEFAULT_CHESSBOARD_SIZE,
+                    squareSize=1, camIntrinsic=None, camDistCoeffs=None, extended=False):
     """
     Calibrate camera and projector using phase shifting and heterodyne
-    principle [Reich 1997]. Using center of white squares as reference.
+    principle [Reich 1997]. Using center of white squares instead of
+    corners as targets.
     
     The center of a white square is well defined and less subject to
     noise or uncertanty of the phase value.
@@ -790,11 +809,16 @@ def phaseShiftWhite(periods, projectorResolution, cameraImages, chessboardSize=D
     camIntrinsic : list, optional
         Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).
         If not given they will be calculated.
+    extended: bool
+        If True, `perViewErrors` of the stereo calibration are returned. Default to False.
         
     Returns
     -------
     StereoRig
         A StereoRig object
+    perViewErrors
+        Returned only if `extended` is True. For each pattern view, the
+        RMS error of camera and projector is returned.
     """
     
     
@@ -904,7 +928,6 @@ def phaseShiftWhite(periods, projectorResolution, cameraImages, chessboardSize=D
                 
                 i+=4 # update counter
         
-                    
         ### Find camera-projector correspondences
         #cam_corners_sub shape (n, 1, 2)
         corners = cam_whiteCorners_list[setnum].reshape(-1,2) # shape (n, 2) [[x1,y1], [x2,y2], ...]
@@ -921,21 +944,35 @@ def phaseShiftWhite(periods, projectorResolution, cameraImages, chessboardSize=D
         proj_corners_list.append(proj_corners.astype(np.float32))
         proj_objps_list.append(whiteObjps)
     
-    
-    
-    
     # Calibrate projector
     proj_rms, proj_int, proj_dist, proj_rvecs, proj_tvecs = cv2.calibrateCamera(
         proj_objps_list, proj_corners_list, projectorResolution, None, None, None, None)
+    '''
+    # Calibrate projector WITHOUT LENS DISTORTION
+    proj_rms, proj_int, proj_dist, proj_rvecs, proj_tvecs = cv2.calibrateCamera(
+        proj_objps_list, proj_corners_list, projectorResolution, None, None, None, None, flags=cv2.CALIB_FIX_K1+cv2.CALIB_FIX_K2+cv2.CALIB_FIX_K3+cv2.CALIB_ZERO_TANGENT_DIST)
+    '''
     
     # Stereo calibrate
     retval, intrinsic1, distCoeffs1, intrinsic2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate(
         proj_objps_list, cam_whiteCorners_list, proj_corners_list, cam_int, cam_dist, proj_int, proj_dist, None, flags=cv2.CALIB_FIX_INTRINSIC)
-    
+
     # Build StereoRig object
     stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
     
-    return stereoRigObj
+    #TEMP
+    print("cam_rms", cam_rms)
+    print("proj_rms", proj_rms)
+    print("stereo_rms", retval)
+    
+    if extended:
+        _, _, _, _, _, _, _, _, _, perViewErrors = cv2.stereoCalibrateExtended(
+            proj_objps_list, cam_whiteCorners_list, proj_corners_list, cam_int, cam_dist, proj_int, proj_dist, None, R, T, flags=cv2.CALIB_FIX_INTRINSIC)
+        
+        return stereoRigObj, perViewErrors
+    
+    else:
+        return stereoRigObj
 
 
 def generateChessboardSVG(chessboardSize, filepath, squareSize=20, border=10):

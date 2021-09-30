@@ -473,14 +473,6 @@ class StereoFTP:
         stripe_cam = ss.active.findCentralStripe(imgObj,
                                 self.stripeColor, self.stripeThreshold)
         
-        '''
-        # Process a copy for triangulation
-        cs = objStripe.reshape(-1,1,2).astype(np.float64)
-        cs = cv2.undistortPoints(cs,               # Consider distortion
-                        self.stereoRig.intrinsic1,
-                        self.stereoRig.distCoeffs1,
-                        P=self.stereoRig.intrinsic1)
-        '''
         stripe_cam = stripe_cam.reshape(-1,2) # x, y camera points (already undistorted)
         
         # Find integer indexes of stripe on camera (round half down)
@@ -582,8 +574,8 @@ class StereoFTP:
               
         if plot:
             plt.title("Middle row unwrapped phase")
-            plt.plot(np.arange(roi_w), phase[roi_h//2-1,:], label="Phase", linestyle='-.', color='red')
-            plt.plot(np.arange(roi_w), phaseUnwrapped[roi_h//2-1,:], label="Unwrapped phase", linestyle='-', color='blue')
+            plt.plot(np.arange(roi_w), phase[roi_h//2-1,:], label="Phase shift", linestyle='-.', color='red')
+            plt.plot(np.arange(roi_w), phaseUnwrapped[roi_h//2-1,:], label="Unwrapped phase shift", linestyle='-', color='blue')
             '''
             ### TEMP
             temp = np.angle(ghat)
@@ -1067,7 +1059,7 @@ class StereoFTP_PhaseOnly:
         newSignal = ghat * np.conjugate(g0hat)
         phase = np.angle(newSignal)
         
-        return phase.reshape(roi_h,roi_w), np.angle(ghat).reshape(roi_h,roi_w)
+        return phase.reshape(roi_h,roi_w), np.angle(ghat), np.angle(g0hat)
 
         
 
@@ -1204,11 +1196,14 @@ class GrayCode:
         
         return finalPoints
 
-### TEMP
+
+
 class StereoFTP_Mapping:
     """
-    Manager of the Stereo Fourier Transform Profilometry.
-    Classic method (does not use a virtual reference plane).
+    Manager of the classic Stereo Fourier Transform Profilometry.
+    
+    Classic method (does not use a virtual reference plane) but it does
+    use the automatic band-pass estimation.
     
     Parameters
     ----------
@@ -1526,8 +1521,6 @@ class StereoFTP_Mapping:
         fmin = fc - radius
         fmax = fc + radius
         
-        
-        
         if plot:
             cv2.namedWindow('Object',cv2.WINDOW_NORMAL)
             cv2.imshow("Object", imgObj)
@@ -1564,8 +1557,8 @@ class StereoFTP_Mapping:
         
         # Inverse FFT
         ghat = np.fft.ifft(G,axis=1)
-        
         phase = np.angle(ghat) # (-pi, pi]
+        
         
         if unwrappingMethod is None:
             # Unwrap along the direction perpendicular to the fringe
@@ -1574,8 +1567,6 @@ class StereoFTP_Mapping:
             phaseUnwrapped = np.unwrap(phaseUnwrapped, axis=0)            
         else:
             phaseUnwrapped = unwrappingMethod(phase)
-        
-        
               
         if plot:
             plt.title("Middle row unwrapped phase")
@@ -1803,7 +1794,10 @@ def computeROI(img, blackThreshold=10, extraMargin=0):
     -------
     tuple
         ROI as tuple of integers (x,y,w,h).
-     
+    
+    Notes
+    -----
+    To rewrite completely. Not suitable for production. 
     """
     if img.ndim>2:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -1822,24 +1816,33 @@ def computeROI(img, blackThreshold=10, extraMargin=0):
         allInside = True
         # TOP
         for j in range(x2,x2+w2):
+            # Check that all the row in inside the contour.
+            if y2 >= height:
+                break
             if cv2.pointPolygonTest(best_cnt, (j,y2), False)<0: # Point is outside
                 y2+=1
                 allInside = False
                 break
         # RIGHT
         for i in range(y2,y2+h2):
+            if w2 <= 1:
+                break
             if cv2.pointPolygonTest(best_cnt, (x2+w2,i), False)<0:
                 w2-=1
                 allInside = False
                 break
         # BOTTOM
         for j in range(x2,x2+w2):
+            if h2 <= 1:
+                break
             if cv2.pointPolygonTest(best_cnt, (j,y2+h2), False)<0:
                 h2-=1
                 allInside = False
                 break
         # LEFT
         for i in range(y2,y2+h2):
+            if x2 >= width:
+                break
             if cv2.pointPolygonTest(best_cnt, (x2,i), False)<0:
                 x2+=1
                 allInside = False
@@ -1848,10 +1851,11 @@ def computeROI(img, blackThreshold=10, extraMargin=0):
         if allInside: # all the rect borders are within the contour
             break
     
+    
     # Reduce ROI further.
     x2 += extraMargin
     y2 += extraMargin
-    w2 -= extraMargin
-    h2 -= extraMargin
+    w2 -= int(2*extraMargin)
+    h2 -= int(2*extraMargin)
         
     return (x2,y2,w2,h2)

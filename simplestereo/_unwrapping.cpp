@@ -54,11 +54,10 @@ PyObject *infiniteImpulseResponse(PyObject *self, PyObject *args)
     double tau;
     
     // Parse input. See https://docs.python.org/3/c-api/arg.html
-    if (!PyArg_ParseTuple(args, "Od", &phase, &tau)){
+    if (!PyArg_ParseTuple(args, "O!d", &PyArray_Type, &phase, &tau)){
         PyErr_SetString(PyExc_ValueError, "Invalid input format!");
         return NULL;
         }
-    
     // Check input format
     if (PyArray_NDIM(phase)!=2){
         PyErr_SetString(PyExc_ValueError, "Wrong phase dimensions!");
@@ -75,16 +74,18 @@ PyObject *infiniteImpulseResponse(PyObject *self, PyObject *args)
     
     //Initialisation
     npy_intp dims[2] = {h, w};
-    //double unwrapped[h][w] = {0};
     PyArrayObject *unwrapped = (PyArrayObject *) PyArray_Zeros(2, dims, PyArray_DTYPE(phase), 0);
-    bool s[h][w] = {0};
-    int y = 0;
-    int x = 0;
-    int S = 0;
-    double temp = 0;
+    
+    bool s[h][w];
+    int y;
+    int x;
+    int S;
+    double temp;
     double cur;
     std::vector<Coord> neigh;
     
+    // Initialize s with zeros
+    std::fill_n(&s[0][0], h * w, 0);
     
     // Remove transient response (first row unwrapped forth and back)
     // First row forward...
@@ -96,15 +97,16 @@ PyObject *infiniteImpulseResponse(PyObject *self, PyObject *args)
         neigh = neighbours(y,x,dims);
         for(auto const& c : neigh)
             {
-            if (s[c.y][c.x])
+            if (s[c.y][c.x]) // Get only neighbours already processed
                 {
                 S+=1;
-                temp += (double) ( ((double *)PyArray_GETPTR2(unwrapped,c.y,c.x))[0] + tau*W(cur - ((double *)PyArray_GETPTR2(unwrapped,c.y,c.x))[0]) )*s[c.y][c.x];
+                temp += (double) ( ((double *)PyArray_GETPTR2(unwrapped,c.y,c.x))[0] + tau*W(cur - ((double *)PyArray_GETPTR2(unwrapped,c.y,c.x))[0]) );
                 }
             }
         s[y][x] = 1;
         PyArray_SETITEM(unwrapped, PyArray_GETPTR2(unwrapped,y,x), Py_BuildValue("f", (S>0)? temp/S : cur) );
         }
+    
     // ...and backward
     for(x=w-1;x>0;--x)
         {
@@ -117,7 +119,7 @@ PyObject *infiniteImpulseResponse(PyObject *self, PyObject *args)
             if (s[c.y][c.x])
                 {
                 S+=1;
-                temp += (double) ( ((double *)PyArray_GETPTR2(unwrapped,c.y,c.x))[0] + tau*W(cur - ((double *)PyArray_GETPTR2(unwrapped,c.y,c.x))[0]) )*s[c.y][c.x];
+                temp += (double) ( ((double *)PyArray_GETPTR2(unwrapped,c.y,c.x))[0] + tau*W(cur - ((double *)PyArray_GETPTR2(unwrapped,c.y,c.x))[0]) );
                 }
             }
         s[y][x] = 1;
@@ -146,7 +148,6 @@ PyObject *infiniteImpulseResponse(PyObject *self, PyObject *args)
             }
     }  
     
-    
     //It should be used whenever 0-dimensional arrays could be returned to Python.
     return PyArray_Return(unwrapped);
 }
@@ -165,7 +166,7 @@ static struct PyMethodDef module_methods[] = {
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "_unwrapping",
-        NULL,
+        "Unwrapping interface",
         -1,
         module_methods,
         NULL,
@@ -177,7 +178,6 @@ static struct PyModuleDef moduledef = {
 PyMODINIT_FUNC PyInit__unwrapping(void)
 {
     PyObject *m;
-    
     import_array(); //This function must be called to use Numpy C-API
     
     m = PyModule_Create(&moduledef);
@@ -185,8 +185,6 @@ PyMODINIT_FUNC PyInit__unwrapping(void)
         return NULL;
     }
     
-    
-
     return m;
 }
 

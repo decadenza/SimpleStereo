@@ -298,7 +298,7 @@ PyObject *computeASW(PyObject *self, PyObject *args)
     int consistent = 0; // Optional value
     
     // Parse input. See https://docs.python.org/3/c-api/arg.html
-    if (!PyArg_ParseTuple(args, "OOiiidd|p", &img1, &img2,
+    if (!PyArg_ParseTuple(args, "O!O!iiidd|p", &PyArray_Type, &img1, &PyArray_Type, &img2,
                           &winSize, &maxDisparity, &minDisparity, &gammaC, &gammaP,
                           &consistent)){
         PyErr_SetString(PyExc_ValueError, "Invalid input format!");
@@ -706,7 +706,7 @@ PyObject *computeGSW(PyObject *self, PyObject *args)
     int winSize, maxDisparity, minDisparity, gamma, iterations, bins;
     float fMax;
     // Parse input. See https://docs.python.org/3/c-api/arg.html
-    if (!PyArg_ParseTuple(args, "OOiiiifii", &img1, &img2, 
+    if (!PyArg_ParseTuple(args, "O!O!iiiifii", &PyArray_Type, &img1, &PyArray_Type, &img2, 
                           &winSize, &maxDisparity, &minDisparity, &gamma,
                           &fMax, &iterations, &bins)){
         PyErr_SetString(PyExc_ValueError, "Invalid input format!");
