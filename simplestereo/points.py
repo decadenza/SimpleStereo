@@ -8,7 +8,7 @@ import cv2
 
 def exportPLY(points3D, filepath, referenceImage=None, precision=6):
     """
-    Export raw point cloud to PLY file.
+    Export raw point cloud to PLY file (ASCII).
     
     Parameters
     ----------
@@ -16,7 +16,7 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
         Array of 3D points. The last dimension must contain ordered x,y,z coordinates.
     filepath : str
         File path for the PLY file (absolute or relative).
-    referenceImage : numpy.ndarray
+    referenceImage : numpy.ndarray, optional
         Reference image to extract color from. It must contain the same
         number of points of `points3D`. Last dimension must be either
         1 (grayscale) or 3 (BGR).
@@ -62,7 +62,7 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
                         referenceImage[i], p=precision)) # Grayscale
     
 
-def importPLY(filename, x=0, y=1, z=2):
+def importPLY(filename, *properties):
     """
     Import 3D coordinates from PLY file.
     
@@ -70,20 +70,24 @@ def importPLY(filename, x=0, y=1, z=2):
     ----------
     filename : str
         PLY file path.
-    x
-    y
-    z : int, optional
-        Coordinate position on each data line.
-        Default x y z coordinates expected at the beginning of line.
+    *properties : argument list, optional
+        Property column positions to be extracted as `float`, in the
+        same order. Default to (0,1,2).
+        
     
     Returns
     -------
     numpy.ndarray
-        Array of 3D xyz points.
+        Array of data values with shape (number of values, number of
+        properties).
         
     ..todo::
-        Automatically read PLY properties and load accordingly.
+        Automatically read PLY properties as `dict`.
+        Manage values other than `float`.
     """
+    if not properties:
+        properties = (0,1,2)
+    
     with open(filename, "r") as f:
         i=0
         for line in f:
@@ -93,7 +97,7 @@ def importPLY(filename, x=0, y=1, z=2):
         points = []
         for line in f:
             prop = line.split(' ')
-            points.append([ float(prop[x]), float(prop[y]), float(prop[z]) ])
+            points.append([ float(prop[x]) for x in properties ])
         
     return np.asarray(points, dtype=float)
 
