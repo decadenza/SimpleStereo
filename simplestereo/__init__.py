@@ -29,7 +29,6 @@ import pkg_resources # part of setuptools
 __version__ = pkg_resources.require("SimpleStereo")[0].version
 
 
-
 class StereoRig:
     """ 
     Keep together and manage all parameters of a calibrated stereo rig.
@@ -75,7 +74,8 @@ class StereoRig:
         self.F = np.array(F) if F is not None else None
         self.E = np.array(E) if E is not None else None
         self.reprojectionError = reprojectionError
-        
+    
+       
     @classmethod 
     def fromFile(cls, filepath):
         """
@@ -107,6 +107,7 @@ class StereoRig:
         reprojectionError = data.get('reprojectionError')
         
         return cls(res1, res2, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F, E, reprojectionError)
+    
         
     def save(self, filepath):
         """
@@ -156,6 +157,7 @@ class StereoRig:
         C2 = -np.linalg.inv(Po2[:,:3]).dot(Po2[:,3])
         return C1, C2
     
+    
     def getBaseline(self):
         """
         Calculate the norm of the vector from camera 1 to camera 2.
@@ -184,6 +186,7 @@ class StereoRig:
         Po2 = self.intrinsic2.dot( np.hstack( (self.R, self.T) ) )
         return Po1, Po2
     
+    
     def getFundamentalMatrix(self):
         """
         Returns the fundamental matrix F.
@@ -210,6 +213,7 @@ class StereoRig:
                 
         return self.F
     
+    
     def getEssentialMatrix(self):
         """
         Returns the essential matrix E.
@@ -230,6 +234,7 @@ class StereoRig:
             self.E = self.intrinsic2.T.dot(F).dot(self.intrinsic1)
             
         return self.E
+    
     
     def undistortImages(self, img1, img2, changeCameras=False, alpha=1, destDims=None, centerPrincipalPoint=False):
         """
@@ -285,10 +290,7 @@ class StereoRig:
             img2_undist = cv2.undistort(img2, self.intrinsic2, self.distCoeffs2, None, None)
             
             return img1_undist, img2_undist
-        
-        
-        
-        
+          
         
 class RectifiedStereoRig(StereoRig):
     """
@@ -328,6 +330,7 @@ class RectifiedStereoRig(StereoRig):
             super(RectifiedStereoRig, self).__init__(*args)
         
         self.computeRectificationMaps()
+    
         
     @classmethod 
     def fromFile(cls, filepath):
@@ -363,6 +366,7 @@ class RectifiedStereoRig(StereoRig):
         reprojectionError = data.get('reprojectionError')
         
         return cls(Rcommon, rectHomography1, rectHomography2, res1, res2, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F, E, reprojectionError)
+    
         
     def save(self, filepath):
         """
@@ -396,6 +400,7 @@ class RectifiedStereoRig(StereoRig):
                 out['reprojectionError'] = self.reprojectionError
             json.dump(out, f)
     
+    
     def getRectifiedProjectionMatrices(self):
         """
         Calculate the projection matrices of camera 1 and camera 2 after rectification.
@@ -415,6 +420,7 @@ class RectifiedStereoRig(StereoRig):
         P1 = self.K1.dot(self.Rcommon).dot( np.hstack( (np.eye(3), -C1[:,None]) ) )
         P2 = self.K2.dot(self.Rcommon).dot( np.hstack( (np.eye(3), -C2[:,None]) ) )
         return P1, P2  
+    
     
     def computeRectificationMaps(self, destDims=None, zoom=1):
         """
@@ -497,6 +503,7 @@ class RectifiedStereoRig(StereoRig):
         
         return img1_rect, img2_rect
     
+    
     def get3DPoints(self, disparityMap):
         """
         Get the 3D points in the space from the disparity map.
@@ -557,3 +564,95 @@ class RectifiedStereoRig(StereoRig):
         
         
         return cv2.reprojectImageTo3D(disparityMap, Q)
+
+
+class StructuredLightRig(StereoRig):
+    """
+    StereoRig child class with structured light methods.
+    """
+    def __init__(self, r):
+        if isinstance(r, StereoRig):                  # Extend unpacking a StereoRig object 
+            super(StructuredLightRig, self).__init__(r.res1, r.res2, r.intrinsic1, r.intrinsic2, r.distCoeffs1, r.distCoeffs2, r.R, r.T, r.F, r.E, r.reprojectionError)
+        else:
+            raise ValueError("Invalid argument!")
+                
+        self._computeMatrices()
+    
+    
+    def _computeMatrices(self):
+        self.R1, self.R2, self.R = rectification._lowLevelRectify(self)    
+        ### Get inverse common orientation and extend to 4x4 transform
+        R_inv = np.linalg.inv(self.R)
+        R_inv = np.hstack( ( np.vstack( (R_inv,np.zeros((1,3))) ), np.zeros((4,1)) ) )
+        R_inv[3,3] = 1
+        self.R_inv = R_inv
+    
+    def fromFile(self):
+        self = StereoRig.fromFile(self)
+        self._computeMatrices()
+        
+        
+    def triangulate(self, camPoints, projPoints):
+        """
+        Given camera-projector correspondences, proceed with
+        triangulation.
+        
+        Parameters
+        ----------
+        camPoints, projPoints: numpy.ndarray
+            Ordered corresponding coordinates as (x, y) couples from 
+            camera and projector. Last dimension must be 2.
+            Camera points must be already undistorted.
+        
+        Returns
+        -------
+        3D coordinates with shape (-1, 1, 3).
+        """
+        
+        pc = camPoints.reshape(-1,1,2)
+        pp = projPoints.reshape(-1,1,2)
+        
+        pc = cv2.perspectiveTransform(pc, self.R1).reshape(-1,2) # Apply rectification
+        # Add ones as third coordinate
+        pc = np.hstack( (pc,np.ones((pc.shape[0],1),dtype=np.float64)) )
+        
+        # *Apply* lens distortion to H.
+        # A projector is considered as an inversed pinhole camera (and so are
+        # the distortion coefficients)
+        # H is on the original imgFringe. Passing through the projector lenses,
+        # it gets distortion, so it does not coincide with real world point.
+        # But we want rays going exactly towards world points.
+        # Remove intrinsic, undistort and put same intrinsic back.
+        pp = cv2.undistortPoints(pp, self.intrinsic2, self.distCoeffs2, P=self.intrinsic2)
+        # Apply rectification to projector points.
+        # Rectify2 cancels the intrinsic and applies new rotation.
+        # No new intrinsics here.
+        pp = cv2.perspectiveTransform(pp, self.R2).reshape(-1,2)
+        
+        # Get world points
+        disparity = np.abs(pp[:,[0]] - pc[:,[0]])
+        finalPoints = self.getBaseline()*(pc/disparity)
+        
+        # Cancel common orientation applied to first camera
+        # to bring points into camera coordinate system
+        # NOT NEEDED See `rectification._lowLevelRectify` 
+        finalPoints = cv2.perspectiveTransform(finalPoints.reshape(-1,1,3), self.R_inv)
+        
+        return finalPoints
+    
+    
+    def undistortCameraImage(self, imgObj):
+        """
+        Undistort camera image.
+        
+        Parameters
+        ----------
+        imgObj : numpy.ndarray
+            Camera image.
+        
+        Returns
+        -------
+        Undistorted image.
+        """
+        return cv2.undistort(imgObj, self.intrinsic1, self.distCoeffs1)
+        

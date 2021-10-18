@@ -66,7 +66,8 @@ def generateGrayCodeImgs(targetDir, resolution):
 
 def _getCentralPeak(w, period, shift):
     """
-    Get peak of intensity around central fringe value.
+    Get peak of intensity position in a fringe with central stripe
+    built with :func:`ss.active.buildFringe`.
     """
     k = (w/2)//period
     
@@ -108,7 +109,7 @@ def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColo
     if centralColor is not None:
         row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
         peak = _getCentralPeak(dims[0], period, shift)
-        left = int( peak - period/2 )
+        left = int(peak - period/2)
         right = int(left+period)
         row[0, left:right, 0] *= centralColor[0]/255
         row[0, left:right, 1] *= centralColor[1]/255 
@@ -1588,14 +1589,8 @@ class StereoFTP_Mapping:
         
         # Coordinates as [[list of y values...],[list of x values...]]
         theta_shift = map_coordinates(phaseUnwrapped, np.flip(stripe_cam.T,axis=0), order=1)
-        
         theta_shift = np.mean(theta_shift)
-        '''
-        print("theta_shift", theta_shift)
-        print("divide", theta_shift/(2*np.pi))
-        print("rounded jumps*2pi", np.ceil(theta_shift/(2*np.pi) - 0.5))
-        theta_shift = 2*np.pi*(np.ceil(theta_shift/(2*np.pi) - 0.5) - 1)
-        '''
+        
         # Adjust phase to get absolute phase
         # Consider stripe as phase zero
         phaseUnwrapped = phaseUnwrapped - theta_shift
