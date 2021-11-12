@@ -385,7 +385,7 @@ def _getWhiteCenters(cam_corners_list, cam_int, cam_dist, chessboardSize, square
             
             whiteCenters_undist.append([(xCenter,yCenter)])
         
-        whiteCenters_dist = ss.utils.distortPoints(whiteCenters_undist,cam_dist)
+        whiteCenters_dist = ss.points.distortPoints(whiteCenters_undist,cam_dist)
             
         # Assign back camera intrinsics
         whiteCenters = cv2.perspectiveTransform(whiteCenters_dist,cam_int)   

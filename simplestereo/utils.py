@@ -294,43 +294,4 @@ def drawCorrespondingEpipolarLines(img1, img2, F, x1=[], x2=[], color=(0,0,255),
         
 
 
-def distortPoints(points, distCoeff):
-    '''
-    Undistort relative coordinate points.
-    
-    Parameters
-    ----------
-    points : list
-       List of lists (or tuples) of x,y points in relative coordinates 
-       (already multiplied by the inverse intrinsic matrix and undistorted).
-    distCoeff : list
-        List of 4, 5 or 8 elements (see OpenCV).
-    
-    Returns
-    -------
-    list
-        List of lists of distorted x,y points in relative coordinates
-    
-    .. todo::
-        To be extended for (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]]) 
-        vector of >8 elements.
-    '''
-    distCoeff = list(np.array(distCoeff).flatten())
-    nCoeff = len(distCoeff)
-    if not nCoeff in [4,5,8]:
-        raise ValueError(f"distCoeff is not in a valid format! (length {nCoeff} unexpected)")
-    
-    
-    k1,k2,p1,p2,k3,k4,k5,k6 = distCoeff + [0] * (8 - len(distCoeff))
-    
-    distPoints = []
-    
-    for p in points:
-        x = p[0][0]
-        y = p[0][1]
-        r2 = x**2 + y**2
-        xd = x*(1 + k1*r2 + k2*r2**2 + k3*r2**3 + k4*r2**4 + k5*r2**5 + k6*r2**6) + 2*p1*x*y + p2*(r2 + 2*x**2)
-        yd = y*(1 + k1*r2 + k2*r2**2 + k3*r2**3 + k4*r2**4 + k5*r2**5 + k6*r2**6) + p1*(r2 + 2*y**2) + 2*p2*x*y
-        distPoints.append([(xd,yd)])
-    
-    return np.array(distPoints)
+

@@ -606,29 +606,6 @@ class StereoFTP:
         ep = self.ep
         
         ### Find k values from central stripe
-        # Triangulation can be done directly between left and right red stripe
-        # and then compare with the phase value, but, as a quicker method
-        # we find approximated A and H points over projector image plane
-        # and count the integer periods of shift between the two
-        
-        
-        pointA = projCoords[stripe_indexes[:,1],stripe_indexes[:,0]] # As (x,y) on projector
-        
-        # Calculate k for absolute phase MY METHOD
-        pointH_x = self.stripeCentralPeak
-        theta = phaseUnwrapped[stripe_indexes[:,1],stripe_indexes[:,0]]
-        #k = (pointH_x - pointA[:,0])*self.fp - theta/(2*np.pi)
-        k = (pointH_x - pointA[:,0])*self.fp - theta/(2*np.pi)
-        #k = np.rint(k).reshape(-1,1) # Banker's rounding + appropriate reshape
-        # Phase is already unwrapped: use one k for all to move to correct absolute phase
-        k = np.mean(k)
-        k = np.ceil(k-0.5) #.reshape(-1,1) # Classic rounding
-        
-        
-        # Adjust phase using k values
-        phaseUnwrapped = phaseUnwrapped + k * 2*np.pi
-        phaseUnwrapped = phaseUnwrapped.reshape(-1,1)
-        
         '''
         # Calculate absolute phase shift [S. Zhang 2006 Novel method...]
         theta_shift = phaseUnwrapped[cam_indexes[:,1],cam_indexes[:,0]]
@@ -636,6 +613,25 @@ class StereoFTP:
         phaseUnwrapped = phaseUnwrapped - theta_shift
         phaseUnwrapped = phaseUnwrapped.reshape(-1,1)
         '''
+        
+        # Alternative and more accurate method: we know k is an integer!
+        # Finding and rounding k we reduce numerical errors.
+        
+        theta = phaseUnwrapped[stripe_indexes[:,1],stripe_indexes[:,0]] # Phase values at stripe locations
+        u_A = projCoords[stripe_indexes[:,1],stripe_indexes[:,0]][:,0]  # Stripe over reference as seen from projector 
+        # absolutePhase = knownPhase + phaseShift + 2 * k * pi
+        # On projector image plane:
+        # 2*pi*f_p * stripeCentralPeak = 2*pi*f_p * u_A + phaseShift + 2*k*pi 
+        # => (self.stripeCentralPeak - u_A) * 2 * pi * f_p = theta + 2 * k * pi
+        # =>
+        k = (self.stripeCentralPeak - u_A) * self.fp - theta/(2*np.pi)
+        k = np.mean(k)
+        k = np.ceil(k-0.5) # Rounding to nearest integer
+        
+        # Adjust phase using k values
+        phaseUnwrapped = phaseUnwrapped + k * 2 * np.pi
+        phaseUnwrapped = phaseUnwrapped.reshape(-1,1)
+        
         
         # Get A and B points in pixels on imgFringe
         Xa = projCoords[:,:,0].reshape(-1,1)
@@ -680,7 +676,6 @@ class StereoFTP:
         
         # Cancel common orientation applied to first camera
         # to bring points into camera coordinate system
-        # NOT NEEDED See `rectification._lowLevelRectify` 
         finalPoints = cv2.perspectiveTransform(finalPoints.reshape(-1,1,3), self.R_inv)
         
         # Reshape as original image    

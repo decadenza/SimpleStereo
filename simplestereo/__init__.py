@@ -588,9 +588,7 @@ class StructuredLightRig(StereoRig):
         self.R_inv = R_inv
     
     def fromFile(self):
-        self = StereoRig.fromFile(self)
-        self._computeMatrices()
-        
+        return StructuredLightRig(StereoRig.fromFile(self))
         
     def triangulate(self, camPoints, projPoints):
         """
