@@ -167,13 +167,19 @@ def findCentralStripe(fringe, color, threshold=100, interpolation='linear'):
         s[axis] = -1
         i = np.arange(n).reshape(s)
         with np.errstate(divide='ignore',invalid='ignore'):
-            # Some NaN expected.
+            # Some NaN expected
             out = np.sum(img * i, axis=axis) / np.sum(img, axis=axis)
         return out
     
     x = getCenters(fringe,axis=1)
+    
+    if np.isnan(x).all(): # Line not found
+        return None
+    
     y = np.arange(0.5,h,1)                # Consider pixel center, as first is in y=0.5
     mask = ~np.isnan(x)                   # Remove coords with NaN
+    
+    
     f = interp1d(y[mask],x[mask],kind=interpolation,fill_value="extrapolate") # Interpolate
     x = f(y)
     
@@ -251,7 +257,7 @@ class StereoFTP:
         Gamma correction can be implemented as a parameter.
         """
         return np.max(img,axis=2)
-    
+        
     
     def _getProjectorMapping(self, z, interpolation = cv2.INTER_CUBIC):
         """
@@ -474,7 +480,8 @@ class StereoFTP:
         # Find central stripe on camera image
         stripe_cam = ss.active.findCentralStripe(imgObj,
                                 self.stripeColor, self.stripeThreshold)
-        
+        if stripe_cam is None:
+            raise ValueError("Central stripe not found in image!")
         stripe_cam = stripe_cam.reshape(-1,2) # x, y camera points (already undistorted)
         
         # Find integer indexes of stripe on camera (round half down)
@@ -1112,7 +1119,8 @@ class StereoFTP_Mapping:
         # Find central stripe on camera image
         stripe_cam = ss.active.findCentralStripe(imgObj,
                                 self.stripeColor, self.stripeThreshold)
-        
+        if stripe_cam is None:
+            raise ValueError("Central stripe not found in image!")
         stripe_cam = stripe_cam.reshape(-1,2) # x, y camera points (already undistorted)
         
         # Find integer indexes of stripe on camera (round half down)

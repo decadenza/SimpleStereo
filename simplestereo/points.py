@@ -28,11 +28,14 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
         Default to 6.
     """
     
+    originalShape = points3D.shape
     points3D = points3D.reshape(-1,3)
     n = points3D.shape[0]
     
     with open(filepath, "w") as f:
         f.write("ply\nformat ascii 1.0\ncomment SimpleStereo point cloud export\n")
+        # Store the original array shape for future use
+        f.write(f"comment Original array shape {'x'.join(str(d) for d in originalShape)}\n")
         f.write("element vertex {}\n".format(n))
         f.write("property double x\nproperty double y\nproperty double z\n")
         
