@@ -76,7 +76,7 @@ def _getCentralPeak(w, period, shift):
 
 def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColor=None, dtype=np.uint8):
     """
-    Build discrete sinusoidal fringe image.
+    Build sinusoidal fringe image.
     
     Parameters
     ----------
@@ -114,7 +114,8 @@ def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColo
         row[0, left:right, 0] *= centralColor[0]/255
         row[0, left:right, 1] *= centralColor[1]/255 
         row[0, left:right, 2] *= centralColor[2]/255 
-        
+    
+    # Repeat and cast to type    
     fullFringe = np.repeat(row.astype(dtype), dims[1], axis=0)
     
     if vertical is True:
@@ -124,6 +125,117 @@ def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColo
     return fullFringe
 
 
+def buildBinaryFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColor=None, dtype=np.uint8):
+    """
+    Build binary fringe image.
+    
+    Parameters
+    ----------
+    period : int
+        Fringe period along x axis, in pixels. An integer is expected.
+        If a float is passed, it will be converted to integer.
+    shift : float
+        Shift to apply. Default to 0.
+    dims : tuple
+        Image dimensions as (width, height).
+    vertical : bool
+        If True, fringe is build along vertical. Default to False (horizontal).
+    centralColor : tuple
+        BGR color for the central stripe. If None (default), no stripe is drawn and
+        a grayscale image is returned.
+    dtype: numpy.dtype
+        Image is scaled in the range 0 - max value to match `dtype`.
+        Default np.uint8 (max 255).
+        
+    Returns
+    -------
+    numpy.ndarray
+        Fringe image.
+    """
+    
+    if vertical is True:
+        dims = (dims[1], dims[0]) # Swap dimensions
+    
+    # Binarise
+    row = np.ones(int(period),dtype=float)
+    row[period//4:period//2 + period//4] = 0
+    row = np.resize(row, (1,dims[0]))
+    row *= np.iinfo(dtype).max
+    
+    if centralColor is not None:
+        row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
+        peak = _getCentralPeak(dims[0], period, shift)
+        left = int(peak - period/2)
+        right = int(left+period)
+        row[0, left:right, 0] *= centralColor[0]/255
+        row[0, left:right, 1] *= centralColor[1]/255 
+        row[0, left:right, 2] *= centralColor[2]/255 
+    
+    # Repeat and cast to type    
+    fullFringe = np.repeat(row.astype(dtype), dims[1], axis=0)
+    
+    if vertical is True:
+        # Left->Right becomes Top->Bottom
+        fullFringe = np.rot90(fullFringe, k=3, axes=(0,1))
+        
+    return fullFringe
+    
+
+def buildAnaglyphFringe(period=10, shift=0, dims=(1280,720), vertical=False, dtype=np.uint8):
+    """
+    Build sinusoidal anaglyph fringe image.
+    
+    Assumes BGR images, using blue and red as complementary colors and
+    green as central stripe. This allows to actually extract three 
+    different images from a single scan. Red and blue can be subtracted
+    to suppress DC component. Green serves the purpose to obtain a 
+    reference phase in the FTP algorithm.
+    
+    Parameters
+    ----------
+    period : float
+        Fringe period along x axis, in pixels.
+    shift : float
+        Shift to apply. Default to 0.
+    dims : tuple
+        Image dimensions as (width, height).
+    vertical : bool
+        If True, fringe is build along vertical. Default to False (horizontal).
+    dtype: numpy.dtype
+        Image is scaled in the range 0 - max value to match `dtype`.
+        Default np.uint8 (max 255).
+        
+    Returns
+    -------
+    numpy.ndarray
+        Fringe image.
+    """
+    
+    if vertical is True:
+        dims = (dims[1], dims[0]) # Swap dimensions
+    
+    # Red and blue shifted by pi    
+    rowR = np.iinfo(dtype).max * ((1 + np.cos(2*np.pi*(1/period)*(np.arange(dims[0], dtype=float) + shift)))/2)[np.newaxis,:]
+    rowB = np.iinfo(dtype).max * ((1 + np.cos(2*np.pi*(1/period)*(np.arange(dims[0], dtype=float) + shift) + np.pi))/2)[np.newaxis,:]
+    # Green central peak
+    peak = _getCentralPeak(dims[0], period, shift)
+    left = int(peak - period/2)
+    right = int(left+period)
+    rowG = np.zeros_like(rowR)
+    rowG[0, left:right] = rowR[0, left:right]
+    
+    # Stack as BGR row
+    row = np.stack((rowB,rowG,rowR), axis=2)
+    
+    # Repeat and cast to type    
+    fullFringe = np.repeat(row.astype(dtype), dims[1], axis=0)
+    
+    if vertical is True:
+        # Left->Right becomes Top->Bottom
+        fullFringe = np.rot90(fullFringe, k=3, axes=(0,1))
+        
+    return fullFringe
+    
     
 def findCentralStripe(fringe, color, threshold=100, interpolation='linear'):
     """
@@ -252,9 +364,13 @@ class StereoFTP:
         numpy.ndarray
             Grayscale image.
         
-        Todo
-        ----
-        Gamma correction can be implemented as a parameter.
+        .. todo::
+            Gamma correction can be implemented as a parameter.
+        
+        Notes
+        -----
+        I've tried different approaches, but the simple `max` works best
+        at converting the stripe to white.
         """
         return np.max(img,axis=2)
         
@@ -513,7 +629,7 @@ class StereoFTP:
         G0 = np.fft.fft(imgR_gray, axis=1)     # FFT on x dimension
         G = np.fft.fft(imgObj_gray, axis=1)
         freqs = np.fft.fftfreq(roi_w)
-        
+
         # Pass-band filter parameters
         radius = radius_factor*fc
         fmin = fc - radius
