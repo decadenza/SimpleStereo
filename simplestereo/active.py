@@ -19,12 +19,13 @@ import matplotlib.pyplot as plt
 
 import simplestereo as ss
 
+
 def generateGrayCodeImgs(targetDir, resolution):
     """
     Generate Gray Codes and save it to PNG images.
     
-    Starts from the couple of images *0.png* and *1.png* (one is the inverse of the other).
-    Then 2.png is coupled with 3.png and so on.
+    Starts from the couple of images *0.png* and *1.png* (one is the
+    inverse of the other). Then 2.png is coupled with 3.png and so on.
     First half contains vertical stripes, followed by horizontal ones.
     The function stores also a *black.png* and *white.png* images for
     threshold calibration.
@@ -49,32 +50,41 @@ def generateGrayCodeImgs(targetDir, resolution):
     # Generate patterns    
     exp_patterns = graycode.generate()[1]
     
-    # Create dir if not exists
     if not os.path.exists(targetDir):
         os.mkdir(targetDir)
     
-    # Save images
+    # Save images to chosen directory
     for i in range(num_patterns):
         cv2.imwrite(os.path.join(targetDir, str(i) + '.png'), exp_patterns[i])
     
     # Additionally save black and white images (not counted in return value)
-    cv2.imwrite( os.path.join(targetDir,'black.png'), (np.zeros((height, width), np.uint8)) )      # black
-    cv2.imwrite( os.path.join(targetDir,'white.png'), (np.full((height, width), 255, np.uint8)) )  # white
+    cv2.imwrite( os.path.join(targetDir,'black.png'), (np.zeros((height, width), np.uint8)) )
+    cv2.imwrite( os.path.join(targetDir,'white.png'), (np.full((height, width), 255, np.uint8)) )
     
     return num_patterns
 
 
-def _getCentralPeak(w, period, shift):
+def _getCentralPeak(length, period, shift=0):
     """
-    Get peak of intensity position in a fringe with central stripe
-    built with :func:`ss.active.buildFringe`.
+    Get maximum intensity pixel position in a fringe with central stripe
+    built from :func:`ss.active.buildFringe`.
+    
+    Parameters
+    ----------
+    length : int
+        Resolution along the axis.
+    period : float
+        Fringe period along the same axis.
+    shift : float, optional
+        Consider the shift used in the cosine function.
+        Default to 0.
     """
-    k = (w/2)//period
+    k = (length/2)//period
     
     return period*(k - shift/(2*np.pi))
     
 
-def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColor=None, dtype=np.uint8):
+def buildFringe(period, shift=0, dims=(1280,720), vertical=False, stripeColor=None, dtype=np.uint8):
     """
     Build sinusoidal fringe image.
     
@@ -82,15 +92,17 @@ def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColo
     ----------
     period : float
         Fringe period along x axis, in pixels.
-    shift : float
+    shift : float, optional
         Shift to apply. Default to 0.
-    dims : tuple
-        Image dimensions as (width, height).
-    vertical : bool
-        If True, fringe is build along vertical. Default to False (horizontal).
-    centralColor : tuple
-        BGR color for the central stripe. If None (default), no stripe is drawn and
-        a grayscale image is returned.
+    dims : tuple, optional
+        Image dimensions as (width, height). Default to (1280,720).
+    vertical : bool, optional
+        If True, fringe is build along vertical. Default to False
+        (horizontal).
+    stripeColor : str, optional
+        Color of the stripe chosen from 'blue','green' or 'red'.
+        Also 'b', 'g', 'r' are accepted.
+        Default to None (no stripe drawn).
     dtype: numpy.dtype
         Image is scaled in the range 0 - max value to match `dtype`.
         Default np.uint8 (max 255).
@@ -106,16 +118,23 @@ def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColo
         
     row = np.iinfo(dtype).max * ((1 + np.cos(2*np.pi*(1/period)*(np.arange(dims[0], dtype=float) + shift)))/2)[np.newaxis,:]
     
-    if centralColor is not None:
+    if stripeColor is not None:
         row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
         peak = _getCentralPeak(dims[0], period, shift)
         left = int(peak - period/2)
         right = int(left+period)
-        row[0, left:right, 0] *= centralColor[0]/255
-        row[0, left:right, 1] *= centralColor[1]/255 
-        row[0, left:right, 2] *= centralColor[2]/255 
+        
+        # Leave the only relevant color and set other channels to 0
+        if stripeColor == 'r' or stripeColor=='red':
+            row[0, left:right, :2] = 0 
+        elif stripeColor == 'g' or stripeColor=='green':
+            row[0, left:right, 0] = 0
+            row[0, left:right, 2] = 0
+        elif stripeColor == 'b' or stripeColor=='blue':
+            row[0, left:right, 1:] = 0
+        else:
+            raise ValueError("stripeColor value not permitted!")
     
-    # Repeat and cast to type    
     fullFringe = np.repeat(row.astype(dtype), dims[1], axis=0)
     
     if vertical is True:
@@ -125,7 +144,7 @@ def buildFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColo
     return fullFringe
 
 
-def buildBinaryFringe(period=10, shift=0, dims=(1280,720), vertical=False, centralColor=None, dtype=np.uint8):
+def buildBinaryFringe(period=10, shift=0, dims=(1280,720), vertical=False, stripeColor=None, dtype=np.uint8):
     """
     Build binary fringe image.
     
@@ -139,10 +158,12 @@ def buildBinaryFringe(period=10, shift=0, dims=(1280,720), vertical=False, centr
     dims : tuple
         Image dimensions as (width, height).
     vertical : bool
-        If True, fringe is build along vertical. Default to False (horizontal).
-    centralColor : tuple
-        BGR color for the central stripe. If None (default), no stripe is drawn and
-        a grayscale image is returned.
+        If True, fringe is build along vertical. Default to False
+        (horizontal fringe direction).
+    stripeColor : str, optional
+        Color of the stripe chosen from 'blue','green' or 'red'.
+        Also 'b', 'g', 'r' are accepted.
+        Default to None (no stripe drawn).
     dtype: numpy.dtype
         Image is scaled in the range 0 - max value to match `dtype`.
         Default np.uint8 (max 255).
@@ -162,16 +183,23 @@ def buildBinaryFringe(period=10, shift=0, dims=(1280,720), vertical=False, centr
     row = np.resize(row, (1,dims[0]))
     row *= np.iinfo(dtype).max
     
-    if centralColor is not None:
+    if stripeColor is not None:
         row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
         peak = _getCentralPeak(dims[0], period, shift)
         left = int(peak - period/2)
         right = int(left+period)
-        row[0, left:right, 0] *= centralColor[0]/255
-        row[0, left:right, 1] *= centralColor[1]/255 
-        row[0, left:right, 2] *= centralColor[2]/255 
+        
+        # Leave the only relevant color and set other channels to 0
+        if stripeColor == 'r' or stripeColor=='red':
+            row[0, left:right, :2] = 0 
+        elif stripeColor == 'g' or stripeColor=='green':
+            row[0, left:right, 0] = 0
+            row[0, left:right, 2] = 0
+        elif stripeColor == 'b' or stripeColor=='blue':
+            row[0, left:right, 1:] = 0
+        else:
+            raise ValueError("stripeColor value not permitted!")
     
-    # Repeat and cast to type    
     fullFringe = np.repeat(row.astype(dtype), dims[1], axis=0)
     
     if vertical is True:
@@ -287,6 +315,7 @@ def findCentralStripe(image, color='r', sensitivity=0.5, interpolation='linear')
     fringe[fringe < lower_color_bound] = 0
     
     def getCenters(img, axis=0):
+        # Weighted average of color values
         n = img.shape[axis]
         s = [1] * img.ndim
         s[axis] = -1
