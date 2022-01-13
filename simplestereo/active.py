@@ -714,6 +714,11 @@ class StereoFTP:
         g0hat = np.fft.ifft(G0,axis=1)
         ghat = np.fft.ifft(G,axis=1)
         
+        # Show filtered object image
+        #tmp = ghat.real
+        #cv2.imshow("TEMP OBJ FILTERED", (tmp-np.min(tmp))/np.ptp(tmp))
+        #cv2.waitKey(0)
+        
         # Build the new signal and get its phase
         # NB Numerically this is not equivalent to the phase difference.
         # https://stackoverflow.com/questions/69176709/numerical-differences-in-numpy-conjugate-and-angle/69178618#69178618
@@ -995,8 +1000,8 @@ class StereoFTPAnaglyph(StereoFTP):
         G0[ mask_high ] = 0
         
         # Inverse FFT
-        g0hat = np.fft.ifft(G0,axis=1)
-        ghat = np.fft.ifft(G,axis=1)
+        g0hat = np.fft.ifft(G0, axis=1)
+        ghat = np.fft.ifft(G, axis=1)
         
         # Build the new signal and get its phase
         # NB Numerically this is not equivalent to the phase difference.

@@ -4,6 +4,7 @@ rectification
 Contains different rectification algorithms.
 """
 import math
+import warnings
 
 import numpy as np
 import cv2
@@ -305,8 +306,6 @@ def loopRectify(rig):
             D1 = cholesky(A1, lower=True) # Upper triangle so that A1 = D1.T.dot(D1)
             D2 = cholesky(A2, lower=True)
         except:
-            raise
-            '''
             # If factorization fails because of negative eigenvalues
             # you may try to manage with it...
             # Eg. try to add a small value to diagonal elements
@@ -316,10 +315,11 @@ def loopRectify(rig):
             try:
                 D1 = cholesky(A1, lower=True)
                 D2 = cholesky(A2, lower=True)
+                warnings.warn("Added 1e-10 value to diagonal elements of A1 and A2 before Cholesky factorization.", RuntimeWarning)
             except np.linalg.LinAlgError:
                 # If fails again, raise the original error
                 raise e
-            '''    
+                
         # Calculate the eigenvector associated to the maximum eigenvalue of np.linalg.inv(D1).T.dot(B1).dot(np.linalg.inv(D1))
         D1_inv = np.linalg.inv(D1)
         eval1, evec1 = np.linalg.eig(D1_inv.T.dot(B1).dot(D1_inv))   # Calculate corresponding eigenvectors/values
