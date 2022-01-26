@@ -302,11 +302,11 @@ def findCentralStripe(image, color='r', sensitivity=0.5, interpolation='linear')
     
     # Reduce BGR image to the relevant channel 
     if color == 'r' or color=='red':
-        fringe = image[:,:,2]
+        fringe = image[:,:,2].copy()
     elif color == 'g' or color=='green':
-        fringe = image[:,:,1]
+        fringe = image[:,:,1].copy()
     elif color == 'b' or color=='blue':
-        fringe = image[:,:,0]
+        fringe = image[:,:,0].copy()
     else:
         raise ValueError("Color value not permitted!")
     
@@ -325,7 +325,7 @@ def findCentralStripe(image, color='r', sensitivity=0.5, interpolation='linear')
             out = np.sum(img * i, axis=axis) / np.sum(img, axis=axis)
         return out
     
-    x = getCenters(fringe,axis=1)
+    x = getCenters(fringe, axis=1)
     
     if np.isnan(x).all(): # Line not found
         return None
@@ -876,7 +876,9 @@ class StereoFTPAnaglyph(StereoFTP):
             Gamma correction can be implemented as a parameter.
         
         """
-        return img[:,:,0].astype(float) - img[:,:,2].astype(float)
+        img = img[:,:,0].astype(float) - img[:,:,2].astype(float)
+        img = (img - np.min(img))/np.ptp(img)
+        return img
         
     
     def getCloud(self, imgObj, radius_factor=0.5, roi=None, unwrappingMethod=None, plot=False):
@@ -921,7 +923,7 @@ class StereoFTPAnaglyph(StereoFTP):
         else:
             roi = (0,0,widthC,heightC)
             roi_x, roi_y, roi_w, roi_h = roi
-            
+        
         ### Estimate camera carrier frequency fc    
         stripe_cam = ss.active.findCentralStripe(imgObj, self.stripeColor, self.stripeSensitivity)
         if stripe_cam is None:
@@ -947,6 +949,7 @@ class StereoFTPAnaglyph(StereoFTP):
         projCoords, imgR_gray = self._getProjectorMapping(z_plane)
         imgR_gray = imgR_gray[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
         projCoords = projCoords[roi_y:roi_y+roi_h,roi_x:roi_x+roi_w]
+        
         
         # Preprocess image for phase analysis
         # following " Improved fourier transform profilometry for the
