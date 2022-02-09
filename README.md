@@ -65,4 +65,4 @@ print("Centers:", rig.getCenters())
 print("Baseline:", rig.getBaseline())
 ```
     
-More advanced examples available in the [example](example/) folder.
+More advanced examples available in the [example](https://github.com/decadenza/SimpleStereo/tree/master/examples) folder.
