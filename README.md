@@ -21,13 +21,14 @@ pip3 install .
 ## Features and future work
 
 ### General
-* StereoRig and RectifiedStereoRig classes to easily manage your stereo rigs and their geometry
+* `StereoRig`, `RectifiedStereoRig` and `StructuredLightRig` classes to easily manage your stereo rigs and their calibration
 * Basic stereo capture using OpenCV `cv2.videoCapture`
-* Export raw point cloud to PLY file
+* Export and import point cloud to PLY file
  
 ### Calibration algorithms
-- [x] Chessboard calibration (single and double cameras)
-- [x] Camera-projector calibration adapted from [procam](https://github.com/kamino410/procam-calibration) (see `ss.calibration.chessboardProCam` and a derived version `ss.calibration.chessboardProCamWhite`)
+- [x] Chessboard calibration (one and two cameras)
+- [x] Camera-projector calibration adapted from [procam](https://github.com/kamino410/procam-calibration) (see `ss.calibration.chessboardProCam`)
+- [x] Camera-projector calibration alternative version (see `ss.calibration.chessboardProCamWhite`)
 
 ### Stereo rectification algorithms
 - [x] Fusiello et al.
@@ -38,16 +39,17 @@ pip3 install .
 - [x] Adaptive Support Weight algorithm
 - [x] Geodesic Support Weight algorithm (*simplified implementation*)
 
-## Structured light algorithms
+### Active and Structured light algorithms
 - [x] Gray code
 - [ ] De Brujin
+- [ ] Adapt structured light algorithms to work with two cameras
 - [x] StereoFTP (*see citation below*)
 
 N.B. StereoFTP algorithm is discussed in detail in:
 
 Lafiosca, Pasquale, Ip-Shing Fan, and Nicolas P. Avdelidis. "Automated Aircraft Dent Inspection via a Modified Fourier Transform Profilometry Algorithm." *Sensors* 22.2 (2022): 433.
 
-Please cite as:
+If you find this useful, please cite as:
 
 ```
 @Article{StereoFTP,
@@ -67,8 +69,8 @@ DOI = {10.3390/s22020433}
 
 ```
 
-### Active stereo algorithms
-- [ ] Adapt structured light algorithms to work with two cameras
+### Unwrapping algorithms
+- [x] Infinite impulse response (Estrada et al.) 
 
 ## Basic example
 SimpleStereo helps you with common tasks. You can calibrate a single camera as:
