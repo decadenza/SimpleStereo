@@ -831,8 +831,9 @@ class StereoFTP:
     
 
 ########################################
-###### (c) Pasquale Lafiosca 2020 ######
+###### (c) Pasquale Lafiosca 2021 ######
 ########################################
+# Work in progress...
 class StereoFTPAnaglyph(StereoFTP):
     """
     Manager of the Stereo Fourier Transform Profilometry using an
