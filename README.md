@@ -27,13 +27,14 @@ pip3 install .
  
 ### Calibration algorithms
 - [x] Chessboard calibration (one and two cameras)
-- [x] Camera-projector calibration adapted from [procam](https://github.com/kamino410/procam-calibration) (see `ss.calibration.chessboardProCam`)
-- [x] Camera-projector calibration alternative version (see `ss.calibration.chessboardProCamWhite`)
+- [x] Camera-projector calibration adapted (Moreno D. et al.), adapted from [procam](https://github.com/kamino410/procam-calibration) (`ss.calibration.chessboardProCam`)
+- [x] Camera-projector calibration alternative version (`ss.calibration.chessboardProCamWhite`)
 
 ### Stereo rectification algorithms
-- [x] Fusiello et al.
-- [x] Loop and Zhang
-- [x] Lafiosca and Ceccaroni (see [DirectStereoRectification](https://github.com/decadenza/DirectStereoRectification))
+- [x] Fusiello et al. (`ss.rectification.fusielloRectify`)
+- [x] Wrapper of OpenCV algorithm (`ss.rectification.stereoRectify`)
+- [x] Loop and Zhang (`ss.rectification.loopRectify`)
+- [x] Lafiosca and Ceccaroni (`ss.rectification.directRectify`, see also [DirectStereoRectification](https://github.com/decadenza/DirectStereoRectification))
 
 ### Passive stereo matching algorithms
 - [x] Adaptive Support Weight algorithm (K. Yoon et al.)
