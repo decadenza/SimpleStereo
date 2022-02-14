@@ -3,10 +3,6 @@ phaseUnwrapping
 =======
 Contains different phase unwrapping strategies.
 """
-#import ctypes
-
-#import numpy as np
-#import cv2
 
 from simplestereo import _unwrapping
 

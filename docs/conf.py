@@ -19,6 +19,8 @@ sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Mocking imports  -----------------------------------------------------
+MOCK_MODULES = ['numpy', 'scipy', 'matplotlib', 'cv2', 'scipy.ndimage', 'scipy.optimize', 'scipy.linalg', 'simplestereo._passive', 'simplestereo._unwrapping']
+
 from unittest.mock import MagicMock
 
 class Mock(MagicMock):
@@ -26,8 +28,9 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return MagicMock()
 
-MOCK_MODULES = ['numpy', 'scipy', 'matplotlib', 'cv2', 'scipy.ndimage', 'scipy.optimize', 'scipy.linalg']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
+autodoc_mock_imports = MOCK_MODULES
 
 # -- Project information -----------------------------------------------------
 
@@ -46,6 +49,10 @@ release = '1'
 # ones.
 extensions = [
                 'sphinx.ext.autodoc',
+                'sphinx.ext.coverage',
+                'sphinx.ext.napoleon',
+                'sphinx.ext.todo',
+                'sphinx.ext.viewcode'
              ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -68,3 +75,9 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# These paths are either relative to html_static_path
+# or fully qualified paths (eg. https://...)
+html_css_files = [
+    'custom.css',
+    ]
