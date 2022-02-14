@@ -10,7 +10,7 @@ Welcome to SimpleStereo's documentation!
    :maxdepth: 2
    :caption: Contents:
     
-   simplestereo
+   modules
 
 
 Indices and tables
