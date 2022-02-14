@@ -12,7 +12,7 @@ class get_numpy_include(object):
 if __name__ == '__main__':
          
     setup(name='SimpleStereo',
-          version = "0.9.0",
+          version = "1.0",
           description = "Stereo vision made simple",
           author = "Pasquale Lafiosca",
           author_email = "decadenza@protonmail.com",
