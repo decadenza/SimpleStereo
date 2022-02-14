@@ -433,14 +433,10 @@ class RectifiedStereoRig(StereoRig):
         
         Parameters
         ----------
-        alpha : float
-            Scaling parameter for both images. If alpha=0, it returns undistorted image with minimum unwanted pixels
-            (so it may even remove some pixels at image corners). If alpha=1, all pixels are retained 
-            with some extra black images. Values in the middle are accepted too (default to 1).
         destDims: tuple, optional
             Resolution of destination images as (width, height) tuple (default to first image resolution).
-        centerPrincipalPoint : bool
-            If True the principal point is centered within the images (default to False).
+        zoom: float, optional
+            Zoom on the final images. Default to 1.
         
         Returns
         -------

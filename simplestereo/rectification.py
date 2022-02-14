@@ -88,8 +88,14 @@ def getFittingMatrices(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2,
     if flipY == 1:
         tY = -minY * scaleY
     else:
-        tY = -maxY * scaleY
-        
+        tY = -maxY * scaleY 
+    
+    # Compensate zoom
+    tX1 -= destDims[0]*(zoom-1)/2
+    tX2 -= destDims[0]*(zoom-1)/2
+    tY -= destDims[1]*(zoom-1)/2
+    
+    # Final transformations    
     K1 = np.array( [[scaleX,0,tX1], [0,scaleY,tY], [0,0,1]] )
     K2 = np.array( [[scaleX,0,tX2], [0,scaleY,tY], [0,0,1]] )
     

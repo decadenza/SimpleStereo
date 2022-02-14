@@ -20,6 +20,8 @@ rigRect = ss.RectifiedStereoRig.fromFile(loadFile)
 img1 = cv2.imread(os.path.join(imgPath,'test_L.png'))
 img2 = cv2.imread(os.path.join(imgPath,'test_R.png'))
 
+#rigRect.computeRectificationMaps(zoom=1.5) # May help removing unwanted border
+
 # Simply rectify two images (it takes care of distortion too)
 img1_rect, img2_rect = rigRect.rectifyImages(img1, img2)
 
