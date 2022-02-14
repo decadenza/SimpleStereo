@@ -1,0 +1,749 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>simplestereo &#8212; SimpleStereo  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for simplestereo</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">simplestereo</span>
+<span class="sd">============</span>
+<span class="sd">Common classes and functions.</span>
+
+
+<span class="sd">Documentation DOCSTRING follows numpy-style wherever possible.</span>
+<span class="sd">See https://numpydoc.readthedocs.io/en/latest/format.html</span>
+
+<span class="sd">.. todo::</span>
+<span class="sd">    - Add new rig class for structured light (projector + camera).</span>
+<span class="sd">    - Add new rig class for uncalibrated stereo.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">calibration</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">rectification</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">passive</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">active</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">unwrapping</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">points</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">utils</span>
+
+
+<span class="c1">### VERSION INFO</span>
+<span class="kn">import</span> <span class="nn">pkg_resources</span> <span class="c1"># part of setuptools</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s2">&quot;SimpleStereo&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">version</span>
+
+
+<div class="viewcode-block" id="StereoRig"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig">[docs]</a><span class="k">class</span> <span class="nc">StereoRig</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Keep together and manage all parameters of a calibrated stereo rig.</span>
+<span class="sd">    </span>
+<span class="sd">    The essential E and fundamental F matrices are optional as they are not always available.</span>
+<span class="sd">    They may be computed from camera parameters, if needed.</span>
+<span class="sd">        </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    res1, res2 : tuple</span>
+<span class="sd">        Resolution of camera as (width, height)  </span>
+<span class="sd">    intrinsic1, intrinsic2 : numpy.ndarray</span>
+<span class="sd">        3x3 intrinsic camera matrix in the form [[fx, 0, tx], [0, fy, ty], [0, 0, 1]].</span>
+<span class="sd">    distCoeffs1, distCoeffs2 : list or numpy.ndarray</span>
+<span class="sd">        List of distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).</span>
+<span class="sd">    R : numpy.ndarray</span>
+<span class="sd">        Rotation matrix between the 1st and the 2nd camera coordinate systems as numpy.ndarray.</span>
+<span class="sd">    T : numpy.ndarray</span>
+<span class="sd">        Translation vector between the coordinate systems of the cameras as numpy.ndarray.</span>
+<span class="sd">    E : numpy.ndarray, optional</span>
+<span class="sd">        Essential matrix as numpy.ndarray (default None) .</span>
+<span class="sd">    F : numpy.ndarray, optional</span>
+<span class="sd">        Fundamental matrix as numpy.ndarray (default None).</span>
+<span class="sd">    reprojectionError : float, optional</span>
+<span class="sd">        Total reprojection error resulting from calibration (default None).</span>
+<span class="sd">    </span>
+<span class="sd">    .. note:: </span>
+<span class="sd">        This class follows OpenCV convention to set the origin of the world coordinate system into the first camera.</span>
+<span class="sd">        Hence the first camera extrinsics parameters will always be identity matrix rotation and zero translation.</span>
+<span class="sd">        If your world coordinate system is placed into a camera, you must convert it to use this class</span>
+<span class="sd">        (see :func:`ss.utils.moveExtrinsicOriginToFirstCamera`).</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>  
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">res1</span><span class="p">,</span> <span class="n">res2</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reprojectionError</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res1</span> <span class="o">=</span> <span class="n">res1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res2</span> <span class="o">=</span> <span class="n">res2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">intrinsic1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">intrinsic2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">distCoeffs1</span><span class="p">)</span> <span class="k">if</span> <span class="n">distCoeffs1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="c1"># Convert to numpy.ndarray</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">distCoeffs2</span><span class="p">)</span> <span class="k">if</span> <span class="n">distCoeffs2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>              
+        <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">F</span><span class="p">)</span> <span class="k">if</span> <span class="n">F</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">E</span><span class="p">)</span> <span class="k">if</span> <span class="n">E</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reprojectionError</span> <span class="o">=</span> <span class="n">reprojectionError</span>
+    
+       
+<div class="viewcode-block" id="StereoRig.fromFile"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.fromFile">[docs]</a>    <span class="nd">@classmethod</span> 
+    <span class="k">def</span> <span class="nf">fromFile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Alternative initialization of StereoRig object from JSON file.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filepath : str</span>
+<span class="sd">            Path of the JSON file containing saved parameters of the stereo rig.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        StereoRig</span>
+<span class="sd">            An object of StereoRig class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        
+        <span class="n">res1</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;res1&#39;</span><span class="p">))</span>
+        <span class="n">res2</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;res2&#39;</span><span class="p">))</span>
+        <span class="n">intrinsic1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;intrinsic1&#39;</span><span class="p">))</span>
+        <span class="n">intrinsic2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;intrinsic2&#39;</span><span class="p">))</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">))</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>              
+        <span class="n">distCoeffs1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;distCoeffs1&#39;</span><span class="p">))</span>
+        <span class="n">distCoeffs2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;distCoeffs2&#39;</span><span class="p">))</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">reprojectionError</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;reprojectionError&#39;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">res1</span><span class="p">,</span> <span class="n">res2</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">reprojectionError</span><span class="p">)</span></div>
+    
+        
+<div class="viewcode-block" id="StereoRig.save"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save configuration to JSON file.</span>
+<span class="sd">        </span>
+<span class="sd">        Save the current stereo rig configuration to a JSON file that can be loaded later.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filepath : str</span>
+<span class="sd">            Path where to save the JSON file containing the parameters of the stereo rig.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;res1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">res1</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;res2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">res2</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;intrinsic1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;intrinsic2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;distCoeffs1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;distCoeffs2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="s1">&#39;F&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reprojectionError</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="s1">&#39;reprojectionError&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reprojectionError</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
+            
+    
+<div class="viewcode-block" id="StereoRig.getCenters"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.getCenters">[docs]</a>    <span class="k">def</span> <span class="nf">getCenters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate camera centers in world coordinates.</span>
+<span class="sd">        </span>
+<span class="sd">        Anyway first camera will always be centered in zero (returned anyway).</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        numpy.ndarray</span>
+<span class="sd">            3D coordinates of first camera center (always zero).</span>
+<span class="sd">        numpy.ndarray</span>
+<span class="sd">            3D coordinates of second camera center.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Po1</span><span class="p">,</span> <span class="n">Po2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getProjectionMatrices</span><span class="p">()</span>
+        <span class="n">C1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>    <span class="c1"># World origin is set in camera 1</span>
+        <span class="n">C2</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Po2</span><span class="p">[:,:</span><span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Po2</span><span class="p">[:,</span><span class="mi">3</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">C1</span><span class="p">,</span> <span class="n">C2</span></div>
+    
+    
+<div class="viewcode-block" id="StereoRig.getBaseline"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.getBaseline">[docs]</a>    <span class="k">def</span> <span class="nf">getBaseline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the norm of the vector from camera 1 to camera 2.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            Length of the baseline in world units.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">C1</span><span class="p">,</span> <span class="n">C2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getCenters</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">C2</span><span class="p">)</span> <span class="c1"># No need to do C2 - C1 as C1 is always zero (origin of world system)</span></div>
+    
+    
+<div class="viewcode-block" id="StereoRig.getProjectionMatrices"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.getProjectionMatrices">[docs]</a>    <span class="k">def</span> <span class="nf">getProjectionMatrices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the projection matrices of camera 1 and camera 2.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        numpy.ndarray</span>
+<span class="sd">            The 3x4 projection matrix of the first camera.</span>
+<span class="sd">        numpy.ndarray</span>
+<span class="sd">            The 3x4 projection matrix of the second camera.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Po1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)))</span> <span class="p">)</span>
+        <span class="n">Po2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="p">)</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="n">Po1</span><span class="p">,</span> <span class="n">Po2</span></div>
+    
+    
+<div class="viewcode-block" id="StereoRig.getFundamentalMatrix"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.getFundamentalMatrix">[docs]</a>    <span class="k">def</span> <span class="nf">getFundamentalMatrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the fundamental matrix F.</span>
+<span class="sd">        </span>
+<span class="sd">        If not set, F is computed from projection matrices using </span>
+<span class="sd">        :func:`simplestereo.calibration.getFundamentalMatrixFromProjections`.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        F : numpy.ndarray</span>
+<span class="sd">            The 3x3 fundamental matrix.</span>
+<span class="sd">        </span>
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The fundamental matrix has always a free scaling factor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>   <span class="c1"># If F is not set, calculate it and update the object data.</span>
+            <span class="c1">#P1, P2 = self.getProjectionMatrices()</span>
+            <span class="c1">#self.F = calibration.getFundamentalMatrixFromProjections(P1,P2)</span>
+            <span class="c1"># Alternative formula by</span>
+            <span class="c1"># Multiple View Geometry in Computer Vision, by Richard Hartley and Andrew Zisserman</span>
+            <span class="n">vv</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">getCrossProductMatrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vv</span><span class="p">)</span>
+                
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span></div>
+    
+    
+<div class="viewcode-block" id="StereoRig.getEssentialMatrix"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.getEssentialMatrix">[docs]</a>    <span class="k">def</span> <span class="nf">getEssentialMatrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the essential matrix E.</span>
+<span class="sd">        </span>
+<span class="sd">        If not set, E is computed from the fundamental matrix F and the camera matrices.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        E : numpy.ndarray</span>
+<span class="sd">            The 3x3 essential matrix.</span>
+<span class="sd">        </span>
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The essential matrix has always a free scaling factor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="kc">True</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># If E is not set, calculate it and update the object data.</span>
+            <span class="n">F</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getFundamentalMatrix</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">F</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">)</span>
+            
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span></div>
+    
+    
+<div class="viewcode-block" id="StereoRig.undistortImages"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.undistortImages">[docs]</a>    <span class="k">def</span> <span class="nf">undistortImages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">,</span> <span class="n">changeCameras</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">centerPrincipalPoint</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undistort two given images of the stereo rig.</span>
+<span class="sd">        </span>
+<span class="sd">        This method wraps `cv2.getOptimalNewCameraMatrix()` followed</span>
+<span class="sd">        by `cv2.undistort()` for both images.</span>
+<span class="sd">        If changeCameras is False, original camera matrices are used,</span>
+<span class="sd">        otherwise all the parameters of</span>
+<span class="sd">        `cv2.getOptimalNewCameraMatrix()` are considered when </span>
+<span class="sd">        undistorting the images.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        img1, img2 : cv2.Mat</span>
+<span class="sd">            A couple of OpenCV images taken with the stereo rig (ordered).</span>
+<span class="sd">        changeCameras : bool</span>
+<span class="sd">            If False (default) the original camera matrices are used and all the following parameters are skipped.</span>
+<span class="sd">            If True, new camera matrices are computed with the given parameters.</span>
+<span class="sd">        alpha : float</span>
+<span class="sd">            Scaling parameter for both images.</span>
+<span class="sd">            If alpha=0, it returns undistorted image with minimum unwanted pixels</span>
+<span class="sd">            (so it may even remove some pixels at image corners). If alpha=1, all pixels are retained </span>
+<span class="sd">            with some extra black images. Values in the middle are accepted too (default to 1).</span>
+<span class="sd">        destDims : tuple, optional</span>
+<span class="sd">            Resolution of destination images as (width, height) tuple (default to first image resolution).</span>
+<span class="sd">        centerPrincipalPoint : bool</span>
+<span class="sd">            If True the principal point is centered within the images (default to False).</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        img1_undist, img2_undist : cv2.Mat</span>
+<span class="sd">            The undistorted images.</span>
+<span class="sd">        cameraMatrixNew1, cameraMatrixNew2 : numpy.ndarray</span>
+<span class="sd">            If *changeCameras* is set to True, the new camera matrices are returned too.</span>
+<span class="sd">        </span>
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        cv2.getOptimalNewCameraMatrix</span>
+<span class="sd">        cv2.undistort</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">changeCameras</span><span class="p">:</span>   <span class="c1"># Change camera matrices</span>
+            <span class="n">cameraMatrixNew1</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">getOptimalNewCameraMatrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">res1</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">centerPrincipalPoint</span><span class="p">)</span>
+            <span class="n">cameraMatrixNew2</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">getOptimalNewCameraMatrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">res2</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">centerPrincipalPoint</span><span class="p">)</span>
+            
+            <span class="n">img1_undist</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">undistort</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">cameraMatrixNew1</span><span class="p">)</span>
+            <span class="n">img2_undist</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">undistort</span><span class="p">(</span><span class="n">img2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">cameraMatrixNew2</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">img1_undist</span><span class="p">,</span> <span class="n">img2_undist</span><span class="p">,</span> <span class="n">cameraMatrixNew1</span><span class="p">,</span> <span class="n">cameraMatrixNew2</span>
+        
+        <span class="k">else</span><span class="p">:</span>   <span class="c1"># Use original camera matrices</span>
+            <span class="n">img1_undist</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">undistort</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">img2_undist</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">undistort</span><span class="p">(</span><span class="n">img2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">img1_undist</span><span class="p">,</span> <span class="n">img2_undist</span></div></div>
+          
+        
+<div class="viewcode-block" id="RectifiedStereoRig"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig">[docs]</a><span class="k">class</span> <span class="nc">RectifiedStereoRig</span><span class="p">(</span><span class="n">StereoRig</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Keep together and manage all parameters of a calibrated and rectified stereo rig.</span>
+<span class="sd">    </span>
+<span class="sd">    It includes all the parameters of StereoRig plus two rectifying homographies. Differently from OpenCV,</span>
+<span class="sd">    here the rectifying *homographies* (pixel domain) are taken as input, the ones commonly referred in literature, and</span>
+<span class="sd">    **not** the rectification transformation in the object space.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Rcommon : np.array</span>
+<span class="sd">        3x3 matrices representing the new common camera orientation</span>
+<span class="sd">        after rectification.</span>
+<span class="sd">    rectHomography1, rectHomography2 : np.array</span>
+<span class="sd">        3x3 rectification homographies.</span>
+<span class="sd">    StereoRig:</span>
+<span class="sd">        A StereoRig object or, *alternatively*, all the parameters of</span>
+<span class="sd">        :meth:`simplestereo.StereoRig` (in the same order).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Rcommon</span><span class="p">,</span> <span class="n">rectHomography1</span><span class="p">,</span> <span class="n">rectHomography2</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span> <span class="o">=</span> <span class="n">Rcommon</span>                  <span class="c1"># Common camera orientation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography1</span> <span class="o">=</span> <span class="n">rectHomography1</span>  <span class="c1"># Rectification homographies</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography2</span> <span class="o">=</span> <span class="n">rectHomography2</span>
+        
+        <span class="c1"># Final intrinsic matrices that keep track of all affine transformations applied, are</span>
+        <span class="c1"># calculated in self.computeRectificationMaps() considering destination dimensions and zoom.</span>
+        <span class="c1"># N.B. These will be needed for depth reconstruction!</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K1</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K2</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">StereoRig</span><span class="p">):</span>                  <span class="c1"># Extend unpacking a StereoRig object </span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">RectifiedStereoRig</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">res1</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">res2</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">F</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">reprojectionError</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>                                               <span class="c1"># Or use all the parameters</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">RectifiedStereoRig</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">computeRectificationMaps</span><span class="p">()</span>
+    
+        
+<div class="viewcode-block" id="RectifiedStereoRig.fromFile"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.fromFile">[docs]</a>    <span class="nd">@classmethod</span> 
+    <span class="k">def</span> <span class="nf">fromFile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Alternative initialization of StereoRigRectified object from JSON file.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filepath : str</span>
+<span class="sd">            Path of the JSON file containing saved parameters of the stereo rig.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        StereoRigRectified</span>
+<span class="sd">            An object of StereoRigRectified class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        
+        <span class="n">Rcommon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Rcommon&#39;</span><span class="p">))</span>
+        <span class="n">rectHomography1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;rectHomography1&#39;</span><span class="p">))</span>
+        <span class="n">rectHomography2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;rectHomography2&#39;</span><span class="p">))</span>
+        <span class="n">res1</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;res1&#39;</span><span class="p">))</span>
+        <span class="n">res2</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;res2&#39;</span><span class="p">))</span>
+        <span class="n">intrinsic1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;intrinsic1&#39;</span><span class="p">))</span>
+        <span class="n">intrinsic2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;intrinsic2&#39;</span><span class="p">))</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">))</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">))</span>              
+        <span class="n">distCoeffs1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;distCoeffs1&#39;</span><span class="p">))</span>
+        <span class="n">distCoeffs2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;distCoeffs2&#39;</span><span class="p">))</span>
+        <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">))</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">))</span>
+        <span class="n">reprojectionError</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;reprojectionError&#39;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">Rcommon</span><span class="p">,</span> <span class="n">rectHomography1</span><span class="p">,</span> <span class="n">rectHomography2</span><span class="p">,</span> <span class="n">res1</span><span class="p">,</span> <span class="n">res2</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">reprojectionError</span><span class="p">)</span></div>
+    
+        
+<div class="viewcode-block" id="RectifiedStereoRig.save"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save configuration to JSON file.</span>
+<span class="sd">        </span>
+<span class="sd">        Save the current stereo rig configuration to a JSON file that can be loaded later.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        filepath : str</span>
+<span class="sd">            Path where to save the JSON file containing the parameters of the stereo rig.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;Rcommon&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;rectHomography1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography1</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;rectHomography2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography2</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;res1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">res1</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;res2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">res2</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;intrinsic1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;intrinsic2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;distCoeffs1&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;distCoeffs2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="s1">&#39;F&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="s1">&#39;E&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reprojectionError</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="s1">&#39;reprojectionError&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reprojectionError</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
+    
+    
+<div class="viewcode-block" id="RectifiedStereoRig.getRectifiedProjectionMatrices"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.getRectifiedProjectionMatrices">[docs]</a>    <span class="k">def</span> <span class="nf">getRectifiedProjectionMatrices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the projection matrices of camera 1 and camera 2 after rectification.</span>
+<span class="sd">        </span>
+<span class="sd">        New projection matrices, after rectification, share the same orientation `Rcommon`,</span>
+<span class="sd">        have only one horizontal displacement (the baseline) and</span>
+<span class="sd">        have new intrinsics (`K1` and `K2`) that depends on all the rigid manipulation done after rectification.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        numpy.ndarray</span>
+<span class="sd">            The 3x4 projection matrix of the first camera.</span>
+<span class="sd">        numpy.ndarray</span>
+<span class="sd">            The 3x4 projection matrix of the second camera.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">C1</span><span class="p">,</span> <span class="n">C2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getCenters</span><span class="p">()</span>
+        <span class="n">P1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K1</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="o">-</span><span class="n">C1</span><span class="p">[:,</span><span class="kc">None</span><span class="p">])</span> <span class="p">)</span> <span class="p">)</span>
+        <span class="n">P2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K2</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="o">-</span><span class="n">C2</span><span class="p">[:,</span><span class="kc">None</span><span class="p">])</span> <span class="p">)</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="n">P1</span><span class="p">,</span> <span class="n">P2</span>  </div>
+    
+    
+<div class="viewcode-block" id="RectifiedStereoRig.computeRectificationMaps"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.computeRectificationMaps">[docs]</a>    <span class="k">def</span> <span class="nf">computeRectificationMaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">zoom</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the two maps to undistort and rectify the stereo pair.</span>
+<span class="sd">        </span>
+<span class="sd">        This method wraps ``cv2.initUndistortRectifyMap()`` plus a custom fitting algorithm to keep image within dimensions. </span>
+<span class="sd">        It modifies the original camera matrix applying affine transformations (x-y scale and translation, shear (x axis only)) </span>
+<span class="sd">        without losing rectification. The two new maps are stored internally.</span>
+<span class="sd">        This method is called in the constructor with default parameters and can be called later to change its settings.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        destDims: tuple, optional</span>
+<span class="sd">            Resolution of destination images as (width, height) tuple (default to first image resolution).</span>
+<span class="sd">        zoom: float, optional</span>
+<span class="sd">            Zoom on the final images. Default to 1.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+<span class="sd">        </span>
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        OpenCV uses *rectification transformation in the object space (3x3 matrix)*, but most of the papers provide algorithms</span>
+<span class="sd">        to compute the homography to be applied to the *image* in a pixel domain, not a rotation matrix R in 3D space.</span>
+<span class="sd">        This library always refers to rectification transform as the ones in pixel domain.</span>
+<span class="sd">        To adapt it to be used with OpenCV the transformation to be used in :func:`cv2.initUndistortRectifyMap()` (and other functions)</span>
+<span class="sd">        is given by `rectHomography.dot(cameraMatrix)`.</span>
+<span class="sd">        For each camera, the function computes homography H as the rectification transformation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">destDims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">destDims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">res1</span>
+        
+        <span class="c1"># Find fitting matrices, as additional correction of the new camera matrices (if any).</span>
+        <span class="c1"># Useful e.g. to change destination image resolution or zoom.</span>
+        <span class="n">Fit1</span><span class="p">,</span> <span class="n">Fit2</span> <span class="o">=</span> <span class="n">rectification</span><span class="o">.</span><span class="n">getFittingMatrices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">res1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">res2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">zoom</span><span class="p">)</span>
+        
+        <span class="c1"># Isolate affine transformation applied after rectification</span>
+        <span class="c1"># These would be the FINAL new camera intrinsics (needed for 3D reconstrunction)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K1</span> <span class="o">=</span> <span class="n">Fit1</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rectHomography1</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span> <span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K2</span> <span class="o">=</span> <span class="n">Fit2</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rectHomography2</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">)</span> <span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        
+        <span class="c1"># OpenCV requires the final rotations applied</span>
+        <span class="n">R1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span>
+        <span class="n">R2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        
+        <span class="c1"># Recompute final maps considering fitting transformations too</span>
+        <span class="c1">#P1, P2 = self.getRectifiedProjectionMatrices()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mapx1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapy1</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">initUndistortRectifyMap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">R1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K1</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CV_32FC1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mapx2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapy2</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">initUndistortRectifyMap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K2</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CV_32FC1</span><span class="p">)</span></div>
+        
+        
+<div class="viewcode-block" id="RectifiedStereoRig.rectifyImages"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.rectifyImages">[docs]</a>    <span class="k">def</span> <span class="nf">rectifyImages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_LINEAR</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undistort, rectify and apply affine transformation to a couple of images coming from the stereo rig.</span>
+<span class="sd">        </span>
+<span class="sd">        *img1* and *img2* must be provided as in calibration (es. img1 is the left image, img2 the right one).</span>
+<span class="sd">        This method is wraps ``cv2.remap()`` for two images of the stereo pair. The maps used are computed by</span>
+<span class="sd">        :meth:`computeRectificationMaps` during initialization (with default parameters). </span>
+<span class="sd">        :meth:`computeRectificationMaps` can be called before calling this method to change mapping settings (e.g. final resolution).</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        img1, img2 : cv2.Mat</span>
+<span class="sd">            A couple of OpenCV images taken with the stereo rig (ordered).</span>
+<span class="sd">        interpolation : int, optional</span>
+<span class="sd">            OpenCV *InterpolationFlag*. The most common are ``cv2.INTER_NEAREST``, ``cv2.INTER_LINEAR`` (default) and ``cv2.INTER_CUBIC``.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        img1_rect, img2_rect : cv2.Mat</span>
+<span class="sd">            The undistorted images.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">img1_rect</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">remap</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapx1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapy1</span><span class="p">,</span> <span class="n">interpolation</span><span class="p">);</span>
+        <span class="n">img2_rect</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">remap</span><span class="p">(</span><span class="n">img2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapx2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapy2</span><span class="p">,</span> <span class="n">interpolation</span><span class="p">);</span>
+        
+        <span class="k">return</span> <span class="n">img1_rect</span><span class="p">,</span> <span class="n">img2_rect</span></div>
+    
+    
+<div class="viewcode-block" id="RectifiedStereoRig.get3DPoints"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.get3DPoints">[docs]</a>    <span class="k">def</span> <span class="nf">get3DPoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">disparityMap</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the 3D points in the space from the disparity map.</span>
+<span class="sd">        </span>
+<span class="sd">        If the calibration was done with real world units (e.g. millimeters),</span>
+<span class="sd">        the output would be in the same units. The world origin will be in the</span>
+<span class="sd">        left camera.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        disparityMap : numpy.ndarray</span>
+<span class="sd">            A dense disparity map having same height and width of images.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        numpy.ndarray</span>
+<span class="sd">            Array of points having shape *(height,width,3)*, where at each y,x coordinates</span>
+<span class="sd">            a *(x,y,z)* point is associated.</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">disparityMap</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+        
+        <span class="c1"># Build the Q matrix as OpenCV requirement</span>
+        <span class="c1"># to be used as input of ``cv2.reprojectImageTo3D``</span>
+        <span class="c1"># We need to cancel the final intrinsics (contained in self.K1</span>
+        <span class="c1"># and self.K2)</span>
+        
+        <span class="c1"># IMPLEMENTATION NOTES</span>
+        <span class="c1"># fx and fy are assumed the same for left and right (after</span>
+        <span class="c1"># rectification, they should)</span>
+        <span class="c1"># Accepts different x-shear terms (generally not used)</span>
+        <span class="c1"># cx1 is not the same of cx2</span>
+        <span class="c1"># cy1 is equal cy2 (as images are rectified)</span>
+        
+        <span class="n">b</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getBaseline</span><span class="p">()</span>
+        <span class="n">fx</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K1</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">fy</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K2</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">cx1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K1</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">cx2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K2</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">a1</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K1</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">a2</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K2</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">cy</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K1</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+        
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">)</span>
+        
+        <span class="n">Q</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">a1</span><span class="o">/</span><span class="n">fy</span>
+        <span class="n">Q</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">a1</span><span class="o">*</span><span class="n">cy</span><span class="o">/</span><span class="n">fy</span> <span class="o">-</span> <span class="n">cx1</span>
+        
+        <span class="n">Q</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">fx</span><span class="o">/</span><span class="n">fy</span>
+        <span class="n">Q</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">cy</span><span class="o">*</span><span class="n">fx</span><span class="o">/</span><span class="n">fy</span>
+                                 
+        <span class="n">Q</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">Q</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">fx</span>
+        
+        <span class="n">Q</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">a2</span><span class="o">-</span><span class="n">a1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">fy</span><span class="o">*</span><span class="n">b</span><span class="p">)</span>
+        <span class="n">Q</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">b</span>                        
+        <span class="n">Q</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">a1</span><span class="o">-</span><span class="n">a2</span><span class="p">)</span><span class="o">*</span><span class="n">cy</span><span class="o">+</span><span class="p">(</span><span class="n">cx2</span><span class="o">-</span><span class="n">cx1</span><span class="p">)</span><span class="o">*</span><span class="n">fy</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">fy</span><span class="o">*</span><span class="n">b</span><span class="p">)</span>    
+        
+        
+        <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">reprojectImageTo3D</span><span class="p">(</span><span class="n">disparityMap</span><span class="p">,</span> <span class="n">Q</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="StructuredLightRig"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StructuredLightRig">[docs]</a><span class="k">class</span> <span class="nc">StructuredLightRig</span><span class="p">(</span><span class="n">StereoRig</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    StereoRig child class with structured light methods.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">StereoRig</span><span class="p">):</span>                  <span class="c1"># Extend unpacking a StereoRig object </span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">StructuredLightRig</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">res1</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">res2</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">F</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">E</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">reprojectionError</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid argument!&quot;</span><span class="p">)</span>
+                
+        <span class="bp">self</span><span class="o">.</span><span class="n">_computeMatrices</span><span class="p">()</span>
+    
+    
+    <span class="k">def</span> <span class="nf">_computeMatrices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">R2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="n">rectification</span><span class="o">.</span><span class="n">_lowLevelRectify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>    
+        <span class="c1">### Get inverse common orientation and extend to 4x4 transform</span>
+        <span class="n">R_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">)</span>
+        <span class="n">R_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span> <span class="p">(</span><span class="n">R_inv</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">)))</span> <span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="p">)</span> <span class="p">)</span>
+        <span class="n">R_inv</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R_inv</span> <span class="o">=</span> <span class="n">R_inv</span>
+    
+<div class="viewcode-block" id="StructuredLightRig.fromFile"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StructuredLightRig.fromFile">[docs]</a>    <span class="k">def</span> <span class="nf">fromFile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">StructuredLightRig</span><span class="p">(</span><span class="n">StereoRig</span><span class="o">.</span><span class="n">fromFile</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+        
+<div class="viewcode-block" id="StructuredLightRig.triangulate"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StructuredLightRig.triangulate">[docs]</a>    <span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">camPoints</span><span class="p">,</span> <span class="n">projPoints</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given camera-projector correspondences, proceed with</span>
+<span class="sd">        triangulation.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        camPoints, projPoints: numpy.ndarray</span>
+<span class="sd">            Ordered corresponding coordinates as (x, y) couples from </span>
+<span class="sd">            camera and projector. Last dimension must be 2.</span>
+<span class="sd">            Camera points must be already undistorted.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        3D coordinates with shape (-1, 1, 3).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">pc</span> <span class="o">=</span> <span class="n">camPoints</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">pp</span> <span class="o">=</span> <span class="n">projPoints</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+        
+        <span class="n">pc</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">perspectiveTransform</span><span class="p">(</span><span class="n">pc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">R1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># Apply rectification</span>
+        <span class="c1"># Add ones as third coordinate</span>
+        <span class="n">pc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">(</span><span class="n">pc</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">pc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span> <span class="p">)</span>
+        
+        <span class="c1"># *Apply* lens distortion to H.</span>
+        <span class="c1"># A projector is considered as an inversed pinhole camera (and so are</span>
+        <span class="c1"># the distortion coefficients)</span>
+        <span class="c1"># H is on the original imgFringe. Passing through the projector lenses,</span>
+        <span class="c1"># it gets distortion, so it does not coincide with real world point.</span>
+        <span class="c1"># But we want rays going exactly towards world points.</span>
+        <span class="c1"># Remove intrinsic, undistort and put same intrinsic back.</span>
+        <span class="n">pp</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">undistortPoints</span><span class="p">(</span><span class="n">pp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">P</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">)</span>
+        <span class="c1"># Apply rectification to projector points.</span>
+        <span class="c1"># Rectify2 cancels the intrinsic and applies new rotation.</span>
+        <span class="c1"># No new intrinsics here.</span>
+        <span class="n">pp</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">perspectiveTransform</span><span class="p">(</span><span class="n">pp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">R2</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+        
+        <span class="c1"># Get world points</span>
+        <span class="n">disparity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">pp</span><span class="p">[:,[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">-</span> <span class="n">pc</span><span class="p">[:,[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="n">finalPoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getBaseline</span><span class="p">()</span><span class="o">*</span><span class="p">(</span><span class="n">pc</span><span class="o">/</span><span class="n">disparity</span><span class="p">)</span>
+        
+        <span class="c1"># Cancel common orientation applied to first camera</span>
+        <span class="c1"># to bring points into camera coordinate system</span>
+        <span class="c1"># NOT NEEDED See `rectification._lowLevelRectify` </span>
+        <span class="n">finalPoints</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">perspectiveTransform</span><span class="p">(</span><span class="n">finalPoints</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">R_inv</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">finalPoints</span></div>
+    
+    
+<div class="viewcode-block" id="StructuredLightRig.undistortCameraImage"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StructuredLightRig.undistortCameraImage">[docs]</a>    <span class="k">def</span> <span class="nf">undistortCameraImage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imgObj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Undistort camera image.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        imgObj : numpy.ndarray</span>
+<span class="sd">            Camera image.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Undistorted image.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">undistort</span><span class="p">(</span><span class="n">imgObj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">)</span></div></div>
+        
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">SimpleStereo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, decadenza.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
