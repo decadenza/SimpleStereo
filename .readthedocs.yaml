@@ -7,9 +7,9 @@ version: 1
 
 # Set the version of Python and other tools you might need
 build:
-  os: Any
+  os: ubuntu-20.04
   tools:
-    python: "3"
+    python: "3.9"
     # You can also specify other tool versions:
     # nodejs: "16"
     # rust: "1.55"
