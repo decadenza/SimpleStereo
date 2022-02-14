@@ -203,7 +203,7 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
     StereoRig
         A StereoRig object
     
-    ..todo::
+    .. todo::
         Iteratively exclude images that have high reprojection errors and re-calibrate.
     """
     
