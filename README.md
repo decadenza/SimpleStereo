@@ -12,7 +12,7 @@ Documentation is available at https://decadenza.github.io/SimpleStereo/
 * matplotlib (for data visualisation purposes)
 
 ## Installation
-Download the last version and unzip. Then, in the folder containing `setup.py`, run:
+Download the lastest version and unzip. Then, from the folder containing `setup.py`, run:
 ```
 pip3 install .
 ```
