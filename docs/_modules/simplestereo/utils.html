@@ -1,0 +1,383 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>simplestereo.utils &#8212; SimpleStereo 1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../simplestereo.html" accesskey="U">simplestereo</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simplestereo.utils</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for simplestereo.utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">utils</span>
+<span class="sd">==========</span>
+<span class="sd">This module provides general utilities.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Thread</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+
+
+<div class="viewcode-block" id="Capture"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture">[docs]</a><span class="k">class</span> <span class="nc">Capture</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Capture a video stream continuously.</span>
+<span class="sd">    </span>
+<span class="sd">    Allows to capture a video stream in a separate thread and grab the current frame when needed, </span>
+<span class="sd">    minimizing lags for streaming and webcams.</span>
+<span class="sd">    It supports webcams, URL streaming and video files.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    device : int or str</span>
+<span class="sd">        Id of the opened video capturing device (i.e. a camera index). If there is a single camera connected, usually it will be 0 (default 0).</span>
+<span class="sd">        Also the string containing full URL of the video stream (e.g. *protocol://username:password@script?params*) or a path to a video file.</span>
+<span class="sd">    flipY : bool</span>
+<span class="sd">        If True, output image is flipped on the Y-axis. Default to False.</span>
+<span class="sd">        </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If device cannot be opened.</span>
+<span class="sd">    </span>
+<span class="sd">    .. note::</span>
+<span class="sd">        When using video streaming URL the initialization may require some time. Check that the image frame is not None</span>
+<span class="sd">        and / or insert a time.sleep() after object constructor.</span>
+<span class="sd">        </span>
+<span class="sd">    Todo</span>
+<span class="sd">    ----</span>
+<span class="sd">    Add support for other options (e.g. change focal length where supported).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">flipY</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># Check if we&#39;re opening a video file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isFile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">VideoCapture</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="c1"># Flip around y axis if needed</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flip</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">flip</span> <span class="k">if</span> <span class="n">flipY</span> <span class="k">else</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">k</span><span class="p">:</span> <span class="n">f</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># Keep this as attribute (needed for streaming)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frame</span> <span class="o">=</span> <span class="kc">None</span>   
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isFile</span><span class="p">:</span>                             <span class="c1"># If we are opening a video file</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">getFrame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span><span class="o">.</span><span class="n">read</span> <span class="c1"># we use read()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grab</span> <span class="o">=</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="kc">None</span>          <span class="c1"># and cannot grab()</span>
+        <span class="k">else</span><span class="p">:</span>                                       <span class="c1"># If opening a webcam or a URL streaming</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grab</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span><span class="o">.</span><span class="n">grab</span>     <span class="c1"># that grabs continuously (grab() is fast)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">getFrame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span><span class="o">.</span><span class="n">retrieve</span> <span class="c1"># and retrieve() (slower) the image only when needed</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="o">=</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__loop</span><span class="p">)</span>       <span class="c1"># use a separate thread</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">daemon</span><span class="o">=</span><span class="kc">True</span>                          
+        
+        <span class="c1"># Check if capture is opened</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span><span class="o">.</span><span class="n">isOpened</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot open device!&#39;</span><span class="p">)</span>
+            
+    
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+    
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="c1"># To allow use in with statement</span>
+        <span class="bp">self</span><span class="o">.</span><span class="fm">__del__</span><span class="p">()</span>
+          
+<div class="viewcode-block" id="Capture.start"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Start the capture in a separate thread.</span>
+<span class="sd">        </span>
+<span class="sd">        No need to call this for video files.</span>
+<span class="sd">        The thread continuously calls ``grab()`` to stay updated to the last frame,</span>
+<span class="sd">        while ``retrieve()`` is called only when the frame is actually needed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isFile</span><span class="p">:</span> <span class="c1"># Do not start if it is file</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+        
+    
+<div class="viewcode-block" id="Capture.stop"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Stop the capture.</span>
+<span class="sd">        </span>
+<span class="sd">        When finished, remember to call this method to **stop the capturing thread**.</span>
+<span class="sd">        No need to call this for video files.</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isFile</span><span class="p">:</span> <span class="c1"># N/A if is a file</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="k">return</span></div>
+        
+    <span class="k">def</span> <span class="nf">__loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grab</span><span class="p">()</span>
+            
+<div class="viewcode-block" id="Capture.get"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the current frame.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns None if there is no frame (e.g. end of video file).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ret</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getFrame</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ret</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="Capture.setResolution"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.setResolution">[docs]</a>    <span class="k">def</span> <span class="nf">setResolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set resolution of the camera.</span>
+<span class="sd">        </span>
+<span class="sd">        Do not call this for video files or when the thread is running.</span>
+<span class="sd">        It works only for supported cameras.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        width, heigth : int</span>
+<span class="sd">            Width and height to be set in pixels.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if the resolution was set successfully, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># You cannot change resolution while running or on files</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">isFile</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        
+        <span class="c1"># Set properties. Each returns === True on success.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">CAP_PROP_FRAME_WIDTH</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">CAP_PROP_FRAME_HEIGHT</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Capture.setFrameRate"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.setFrameRate">[docs]</a>    <span class="k">def</span> <span class="nf">setFrameRate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fps</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set framerate of the camera.</span>
+<span class="sd">        </span>
+<span class="sd">        Do not call this for video files or when the thread is running.</span>
+<span class="sd">        It works only for supported cameras.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fps : int</span>
+<span class="sd">            Frames per second.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if the framerate was set successfully, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># You cannot change resolution while running or on files</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">isFile</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">CAP_PROP_FPS</span><span class="p">,</span> <span class="n">fps</span><span class="p">)</span></div></div>
+
+
+
+<div class="viewcode-block" id="moveExtrinsicOriginToFirstCamera"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.moveExtrinsicOriginToFirstCamera">[docs]</a><span class="k">def</span> <span class="nf">moveExtrinsicOriginToFirstCamera</span><span class="p">(</span><span class="n">R1</span><span class="p">,</span><span class="n">R2</span><span class="p">,</span><span class="n">t1</span><span class="p">,</span><span class="n">t2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Center extrinsic parameters world coordinate system into camera 1.</span>
+<span class="sd">    </span>
+<span class="sd">    Compute R (rotation from camera 1 to camera 2) and T (translation from camera 1 to camera 2) as used in OpenCV</span>
+<span class="sd">    from extrinsic of two cameras centered anywhere else.</span>
+<span class="sd">    This is particularly useful when the world coordinate system is not centered into the first camera.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    R1, R2 : np.array</span>
+<span class="sd">        3x3 rotation matrices that go from world origin to each camera center.</span>
+<span class="sd">    t1, t2 : np.array</span>
+<span class="sd">        3x1 translation vectors that go from world origin to each camera center.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.ndarray</span>
+<span class="sd">        Rotation matrix between the 1st and the 2nd camera coordinate systems as numpy.ndarray.</span>
+<span class="sd">    numpy.ndarray</span>
+<span class="sd">        Translation vector between the coordinate systems of the cameras as numpy.ndarray.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">t1</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="c1"># Force vertical shape</span>
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">t2</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">R2</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">R1</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">t2</span> <span class="o">-</span> <span class="n">R2</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">R1</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">R</span><span class="p">,</span> <span class="n">t</span></div>
+    
+
+
+
+
+<div class="viewcode-block" id="getCrossProductMatrix"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.getCrossProductMatrix">[docs]</a><span class="k">def</span> <span class="nf">getCrossProductMatrix</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build the 3x3 antisymmetric matrix representing the cross product with v.</span>
+<span class="sd">    </span>
+<span class="sd">    In literature this is often indicated as [v]\ :subscript:`x`.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    v : numpy.ndarray or list</span>
+<span class="sd">        A 3-dimensional vector.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.ndarray</span>
+<span class="sd">        A 3x3 matrix representing the cross product with the input vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span> <span class="p">[</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> \
+                       <span class="p">[</span><span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> \
+                       <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">]</span> <span class="p">]</span> <span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span></div>
+
+
+
+
+
+
+
+<div class="viewcode-block" id="drawCorrespondingEpipolarLines"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.drawCorrespondingEpipolarLines">[docs]</a><span class="k">def</span> <span class="nf">drawCorrespondingEpipolarLines</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">x1</span><span class="o">=</span><span class="p">[],</span> <span class="n">x2</span><span class="o">=</span><span class="p">[],</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">255</span><span class="p">),</span> <span class="n">thickness</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Draw epipolar lines passing by given coordinates in img1 or img1.</span>
+<span class="sd">    </span>
+<span class="sd">    The epipolar lines can be drawn on the images, knowing the</span>
+<span class="sd">    fundamental matrix.</span>
+<span class="sd">    Please note that this is an in-place method, i.e. passed images will</span>
+<span class="sd">    be modified directly.</span>
+<span class="sd">    Distortion is *not* taken into account.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    img1, img2 : cv2.Mat</span>
+<span class="sd">        A couple of OpenCV images taken with a stereo rig (ordered).</span>
+<span class="sd">    F : numpy.ndarray</span>
+<span class="sd">        3x3 fundamental matrix.</span>
+<span class="sd">    x1, x2 : list</span>
+<span class="sd">        List of (x,y) coordinate points on the image 1 (or image 2, respectively).</span>
+<span class="sd">    color : tuple, optional</span>
+<span class="sd">        Color as BGR tuple (default to (0,0,255) (red)).</span>
+<span class="sd">    thickness : int, optional</span>
+<span class="sd">        Thickness of the lines in pixels (default to 1).</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    .. note::</span>
+<span class="sd">        This function needs *undistorted* images.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">drawLineOnImg1</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+        <span class="k">nonlocal</span> <span class="n">img1</span>
+        <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># Vertical line</span>
+            <span class="n">line_from</span> <span class="o">=</span> <span class="p">(</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span> <span class="p">(</span><span class="o">-</span><span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">])),</span> <span class="mi">0</span> <span class="p">)</span>
+            <span class="n">line_to</span> <span class="o">=</span> <span class="p">(</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span> <span class="p">(</span><span class="o">-</span><span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">])),</span> <span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">line_from</span> <span class="o">=</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span> <span class="p">(</span><span class="o">-</span><span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]))</span> <span class="p">)</span>
+            <span class="n">line_to</span> <span class="o">=</span> <span class="p">(</span> <span class="n">img2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span> <span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span><span class="o">/</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]))</span> <span class="p">)</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="p">(</span><span class="n">line_from</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">line_from</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="p">(</span><span class="n">line_to</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">line_to</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="n">thickness</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">line_from</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">line_to</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">,(</span><span class="n">line_from</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">line_to</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">drawLineOnImg2</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+        <span class="k">nonlocal</span> <span class="n">img2</span>
+        <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># Vertical line</span>
+            <span class="n">line_from</span> <span class="o">=</span> <span class="p">(</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span> <span class="p">(</span><span class="o">-</span><span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">])),</span> <span class="mi">0</span> <span class="p">)</span>
+            <span class="n">line_to</span> <span class="o">=</span> <span class="p">(</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span> <span class="p">(</span><span class="o">-</span><span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">])),</span> <span class="n">img2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">line_from</span> <span class="o">=</span> <span class="p">(</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span> <span class="p">(</span><span class="o">-</span><span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]))</span> <span class="p">)</span>
+            <span class="n">line_to</span> <span class="o">=</span> <span class="p">(</span> <span class="n">img2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span> <span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">img2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span><span class="o">/</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]))</span> <span class="p">)</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">img2</span><span class="p">,</span> <span class="p">(</span><span class="n">line_from</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">line_from</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="p">(</span><span class="n">line_to</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">line_to</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="n">thickness</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">line_from</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">line_to</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">,(</span><span class="n">line_from</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">line_to</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        
+    <span class="c1"># Compute lines corresponding to x1 points</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">x1</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="c1"># Find epipolar line on img2 (homogeneous coordinates)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">drawLineOnImg2</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="p">[</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]]))</span> <span class="c1"># Find epipolar line on img1 (homogeneous coordinates)</span>
+        <span class="n">drawLineOnImg1</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        
+    <span class="c1"># Compute lines corresponding to x2 points</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">x2</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="c1"># Find epipolar line on img1 (homogeneous coordinates)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">drawLineOnImg1</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="p">[</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]]))</span> <span class="c1"># Find epipolar line on img2 (homogeneous coordinates)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">drawLineOnImg2</span><span class="p">(</span><span class="n">line</span><span class="p">)</span></div>
+        
+
+
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../simplestereo.html" >simplestereo</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simplestereo.utils</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, decadenza.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

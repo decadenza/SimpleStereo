@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>simplestereo.passive &#8212; SimpleStereo 1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../simplestereo.html" accesskey="U">simplestereo</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simplestereo.passive</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for simplestereo.passive</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">passive</span>
+<span class="sd">=======</span>
+<span class="sd">Contains different passive stereo algorithms to build disparity maps.</span>
+
+<span class="sd">Simpler algorithms, like StereoBM and StereoSGBM, are already implemented in OpenCV.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#import ctypes</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+
+<span class="kn">from</span> <span class="nn">simplestereo</span> <span class="kn">import</span> <span class="n">_passive</span>
+
+
+<div class="viewcode-block" id="StereoASW"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoASW">[docs]</a><span class="k">class</span> <span class="nc">StereoASW</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Custom implementation of &quot;Adaptive Support-Weight Approach</span>
+<span class="sd">    for Correspondence Search&quot;, K. Yoon, I. Kweon, 2006.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    winSize : int</span>
+<span class="sd">        Side of the square window. Must be an odd positive number. Default is 35.</span>
+<span class="sd">    maxDisparity: int</span>
+<span class="sd">        Maximum accepted disparity. Default is 16.</span>
+<span class="sd">    minDisparity: int</span>
+<span class="sd">        Minimum valid disparity, usually set to zero. Default is 0.</span>
+<span class="sd">    gammaC : float</span>
+<span class="sd">        Color parameter. If increased, it increases the color influence. Default is 5.</span>
+<span class="sd">    gammaP : float</span>
+<span class="sd">        Proximity parameter. If increased, it increases the proximity influence. Default is 17.5.</span>
+<span class="sd">    consistent : bool</span>
+<span class="sd">        If True consistent check is made, i.e. disparity is calculated first using left image as reference,</span>
+<span class="sd">        then using right one as reference. Any non-corresponding value is invalidated (occluded)</span>
+<span class="sd">        and assigned as the nearest minimum left-right non-occluded disparity. Original idea from occlusion</span>
+<span class="sd">        detection and filling as in &quot;Local stereo matching using geodesic support weights&quot;, Asmaa Hosni et al., 2009.</span>
+<span class="sd">        If enabled, running time is roughly doubled.</span>
+<span class="sd">        Default to False.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    .. todo::</span>
+<span class="sd">       Alternative version can be written like this: compute disparity map on every other pixel</span>
+<span class="sd">       with the traditional algorithm, then fill the remaining pixels using left-right disparity</span>
+<span class="sd">       boundaries. This proved to be 40-50% faster with no significant decrease in quality.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    .. warning::</span>
+<span class="sd">       It gets very slow for high resolution images or with high *winSize* or *maxDisparity* values.</span>
+<span class="sd">    </span>
+<span class="sd">        </span>
+<span class="sd">    .. note::</span>
+<span class="sd">       This algorithm performs a 384x288 pixel image scan with maxDisparity=16 in less than 1 sec</span>
+<span class="sd">       using 4 CPUs (while other implementations need 60 sec, see DOI 10.1007/s11554-012-0313-2 with code &quot;yk&quot;).</span>
+<span class="sd">       To improve the final result, a smoothering filter could be applied.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">winSize</span><span class="o">=</span><span class="mi">35</span><span class="p">,</span> <span class="n">maxDisparity</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">minDisparity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">gammaC</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">gammaP</span><span class="o">=</span><span class="mf">17.5</span><span class="p">,</span> <span class="n">consistent</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span> 
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">winSize</span><span class="o">&gt;</span><span class="mi">0</span> <span class="ow">and</span> <span class="n">winSize</span><span class="o">%</span><span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;winSize must be a positive odd number!&quot;</span><span class="p">)</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">winSize</span> <span class="o">=</span> <span class="n">winSize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxDisparity</span> <span class="o">=</span> <span class="n">maxDisparity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minDisparity</span> <span class="o">=</span> <span class="n">minDisparity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gammaC</span> <span class="o">=</span> <span class="n">gammaC</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gammaP</span> <span class="o">=</span> <span class="n">gammaP</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">consistent</span> <span class="o">=</span> <span class="n">consistent</span>
+        
+    
+<div class="viewcode-block" id="StereoASW.compute"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoASW.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute disparity map for BGR images.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        img1, img2 : cv2.Mat</span>
+<span class="sd">            A couple of OpenCV images (left and right, respectively) of same shape.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        numpy.ndarray (np.int16)</span>
+<span class="sd">            A disparity map of the same width and height of the images.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1"># Send to C++ extension</span>
+        <span class="n">disparityMap</span> <span class="o">=</span> <span class="n">_passive</span><span class="o">.</span><span class="n">computeASW</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">winSize</span><span class="p">,</span>
+                                             <span class="bp">self</span><span class="o">.</span><span class="n">maxDisparity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">minDisparity</span><span class="p">,</span>
+                                             <span class="bp">self</span><span class="o">.</span><span class="n">gammaC</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gammaP</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">consistent</span><span class="p">)</span>
+                                             
+        <span class="k">return</span> <span class="n">disparityMap</span></div></div>
+        
+
+
+
+
+
+<div class="viewcode-block" id="StereoGSW"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoGSW">[docs]</a><span class="k">class</span> <span class="nc">StereoGSW</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    *Incomplete* implementation of &quot;Local stereo matching using geodesic support weights&quot;,</span>
+<span class="sd">    Asmaa Hosni, Michael Bleyer, Margrit Gelautz and Christoph Rhemann (2009).</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    winSize : int, optional</span>
+<span class="sd">        Side of the square window. Must be an odd positive number.</span>
+<span class="sd">    maxDisparity: int, optional</span>
+<span class="sd">        Maximum accepted disparity. Default is 16.</span>
+<span class="sd">    minDisparity: int, optional</span>
+<span class="sd">        Minimum valid disparity, usually set to zero. Default is 0.</span>
+<span class="sd">    gamma : int, optional</span>
+<span class="sd">        Gamma parameter. If increased, it increases the geodesic weight influence. Default is 10.</span>
+<span class="sd">    fMax : int or float, optional</span>
+<span class="sd">        Color difference is capped to this value. Default is 120.</span>
+<span class="sd">    iterations : int, optional</span>
+<span class="sd">        Number of iteration for geodesic distances estimation. Default is 3.</span>
+<span class="sd">    bins : int, optional</span>
+<span class="sd">        Number of bins for histograms (currently not used, needed for Mutual Information). Default is 20.</span>
+<span class="sd">        </span>
+<span class="sd">    ..warning::</span>
+<span class="sd">        Not optimized. Do not use in production.</span>
+<span class="sd">    </span>
+<span class="sd">    ..todo::</span>
+<span class="sd">        This is a work in progress.</span>
+<span class="sd">        The reference paper is not clear. Traditional Mutual Information computes a value for the whole</span>
+<span class="sd">        window (not position based). However formula (5) suggests a per-pixel iteration.</span>
+<span class="sd">        Currently implemented with sum of squared differences, weighted with geodesic.</span>
+<span class="sd">        Need to implement Mutual information as matching cost.</span>
+<span class="sd">        Need to implement right image consistency and subsequent occlusion filling. </span>
+<span class="sd">        </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">winSize</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">maxDisparity</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">minDisparity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                 <span class="n">fMax</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">winSize</span><span class="o">&gt;</span><span class="mi">0</span> <span class="ow">and</span> <span class="n">winSize</span><span class="o">%</span><span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;winSize must be a positive odd number!&quot;</span><span class="p">)</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">winSize</span> <span class="o">=</span> <span class="n">winSize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxDisparity</span> <span class="o">=</span> <span class="n">maxDisparity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minDisparity</span> <span class="o">=</span> <span class="n">minDisparity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fMax</span> <span class="o">=</span> <span class="n">fMax</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span> <span class="o">=</span> <span class="n">iterations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bins</span> <span class="o">=</span> <span class="n">bins</span>
+        
+<div class="viewcode-block" id="StereoGSW.compute"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoGSW.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute disparity map for 3-color channel images.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="c1"># Send to C++ extension</span>
+        <span class="n">disparityMap</span> <span class="o">=</span> <span class="n">_passive</span><span class="o">.</span><span class="n">computeGSW</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">winSize</span><span class="p">,</span>
+                                             <span class="bp">self</span><span class="o">.</span><span class="n">maxDisparity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">minDisparity</span><span class="p">,</span>
+                                             <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">fMax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="p">,</span>
+                                             <span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">disparityMap</span></div></div>
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../simplestereo.html" >simplestereo</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simplestereo.passive</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, decadenza.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

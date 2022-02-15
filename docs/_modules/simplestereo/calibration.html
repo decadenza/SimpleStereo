@@ -1,0 +1,1127 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>simplestereo.calibration &#8212; SimpleStereo 1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../simplestereo.html" accesskey="U">simplestereo</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simplestereo.calibration</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for simplestereo.calibration</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">calibration</span>
+<span class="sd">===========</span>
+<span class="sd">Contains different calibration algorithms.</span>
+
+<span class="sd">.. todo::</span>
+<span class="sd">    Implement circles calibration. N.B. after using ``cv2.findCirclesGrid()`` a point refinement algorithm is needed (like  ``cv2.cornerSubPix()`` does for the chessboard).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="kn">import</span> <span class="n">map_coordinates</span>
+
+<span class="kn">import</span> <span class="nn">simplestereo</span> <span class="k">as</span> <span class="nn">ss</span>
+
+
+<span class="c1"># Constants definitions</span>
+<span class="n">DEFAULT_CHESSBOARD_SIZE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">)</span> <span class="c1"># As inner (rows, columns)</span>
+<span class="n">DEFAULT_CORNERSUBPIX_WINSIZE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">11</span><span class="p">,</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">DEFAULT_TERMINATION_CRITERIA</span> <span class="o">=</span> <span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">TERM_CRITERIA_EPS</span> <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">TERM_CRITERIA_MAX_ITER</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="chessboardSingle"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardSingle">[docs]</a><span class="k">def</span> <span class="nf">chessboardSingle</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">showImages</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calibrate a single camera with a chessboard pattern.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    images : list or tuple       </span>
+<span class="sd">        A list (or tuple) of image paths, e.g. [&quot;one.png&quot;, &quot;two.png&quot;, ...]</span>
+<span class="sd">    chessboardSize: tuple</span>
+<span class="sd">        Chessboard *internal* dimensions as (width, height). Dimensions should be different to avoid ambiguity.</span>
+<span class="sd">        Default to (7,6).</span>
+<span class="sd">    squareSize : float</span>
+<span class="sd">        If the square size is known, calibration can be in metric units. Default to 1.</span>
+<span class="sd">    showImages : bool</span>
+<span class="sd">        If True, each processed image is showed to check for correct chessboard detection.</span>
+<span class="sd">        Default to False.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    retval : bool</span>
+<span class="sd">        Same values of `cv2.calibrateCamera`.</span>
+<span class="sd">    cameraMatrix : numpy.ndarray</span>
+<span class="sd">    distCoeffs : numpy.ndarray</span>
+<span class="sd">    rvecs : numpy.ndarray</span>
+<span class="sd">    tvecs : numpy.ndarray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># Prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...</span>
+    <span class="n">objp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">objp</span><span class="p">[:,:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">squareSize</span>
+    
+    <span class="c1"># Arrays to store object points and image points from all the images.</span>
+    <span class="n">objpoints</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># 3d point in real world space</span>
+    <span class="n">imgpoints</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># 2d points in image plane.</span>
+    
+    <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">images</span><span class="p">:</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+        <span class="n">gray</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img</span><span class="p">,</span><span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
+        
+        <span class="c1"># Find the chess board corners</span>
+        <span class="n">ret</span><span class="p">,</span> <span class="n">corners</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findChessboardCorners</span><span class="p">(</span><span class="n">gray</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">)</span>
+
+        <span class="c1"># If found, add object points and image points (after refining them)</span>
+        <span class="k">if</span> <span class="n">ret</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">objpoints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objp</span><span class="p">)</span>
+            <span class="n">corners2</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cornerSubPix</span><span class="p">(</span><span class="n">gray</span><span class="p">,</span><span class="n">corners</span><span class="p">,</span> <span class="n">DEFAULT_CORNERSUBPIX_WINSIZE</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span>
+            <span class="n">imgpoints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corners2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">showImages</span><span class="p">:</span>
+                <span class="c1"># Draw and display the corners</span>
+                <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">drawChessboardCorners</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">,</span> <span class="n">corners2</span><span class="p">,</span><span class="n">ret</span><span class="p">)</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;Chessboard&#39;</span><span class="p">,</span><span class="n">img</span><span class="p">)</span>
+                <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span><span class="n">objpoints</span><span class="p">,</span> <span class="n">imgpoints</span><span class="p">,</span> <span class="n">gray</span><span class="o">.</span><span class="n">shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+    
+    
+        
+<div class="viewcode-block" id="chessboardStereo"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardStereo">[docs]</a><span class="k">def</span> <span class="nf">chessboardStereo</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs stereo calibration between two cameras and returns a StereoRig object.</span>
+<span class="sd">    </span>
+<span class="sd">    First camera (generally left) will be put in world origin.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    images : list or tuple       </span>
+<span class="sd">        A list (or tuple) of 2 dimensional tuples (ordered left and</span>
+<span class="sd">        right) of image paths, e.g. [(&quot;oneL.png&quot;,&quot;oneR.png&quot;),</span>
+<span class="sd">        (&quot;twoL.png&quot;,&quot;twoR.png&quot;), ...]</span>
+<span class="sd">    chessboardSize: tuple</span>
+<span class="sd">        Chessboard *internal* dimensions as (width, height). Dimensions should be different to avoid ambiguity.</span>
+<span class="sd">        Default to (7,6).</span>
+<span class="sd">    squareSize : float</span>
+<span class="sd">        If the square size is known, calibration can be in metric units. Default to 1.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    ----------</span>
+<span class="sd">    StereoRig</span>
+<span class="sd">        A StereoRig object</span>
+<span class="sd">    </span>
+<span class="sd">    ..todo::</span>
+<span class="sd">        Iteratively exclude images that have high reprojection errors and re-calibrate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># Prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...</span>
+    <span class="n">objp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">objp</span><span class="p">[:,:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">squareSize</span>
+    
+    <span class="c1"># Arrays to store image points from all the images.</span>
+    <span class="n">imagePoints1</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">imagePoints2</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># Count successful couples</span>
+    
+    <span class="k">for</span> <span class="n">path1</span><span class="p">,</span> <span class="n">path2</span> <span class="ow">in</span> <span class="n">images</span><span class="p">:</span>
+        <span class="c1"># Read as grayscale images</span>
+        <span class="n">img1</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">path1</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+        <span class="n">img2</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">path2</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+        
+        <span class="c1"># Check that the files exist</span>
+        <span class="k">if</span> <span class="n">img1</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">img2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;File not found!&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Find the chessboard corners</span>
+        <span class="n">ret1</span><span class="p">,</span> <span class="n">corners1</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findChessboardCorners</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">)</span>
+        <span class="n">ret2</span><span class="p">,</span> <span class="n">corners2</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findChessboardCorners</span><span class="p">(</span><span class="n">img2</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">ret1</span> <span class="ow">and</span> <span class="n">ret2</span><span class="p">:</span>
+            <span class="c1"># Refine the corner locations</span>
+            <span class="n">corners1</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cornerSubPix</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="n">corners1</span><span class="p">,</span> <span class="n">DEFAULT_CORNERSUBPIX_WINSIZE</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span>
+            <span class="n">corners2</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cornerSubPix</span><span class="p">(</span><span class="n">img2</span><span class="p">,</span> <span class="n">corners2</span><span class="p">,</span> <span class="n">DEFAULT_CORNERSUBPIX_WINSIZE</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span>
+            <span class="c1"># Save to main list</span>
+            <span class="n">imagePoints1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corners1</span><span class="p">)</span>
+            <span class="n">imagePoints2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corners2</span><span class="p">)</span>
+            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+    
+    <span class="c1"># Initialize parameters</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>             <span class="c1"># Rotation matrix between the 1st and the 2nd camera coordinate systems.</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>      <span class="c1"># Translation vector between the coordinate systems of the cameras.</span>
+    <span class="n">cameraMatrix1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">cameraMatrix2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">distCoeffs1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">distCoeffs2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    
+    <span class="c1"># Flags for calibration</span>
+    <span class="c1"># TO DO flags management to provide different configurations to user</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="c1"># Do stereo calibration</span>
+    <span class="n">retval</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">stereoCalibrate</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">objp</span><span class="p">]]</span> <span class="o">*</span> <span class="n">counter</span><span class="p">),</span> <span class="n">imagePoints1</span><span class="p">,</span> <span class="n">imagePoints2</span><span class="p">,</span> <span class="n">cameraMatrix1</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">cameraMatrix2</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">imageSize</span> <span class="o">=</span> <span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span>
+    
+    <span class="c1"># Build StereoRig object</span>
+    <span class="n">stereoRigObj</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">StereoRig</span><span class="p">(</span><span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="mi">2</span><span class="p">],</span> <span class="n">img2</span><span class="o">.</span><span class="n">shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="mi">2</span><span class="p">],</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span> <span class="o">=</span> <span class="n">E</span><span class="p">,</span> <span class="n">reprojectionError</span> <span class="o">=</span> <span class="n">retval</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">stereoRigObj</span></div>
+
+
+<div class="viewcode-block" id="chessboardProCam"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardProCam">[docs]</a><span class="k">def</span> <span class="nf">chessboardProCam</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
+                     <span class="n">black_thr</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">white_thr</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">camIntrinsic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs stereo calibration between a camera (reference) and a projector.</span>
+<span class="sd">    </span>
+<span class="sd">    Adapted from the code available (MIT licence) at https://github.com/kamino410/procam-calibration</span>
+<span class="sd">    and based on the paper of Daniel Moreno and Gabriel Taubin, &quot;Simple, accurate, and</span>
+<span class="sd">    robust projector-camera calibration&quot;, DOI: 10.1109/3DIMPVT.2012.77.</span>
+<span class="sd">    The camera will be put in world origin.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    images : list or tuple       </span>
+<span class="sd">        A list of lists (one per set) of image paths acquired by the camera.</span>
+<span class="sd">        Each set must be ordered like all the Gray code patterns (see ``cv2.structured_light_GrayCodePattern``)</span>
+<span class="sd">        followed by black, normal light and white images (in this order).</span>
+<span class="sd">        At least 5-6 sets are suggested.</span>
+<span class="sd">    projectorResolution: tuple</span>
+<span class="sd">        Projector pixel resolution as (width, height).</span>
+<span class="sd">    chessboardSize: tuple, optional</span>
+<span class="sd">        Chessboard *internal* dimensions as (width, height). Dimensions should be different to avoid ambiguity.</span>
+<span class="sd">        Default to (7,6).</span>
+<span class="sd">    squareSize : float, optional</span>
+<span class="sd">        If the square size is known, calibration can be in metric units. Default to 1.</span>
+<span class="sd">    black_thr : int, optional</span>
+<span class="sd">       Black threshold is a number between 0-255 that represents the minimum brightness difference</span>
+<span class="sd">       required for valid pixels, between the fully illuminated (white) and the not illuminated images (black).</span>
+<span class="sd">       Default to 40.</span>
+<span class="sd">    white_thr : int, optional</span>
+<span class="sd">        White threshold is a number between 0-255 that represents the minimum brightness difference</span>
+<span class="sd">        required for valid pixels, between the graycode pattern and its inverse images. Default to 5.</span>
+<span class="sd">    camIntrinsic : numpy.ndarray, optional</span>
+<span class="sd">        A 3x3 matrix representing camera intrinsic parameters. If not given it will be calculated.</span>
+<span class="sd">    camIntrinsic : list, optional</span>
+<span class="sd">        Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).</span>
+<span class="sd">        If not given they will be calculated.</span>
+<span class="sd">    normalize : bool</span>
+<span class="sd">        If True, the images are min-max normalized before processing. Default to False.</span>
+<span class="sd">                    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    ----------</span>
+<span class="sd">    StereoRig</span>
+<span class="sd">        A StereoRig object</span>
+<span class="sd">    </span>
+<span class="sd">    .. todo::</span>
+<span class="sd">        Iteratively exclude images that have high reprojection errors and re-calibrate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># Prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...</span>
+    <span class="n">objps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">objps</span><span class="p">[:,:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">squareSize</span>
+    
+    
+    <span class="c1"># Gray Code setup</span>
+    <span class="n">gc_width</span><span class="p">,</span> <span class="n">gc_height</span> <span class="o">=</span> <span class="n">projectorResolution</span>
+    <span class="n">graycode</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">structured_light_GrayCodePattern</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="n">gc_width</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">gc_height</span><span class="p">)</span>
+    <span class="n">graycode</span><span class="o">.</span><span class="n">setBlackThreshold</span><span class="p">(</span><span class="n">black_thr</span><span class="p">)</span>
+    <span class="n">graycode</span><span class="o">.</span><span class="n">setWhiteThreshold</span><span class="p">(</span><span class="n">white_thr</span><span class="p">)</span>
+    
+    <span class="n">cam_shape</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">images</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">patch_size_half</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">cam_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">180</span><span class="p">))</span>
+    
+    <span class="n">cam_corners_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cam_objps_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cam_corners_list2</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">proj_objps_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">proj_corners_list</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    
+    <span class="n">skipped</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># Skipped corners</span>
+    
+    <span class="c1"># Iterate over sets of Gray code images</span>
+    <span class="k">for</span> <span class="n">imageset</span> <span class="ow">in</span> <span class="n">images</span><span class="p">:</span>
+        
+        <span class="c1"># Check that the input images are the right number</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">imageset</span><span class="p">)</span> <span class="o">!=</span> <span class="n">graycode</span><span class="o">.</span><span class="n">getNumberOfPatternImages</span><span class="p">()</span> <span class="o">+</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Invalid number of images in set </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s1">!&#39;</span><span class="p">)</span>
+             
+        <span class="n">imgs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">imageset</span><span class="p">:</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cam_shape</span> <span class="o">!=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Image size of </span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s1"> is mismatch!&#39;</span><span class="p">)</span>
+            
+            
+            <span class="n">imgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+        
+        <span class="n">white_img</span> <span class="o">=</span> <span class="n">imgs</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">normal_img</span> <span class="o">=</span> <span class="n">imgs</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">black_img</span> <span class="o">=</span> <span class="n">imgs</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        
+        <span class="n">res</span><span class="p">,</span> <span class="n">cam_corners</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findChessboardCorners</span><span class="p">(</span><span class="n">normal_img</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Chessboard not found in set </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s1">!&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Subpixel refinement</span>
+        <span class="n">cam_corners_sub</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cornerSubPix</span><span class="p">(</span><span class="n">normal_img</span><span class="p">,</span> <span class="n">cam_corners</span><span class="p">,</span> <span class="n">DEFAULT_CORNERSUBPIX_WINSIZE</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span>
+        
+        <span class="n">cam_corners_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_corners_sub</span><span class="p">)</span>    
+        <span class="n">cam_objps_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objps</span><span class="p">)</span>
+        
+        <span class="n">proj_objps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">proj_corners</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cam_corners2</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">corner</span><span class="p">,</span> <span class="n">objp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cam_corners</span><span class="p">,</span> <span class="n">objps</span><span class="p">):</span>
+            <span class="n">c_x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">corner</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">c_y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">corner</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">src_points</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">dst_points</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">dx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">patch_size_half</span><span class="p">,</span> <span class="n">patch_size_half</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">dy</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">patch_size_half</span><span class="p">,</span> <span class="n">patch_size_half</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">c_x</span> <span class="o">+</span> <span class="n">dx</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">c_y</span> <span class="o">+</span> <span class="n">dy</span>
+                    
+                    <span class="n">err</span><span class="p">,</span> <span class="n">proj_pix</span> <span class="o">=</span> <span class="n">graycode</span><span class="o">.</span><span class="n">getProjPixel</span><span class="p">(</span><span class="n">imgs</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+                    
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">err</span><span class="p">:</span>
+                        <span class="n">src_points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+                        <span class="n">dst_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">proj_pix</span><span class="p">))</span>
+                    
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">src_points</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">patch_size_half</span><span class="o">**</span><span class="mi">2</span><span class="p">:</span>
+                <span class="c1">#warnings.warn(f&quot;Corner {c_x},{c_y} was skipped because decoded pixel were too few.&quot;)</span>
+                <span class="n">skipped</span><span class="o">+=</span><span class="mi">1</span>
+                <span class="k">continue</span>
+                
+            <span class="n">h_mat</span><span class="p">,</span> <span class="n">inliers</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findHomography</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">src_points</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dst_points</span><span class="p">))</span>
+            <span class="n">point</span> <span class="o">=</span> <span class="n">h_mat</span><span class="nd">@np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">corner</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">corner</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+            <span class="n">point_pix</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="n">point</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">proj_objps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objp</span><span class="p">)</span>
+            <span class="n">proj_corners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">point_pix</span><span class="p">])</span>
+            <span class="n">cam_corners2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corner</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">proj_corners</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not enough corners were found in set </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2"> (less than 3). Skipping.&quot;</span><span class="p">)</span>
+            
+            
+        <span class="n">proj_objps_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">proj_objps</span><span class="p">))</span>
+        <span class="n">proj_corners_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">proj_corners</span><span class="p">))</span>
+        <span class="n">cam_corners_list2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">cam_corners2</span><span class="p">))</span>
+        
+    <span class="k">if</span> <span class="n">skipped</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">skipped</span><span class="si">}</span><span class="s2"> over </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">proj_objps_list</span><span class="p">)</span><span class="o">*</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> skipped corners.&quot;</span><span class="p">)</span>
+    
+    <span class="c1">#print(&#39;Initial solution of camera\&#39;s intrinsic parameters&#39;)</span>
+    <span class="n">cam_rvecs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cam_tvecs</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># Calibrate camera only if intrinsic parameters are not given</span>
+    <span class="k">if</span> <span class="n">camIntrinsic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cam_rms</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">cam_rvecs</span><span class="p">,</span> <span class="n">cam_tvecs</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span>
+            <span class="n">cam_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list</span><span class="p">,</span> <span class="n">cam_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">objp</span><span class="p">,</span> <span class="n">corners</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cam_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list</span><span class="p">):</span>
+            <span class="n">cam_rms</span><span class="p">,</span> <span class="n">cam_rvec</span><span class="p">,</span> <span class="n">cam_tvec</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">solvePnP</span><span class="p">(</span><span class="n">objp</span><span class="p">,</span> <span class="n">corners</span><span class="p">,</span> <span class="n">camIntrinsic</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="p">)</span> 
+            <span class="n">cam_rvecs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_rvec</span><span class="p">)</span>
+            <span class="n">cam_tvecs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_tvec</span><span class="p">)</span>
+        <span class="n">cam_int</span> <span class="o">=</span> <span class="n">camIntrinsic</span>
+        <span class="n">cam_dist</span> <span class="o">=</span> <span class="n">camDistCoeffs</span>
+    
+    <span class="c1"># Calibrate projector</span>
+    <span class="n">proj_rms</span><span class="p">,</span> <span class="n">proj_int</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">,</span> <span class="n">proj_rvecs</span><span class="p">,</span> <span class="n">proj_tvecs</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span>
+        <span class="n">proj_objps_list</span><span class="p">,</span> <span class="n">proj_corners_list</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    
+    <span class="c1"># Stereo calibrate</span>
+    <span class="n">retval</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">stereoCalibrate</span><span class="p">(</span>
+        <span class="n">proj_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list2</span><span class="p">,</span> <span class="n">proj_corners_list</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">proj_int</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_INTRINSIC</span><span class="p">)</span>
+    
+    <span class="c1"># Build StereoRig object</span>
+    <span class="n">stereoRigObj</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">StereoRig</span><span class="p">(</span><span class="n">cam_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span> <span class="o">=</span> <span class="n">E</span><span class="p">,</span> <span class="n">reprojectionError</span> <span class="o">=</span> <span class="n">retval</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">stereoRigObj</span></div>
+
+
+<span class="k">def</span> <span class="nf">_getWhiteCenters</span><span class="p">(</span><span class="n">cam_corners_list</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">,</span> <span class="n">squareSize</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    From ordered camera chessboard corners and camera intrinsics, get</span>
+<span class="sd">    world coordinate of the center of the white squares.</span>
+<span class="sd">    </span>
+<span class="sd">    These areas are less affected by ambiguity and noise due to the absence of</span>
+<span class="sd">    high contrast pixel values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># Index of corners situated at the upper-left of white squares </span>
+    <span class="n">whiteUpperLeftIndexes</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">sel</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">1</span> <span class="ow">and</span> <span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">sel</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="c1"># Skip end of row</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">sel</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>   
+        <span class="n">whiteUpperLeftIndexes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sel</span><span class="p">)</span>
+    
+    <span class="c1"># Prepare white object points, like (1,0,0), (3,0,0), (5,0,0)</span>
+    <span class="n">whiteObjps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">whiteUpperLeftIndexes</span><span class="p">),</span><span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">w</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">whiteUpperLeftIndexes</span><span class="p">):</span>
+        <span class="n">whiteObjps</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">w</span><span class="o">//</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="n">squareSize</span>
+        <span class="n">whiteObjps</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">w</span><span class="o">%</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="n">squareSize</span>
+    
+    <span class="c1"># Not necessary, as origin is arbitrary</span>
+    <span class="c1">#whiteObjps[:,:2] += squareSize/2 # Shift wrt origin along x and y</span>
+    
+    <span class="n">cam_whiteCorners_list</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># UNDISTORT CHESSBOARDS</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">points</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cam_corners_list</span><span class="p">):</span>
+        <span class="c1"># Undistort points</span>
+        <span class="n">points_undist</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">undistortPoints</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">)</span>
+        <span class="n">whiteCenters_undist</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Given the upper left of valid white squares, find center</span>
+        <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">whiteUpperLeftIndexes</span><span class="p">:</span>
+            <span class="c1"># As intersection of diagonals</span>
+            <span class="n">xa</span><span class="p">,</span><span class="n">ya</span> <span class="o">=</span> <span class="n">points_undist</span><span class="p">[</span><span class="n">w</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">xb</span><span class="p">,</span><span class="n">yb</span> <span class="o">=</span> <span class="n">points_undist</span><span class="p">[</span><span class="n">w</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">xd</span><span class="p">,</span><span class="n">yd</span> <span class="o">=</span> <span class="n">points_undist</span><span class="p">[</span><span class="n">w</span><span class="o">+</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">xc</span><span class="p">,</span><span class="n">yc</span> <span class="o">=</span> <span class="n">points_undist</span><span class="p">[</span><span class="n">w</span><span class="o">+</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+            
+            <span class="n">xCenter</span> <span class="o">=</span> <span class="p">(</span><span class="n">xb</span><span class="o">*</span><span class="p">(</span><span class="n">yd</span><span class="o">-</span><span class="n">yb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">xc</span><span class="o">-</span><span class="n">xa</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">ya</span><span class="o">-</span><span class="n">yb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">xd</span><span class="o">-</span><span class="n">xb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">xc</span><span class="o">-</span><span class="n">xa</span><span class="p">)</span> <span class="o">-</span> <span class="n">xa</span><span class="o">*</span><span class="p">(</span><span class="n">yc</span><span class="o">-</span><span class="n">ya</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">xd</span><span class="o">-</span><span class="n">xb</span><span class="p">))</span> <span class="o">/</span> <span class="p">((</span><span class="n">yd</span><span class="o">-</span><span class="n">yb</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">xc</span><span class="o">-</span><span class="n">xa</span><span class="p">)</span><span class="o">-</span><span class="p">(</span><span class="n">yc</span><span class="o">-</span><span class="n">ya</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">xd</span><span class="o">-</span><span class="n">xb</span><span class="p">))</span>
+            <span class="n">yCenter</span> <span class="o">=</span> <span class="p">(</span><span class="n">yc</span><span class="o">-</span><span class="n">ya</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">xCenter</span><span class="o">-</span><span class="n">xa</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">xc</span><span class="o">-</span><span class="n">xa</span><span class="p">)</span> <span class="o">+</span> <span class="n">ya</span>
+            
+            <span class="n">whiteCenters_undist</span><span class="o">.</span><span class="n">append</span><span class="p">([(</span><span class="n">xCenter</span><span class="p">,</span><span class="n">yCenter</span><span class="p">)])</span>
+        
+        <span class="n">whiteCenters_dist</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">points</span><span class="o">.</span><span class="n">distortPoints</span><span class="p">(</span><span class="n">whiteCenters_undist</span><span class="p">,</span><span class="n">cam_dist</span><span class="p">)</span>
+            
+        <span class="c1"># Assign back camera intrinsics</span>
+        <span class="n">whiteCenters</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">perspectiveTransform</span><span class="p">(</span><span class="n">whiteCenters_dist</span><span class="p">,</span><span class="n">cam_int</span><span class="p">)</span>   
+        <span class="n">cam_whiteCorners_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">whiteCenters</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span> <span class="c1"># List of [[x,y]]</span>
+    
+    <span class="k">return</span> <span class="n">cam_whiteCorners_list</span><span class="p">,</span> <span class="n">whiteObjps</span>
+    
+    
+<div class="viewcode-block" id="chessboardProCamWhite"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardProCamWhite">[docs]</a><span class="k">def</span> <span class="nf">chessboardProCamWhite</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
+                     <span class="n">black_thr</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">white_thr</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">camIntrinsic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extended</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs stereo calibration between a camera (reference) and a projector.</span>
+<span class="sd">    </span>
+<span class="sd">    Requires a chessboard with *black* top-left square.</span>
+<span class="sd">    Adapted from the code available (MIT licence) at https://github.com/kamino410/procam-calibration</span>
+<span class="sd">    and based on the paper of Daniel Moreno and Gabriel Taubin, &quot;Simple, accurate, and</span>
+<span class="sd">    robust projector-camera calibration&quot;, DOI: 10.1109/3DIMPVT.2012.77.</span>
+<span class="sd">    The camera will be put in world origin.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    images : list or tuple       </span>
+<span class="sd">        A list of lists (one per set) of image paths acquired by the camera.</span>
+<span class="sd">        Each set must be ordered like all the Gray code patterns (see ``cv2.structured_light_GrayCodePattern``)</span>
+<span class="sd">        followed by black, normal light conditions and white images (in this exact order).</span>
+<span class="sd">        At least 5-6 sets are suggested.</span>
+<span class="sd">    projectorResolution: tuple</span>
+<span class="sd">        Projector pixel resolution as (width, height).</span>
+<span class="sd">    chessboardSize: tuple, optional</span>
+<span class="sd">        Chessboard *internal* dimensions as (cols, rows). Dimensions should be different to avoid ambiguity.</span>
+<span class="sd">        Default to (6,7).</span>
+<span class="sd">    squareSize : float, optional</span>
+<span class="sd">        If the square size is known, calibration can be in metric units. Default to 1.</span>
+<span class="sd">    black_thr : int, optional</span>
+<span class="sd">       Black threshold is a number between 0-255 that represents the minimum brightness</span>
+<span class="sd">       difference required for valid pixels, between the fully illuminated (white) and</span>
+<span class="sd">       the not illuminated images (black); used in computeShadowMasks method.</span>
+<span class="sd">       Default to 40.</span>
+<span class="sd">    white_thr : int, optional</span>
+<span class="sd">        White threshold is a number between 0-255 that represents the minimum brightness difference</span>
+<span class="sd">        required for valid pixels, between the graycode pattern and its inverse images; used in</span>
+<span class="sd">        getProjPixel method.</span>
+<span class="sd">        Default to 5.</span>
+<span class="sd">    camIntrinsic : numpy.ndarray, optional</span>
+<span class="sd">        A 3x3 matrix representing camera intrinsic parameters. If not given it will be calculated.</span>
+<span class="sd">    camIntrinsic : list, optional</span>
+<span class="sd">        Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).</span>
+<span class="sd">        If not given they will be calculated.</span>
+<span class="sd">    extended: bool</span>
+<span class="sd">        If True, `perViewErrors` of the stereo calibration are returned. Default to False.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    StereoRig</span>
+<span class="sd">        A StereoRig object</span>
+<span class="sd">    perViewErrors</span>
+<span class="sd">        Returned only if `extended` is True. For each pattern view, the</span>
+<span class="sd">        RMS error of camera and projector is returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># Prepare camera object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...</span>
+    <span class="n">objps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">objps</span><span class="p">[:,:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">squareSize</span>
+    
+    
+    <span class="c1"># Gray Code setup</span>
+    <span class="n">graycode</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">structured_light_GrayCodePattern</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="n">projectorResolution</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">height</span><span class="o">=</span><span class="n">projectorResolution</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="c1"># CALCULATE black_threshold and white_threshold as in paper</span>
+    <span class="c1"># TODO</span>
+    <span class="n">graycode</span><span class="o">.</span><span class="n">setBlackThreshold</span><span class="p">(</span><span class="n">black_thr</span><span class="p">)</span>
+    <span class="n">graycode</span><span class="o">.</span><span class="n">setWhiteThreshold</span><span class="p">(</span><span class="n">white_thr</span><span class="p">)</span>
+    
+    <span class="n">cam_shape</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">images</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">patch_size_half</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">cam_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">180</span><span class="p">))</span>
+    
+    
+    <span class="n">cam_corners_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cam_objps_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cam_corners_list2</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">proj_objps_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">proj_corners_list</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    
+    <span class="n">skipped</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># Skipped corners</span>
+    
+    <span class="c1">#### Camera calibration</span>
+    <span class="n">cam_rvecs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cam_tvecs</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># Calibrate camera only if intrinsic parameters are not given</span>
+    
+    <span class="k">for</span> <span class="n">imageset</span> <span class="ow">in</span> <span class="n">images</span><span class="p">:</span>
+        
+        <span class="c1"># Load only the normal light image</span>
+        <span class="n">normal_img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+        
+        <span class="c1"># Find chessboard corners</span>
+        <span class="n">res</span><span class="p">,</span> <span class="n">cam_corners</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findChessboardCorners</span><span class="p">(</span><span class="n">normal_img</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Chessboard not found in </span><span class="si">{</span><span class="n">imageset</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s1">!&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Subpixel refinement</span>
+        <span class="n">cam_corners_sub</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cornerSubPix</span><span class="p">(</span><span class="n">normal_img</span><span class="p">,</span> <span class="n">cam_corners</span><span class="p">,</span> <span class="n">DEFAULT_CORNERSUBPIX_WINSIZE</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span>
+        
+        <span class="c1"># Draw and display the corners</span>
+        <span class="c1">#img = cv2.drawChessboardCorners(normal_img, chessboardSize, cam_corners_sub, True)</span>
+        <span class="c1">#cv2.imshow(&#39;chessboard&#39;,img)</span>
+        <span class="c1">#cv2.waitKey(0)</span>
+        
+        <span class="n">cam_corners_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_corners_sub</span><span class="p">)</span>
+        <span class="n">cam_objps_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objps</span><span class="p">)</span>
+        
+    <span class="c1"># Do camera calibration if needed</span>
+    <span class="k">if</span> <span class="n">camIntrinsic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># OpenCV prefers (width,height) as resolution</span>
+        <span class="n">cam_rms</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">cam_rvecs</span><span class="p">,</span> <span class="n">cam_tvecs</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span>
+            <span class="n">cam_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list</span><span class="p">,</span> <span class="n">cam_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">objp</span><span class="p">,</span> <span class="n">corners</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cam_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list</span><span class="p">):</span>
+            <span class="n">cam_rms</span><span class="p">,</span> <span class="n">cam_rvec</span><span class="p">,</span> <span class="n">cam_tvec</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">solvePnP</span><span class="p">(</span><span class="n">objp</span><span class="p">,</span> <span class="n">corners</span><span class="p">,</span> <span class="n">camIntrinsic</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="p">)</span> 
+            <span class="n">cam_rvecs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_rvec</span><span class="p">)</span>
+            <span class="n">cam_tvecs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_tvec</span><span class="p">)</span>
+        <span class="n">cam_int</span> <span class="o">=</span> <span class="n">camIntrinsic</span>
+        <span class="n">cam_dist</span> <span class="o">=</span> <span class="n">camDistCoeffs</span>
+    
+    <span class="c1"># From camera corners, get centers of white squares</span>
+    <span class="n">cam_whiteCorners_list</span><span class="p">,</span> <span class="n">whiteObjps</span> <span class="o">=</span> <span class="n">_getWhiteCenters</span><span class="p">(</span><span class="n">cam_corners_list</span><span class="p">,</span>
+                        <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">,</span> <span class="n">squareSize</span><span class="p">)</span>
+        
+    <span class="c1"># Iterate over sets of Gray code images</span>
+    <span class="k">for</span> <span class="n">setnum</span><span class="p">,</span> <span class="n">imageset</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">images</span><span class="p">):</span>
+        
+        <span class="c1"># Check that the input images are the right number</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">imageset</span><span class="p">)</span> <span class="o">!=</span> <span class="n">graycode</span><span class="o">.</span><span class="n">getNumberOfPatternImages</span><span class="p">()</span> <span class="o">+</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Invalid number of images in set </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s1">!&#39;</span><span class="p">)</span>
+             
+        <span class="n">imgs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">imageset</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]:</span> <span class="c1"># Exclude non pattern images</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">cam_shape</span> <span class="o">!=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Image size of </span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s1"> is mismatch!&#39;</span><span class="p">)</span>
+            <span class="n">imgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+        
+        
+        <span class="n">proj_objps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">proj_corners</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cam_corners2</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">pointIndex</span><span class="p">,</span> <span class="n">center</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cam_whiteCorners_list</span><span class="p">[</span><span class="n">setnum</span><span class="p">]):</span>
+            <span class="n">c_x</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">center</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">c_y</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">center</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">src_points</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">dst_points</span> <span class="o">=</span> <span class="p">[]</span>
+            
+            <span class="k">for</span> <span class="n">dx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">patch_size_half</span><span class="p">,</span> <span class="n">patch_size_half</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">dy</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">patch_size_half</span><span class="p">,</span> <span class="n">patch_size_half</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">c_x</span> <span class="o">+</span> <span class="n">dx</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">c_y</span> <span class="o">+</span> <span class="n">dy</span>
+                    
+                    <span class="c1"># Returns integer coord</span>
+                    <span class="n">err</span><span class="p">,</span> <span class="n">proj_pix</span> <span class="o">=</span> <span class="n">graycode</span><span class="o">.</span><span class="n">getProjPixel</span><span class="p">(</span><span class="n">imgs</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+                    
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">err</span><span class="p">:</span>
+                        <span class="n">src_points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+                        <span class="n">dst_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">proj_pix</span><span class="p">))</span>
+                    
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">src_points</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">patch_size_half</span><span class="o">**</span><span class="mi">2</span><span class="p">:</span>
+                <span class="c1">#warnings.warn(f&quot;Corner {c_x},{c_y} was skipped because decoded pixel were too few.&quot;)</span>
+                <span class="n">skipped</span><span class="o">+=</span><span class="mi">1</span>
+                <span class="k">continue</span>
+            
+            
+            <span class="n">proj_objps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">whiteObjps</span><span class="p">[</span><span class="n">pointIndex</span><span class="p">])</span>
+            
+            <span class="n">h_mat</span><span class="p">,</span> <span class="n">inliers</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findHomography</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">src_points</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dst_points</span><span class="p">))</span>
+            <span class="n">point</span> <span class="o">=</span> <span class="n">h_mat</span><span class="nd">@np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">center</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">center</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+            <span class="n">point_pix</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="n">point</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">proj_corners</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">point_pix</span><span class="p">])</span>
+            <span class="n">cam_corners2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">center</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">proj_corners</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not enough corners were found in set </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2"> (less than 3). Skipping.&quot;</span><span class="p">)</span>
+            
+            
+        <span class="n">proj_objps_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">proj_objps</span><span class="p">))</span>
+        <span class="n">proj_corners_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">proj_corners</span><span class="p">))</span>
+        <span class="n">cam_corners_list2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">cam_corners2</span><span class="p">))</span>
+        
+    <span class="k">if</span> <span class="n">skipped</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">skipped</span><span class="si">}</span><span class="s2"> over </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">proj_objps_list</span><span class="p">)</span><span class="o">*</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> skipped corners.&quot;</span><span class="p">)</span>
+    
+    
+    <span class="c1"># Calibrate projector</span>
+    <span class="n">proj_rms</span><span class="p">,</span> <span class="n">proj_int</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">,</span> <span class="n">proj_rvecs</span><span class="p">,</span> <span class="n">proj_tvecs</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span>
+        <span class="n">proj_objps_list</span><span class="p">,</span> <span class="n">proj_corners_list</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    
+    <span class="c1"># Stereo calibrate</span>
+    <span class="n">retval</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">stereoCalibrate</span><span class="p">(</span>
+        <span class="n">proj_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list2</span><span class="p">,</span> <span class="n">proj_corners_list</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">proj_int</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_INTRINSIC</span><span class="p">)</span>
+    
+    
+    <span class="c1"># Build StereoRig object</span>
+    <span class="n">stereoRigObj</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">StereoRig</span><span class="p">(</span><span class="n">cam_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span> <span class="o">=</span> <span class="n">E</span><span class="p">,</span> <span class="n">reprojectionError</span> <span class="o">=</span> <span class="n">retval</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;cam_rms&quot;</span><span class="p">,</span> <span class="n">cam_rms</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;proj_rms&quot;</span><span class="p">,</span> <span class="n">proj_rms</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;stereo_rms&quot;</span><span class="p">,</span> <span class="n">retval</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">extended</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">perViewErrors</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">stereoCalibrateExtended</span><span class="p">(</span>
+            <span class="n">proj_objps_list</span><span class="p">,</span> <span class="n">cam_whiteCorners_list</span><span class="p">,</span> <span class="n">proj_corners_list</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">proj_int</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_INTRINSIC</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">stereoRigObj</span><span class="p">,</span> <span class="n">perViewErrors</span>
+    
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">stereoRigObj</span></div>
+
+
+<div class="viewcode-block" id="phaseShift"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.phaseShift">[docs]</a><span class="k">def</span> <span class="nf">phaseShift</span><span class="p">(</span><span class="n">periods</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">cameraImages</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="o">=</span><span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+               <span class="n">camIntrinsic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calibrate camera and projector using phase shifting and the </span>
+<span class="sd">    heterodyne principle [Reich 1997].</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    periods : list of lists</span>
+<span class="sd">        Periods of fringe used in the projector as list of lists.</span>
+<span class="sd">        First list is for the horizontal fringes, second for the vertical ones.</span>
+<span class="sd">        In descending order (e.g. 1280, 1024, 512, ...).</span>
+<span class="sd">    projectorResolution: tuple</span>
+<span class="sd">        Projector pixel resolution as (width, height).</span>
+<span class="sd">    cameraImages : list or tuple       </span>
+<span class="sd">        A list of lists (one per set) of image paths acquired by the camera.</span>
+<span class="sd">        Each set must be ordered, having 4 images for each period with</span>
+<span class="sd">        horizontal followed by vertical images.</span>
+<span class="sd">        In each set, last image is the one in normal light conditions.</span>
+<span class="sd">        At least 5-6 sets are suggested.</span>
+<span class="sd">    chessboardSize: tuple, optional</span>
+<span class="sd">        Chessboard *internal* dimensions as (cols, rows). Dimensions should be different to avoid ambiguity.</span>
+<span class="sd">        Default to (6,7).</span>
+<span class="sd">    squareSize : float, optional</span>
+<span class="sd">        If the square size is known, calibration can be in metric units. Default to 1.</span>
+<span class="sd">    camIntrinsic : numpy.ndarray, optional</span>
+<span class="sd">        A 3x3 matrix representing camera intrinsic parameters. If not given it will be calculated.</span>
+<span class="sd">    camIntrinsic : list, optional</span>
+<span class="sd">        Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).</span>
+<span class="sd">        If not given they will be calculated.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    StereoRig</span>
+<span class="sd">        A StereoRig object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    
+    <span class="c1"># Internal functions</span>
+    <span class="k">def</span> <span class="nf">getPhase</span><span class="p">(</span><span class="n">imgPaths</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get ordered images and retrieve wrapped phase map.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">imgPaths</span><span class="p">:</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+            <span class="n">I</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span>
+            
+        <span class="c1"># cos(theta + i*pi/2) expected  </span>
+        <span class="c1"># Output values in [0, 2pi)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">-</span><span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">I</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">I</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        
+    
+    <span class="k">def</span> <span class="nf">unwrap</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">theta1</span><span class="p">,</span> <span class="n">T0</span><span class="p">,</span> <span class="n">T1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given absolute phase `theta0`, wrapped phase `theta1` and their</span>
+<span class="sd">        respective periods `T0` and `T1`, unwrap `theta1`.</span>
+<span class="sd">        </span>
+<span class="sd">        Returned phase is normalized in [0, 2pi).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">((</span><span class="n">theta0</span><span class="o">*</span><span class="n">T0</span><span class="o">/</span><span class="n">T1</span> <span class="o">-</span> <span class="n">theta1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">theta1</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">k</span><span class="p">)</span><span class="o">*</span><span class="n">T1</span><span class="o">/</span><span class="n">T0</span>
+    
+    
+    <span class="k">def</span> <span class="nf">getProjCoord</span><span class="p">(</span><span class="n">phase_x</span><span class="p">,</span> <span class="n">phase_y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return projector coordinate corresponding to absolute phase values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">px</span> <span class="o">=</span> <span class="n">projectorResolution</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">phase_x</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">py</span> <span class="o">=</span> <span class="n">projectorResolution</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">phase_y</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">(</span><span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">)</span> <span class="p">)</span>
+    
+    
+    <span class="c1"># Prepare camera object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...</span>
+    <span class="n">objps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">objps</span><span class="p">[:,:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">squareSize</span>
+    
+    <span class="n">cam_shape</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">cameraImages</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">cam_corners_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cam_objps_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">proj_corners_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">proj_objps_list</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1">#### Camera calibration</span>
+    <span class="n">cam_rvecs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cam_tvecs</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    
+    <span class="k">for</span> <span class="n">imageset</span> <span class="ow">in</span> <span class="n">cameraImages</span><span class="p">:</span>
+        
+        <span class="c1"># Get corners from normal.png as [(x1,y1), (x2,y2), ...]</span>
+        <span class="n">normal_img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+        <span class="n">res</span><span class="p">,</span> <span class="n">cam_corners</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findChessboardCorners</span><span class="p">(</span><span class="n">normal_img</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Chessboard not found in </span><span class="si">{</span><span class="n">imageset</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">!&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Subpixel refinement. Output as [(x1,y1), (x2,y2), ...]</span>
+        <span class="n">cam_corners_sub</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cornerSubPix</span><span class="p">(</span><span class="n">normal_img</span><span class="p">,</span> <span class="n">cam_corners</span><span class="p">,</span> <span class="n">DEFAULT_CORNERSUBPIX_WINSIZE</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span>
+        
+        <span class="c1"># Draw and display the corners</span>
+        <span class="c1">#img = cv2.drawChessboardCorners(normal_img, chessboardSize, cam_corners_sub, True)</span>
+        <span class="c1">#cv2.imshow(&#39;chessboard&#39;,img)</span>
+        <span class="c1">#cv2.waitKey(0)</span>
+        
+        <span class="n">cam_corners_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_corners_sub</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+        <span class="n">cam_objps_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objps</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    
+    
+        <span class="c1"># Get absolute phase using all the acquired fringes</span>
+        
+        <span class="n">i</span><span class="o">=</span><span class="mi">0</span> <span class="c1"># counter</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">]</span> <span class="c1"># Horizontal and vertical absolute phases</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span><span class="n">T</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">periods</span><span class="p">[</span><span class="n">v</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">j</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span> <span class="c1"># if it is the first (maximum period)</span>
+                    <span class="n">phase</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">getPhase</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">4</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">phase2</span> <span class="o">=</span> <span class="n">getPhase</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">4</span><span class="p">])</span>
+                    <span class="n">phase</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">unwrap</span><span class="p">(</span><span class="n">phase</span><span class="p">[</span><span class="n">v</span><span class="p">],</span> <span class="n">phase2</span><span class="p">,</span> <span class="n">periods</span><span class="p">[</span><span class="n">v</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">T</span><span class="p">)</span>
+                    
+                <span class="n">i</span><span class="o">+=</span><span class="mi">4</span> <span class="c1"># update counter</span>
+        
+                    
+        <span class="c1"># Find camera-projector correspondences</span>
+        <span class="c1">#cam_corners_sub shape (n, 1, 2)</span>
+        <span class="n">corners</span> <span class="o">=</span> <span class="n">cam_corners_sub</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># shape (n, 2) [[x1,y1], [x2,y2], ...]</span>
+        <span class="n">corners</span> <span class="o">=</span> <span class="n">corners</span><span class="o">.</span><span class="n">T</span> <span class="c1"># (2, n)</span>
+        <span class="n">corners</span> <span class="o">=</span> <span class="n">corners</span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span> <span class="c1"># Swap x,y to get</span>
+        
+        <span class="c1"># Linear interpolation of non-integer coordinates</span>
+        <span class="n">phase_x</span> <span class="o">=</span> <span class="n">map_coordinates</span><span class="p">(</span><span class="n">phase</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">corners</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">phase_y</span> <span class="o">=</span> <span class="n">map_coordinates</span><span class="p">(</span><span class="n">phase</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">corners</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c1"># Get corresponding values on projector</span>
+        <span class="n">proj_corners</span> <span class="o">=</span> <span class="n">getProjCoord</span><span class="p">(</span><span class="n">phase_x</span><span class="p">,</span><span class="n">phase_y</span><span class="p">)</span> <span class="c1"># Shape (n, 2)</span>
+          
+        <span class="n">proj_corners_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">proj_corners</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+        <span class="n">proj_objps_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objps</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    
+    
+    <span class="c1"># Call OpenCV calibrate</span>
+    <span class="c1"># Calibrate camera only if intrinsic parameters are not given</span>
+    <span class="k">if</span> <span class="n">camIntrinsic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cam_rms</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">cam_rvecs</span><span class="p">,</span> <span class="n">cam_tvecs</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span>
+            <span class="n">cam_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list</span><span class="p">,</span> <span class="n">cam_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">objp</span><span class="p">,</span> <span class="n">corners</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cam_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list</span><span class="p">):</span>
+            <span class="n">cam_rms</span><span class="p">,</span> <span class="n">cam_rvec</span><span class="p">,</span> <span class="n">cam_tvec</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">solvePnP</span><span class="p">(</span><span class="n">objp</span><span class="p">,</span> <span class="n">corners</span><span class="p">,</span> <span class="n">camIntrinsic</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="p">)</span> 
+            <span class="n">cam_rvecs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_rvec</span><span class="p">)</span>
+            <span class="n">cam_tvecs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_tvec</span><span class="p">)</span>
+        <span class="n">cam_int</span> <span class="o">=</span> <span class="n">camIntrinsic</span>
+        <span class="n">cam_dist</span> <span class="o">=</span> <span class="n">camDistCoeffs</span>
+    
+    <span class="c1"># Calibrate projector</span>
+    <span class="n">proj_rms</span><span class="p">,</span> <span class="n">proj_int</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">,</span> <span class="n">proj_rvecs</span><span class="p">,</span> <span class="n">proj_tvecs</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span>
+        <span class="n">proj_objps_list</span><span class="p">,</span> <span class="n">proj_corners_list</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    
+    <span class="c1"># Stereo calibrate</span>
+    <span class="n">retval</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">stereoCalibrate</span><span class="p">(</span>
+        <span class="n">proj_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list</span><span class="p">,</span> <span class="n">proj_corners_list</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">proj_int</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_INTRINSIC</span><span class="p">)</span>
+    
+    <span class="c1"># Build StereoRig object</span>
+    <span class="n">stereoRigObj</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">StereoRig</span><span class="p">(</span><span class="n">cam_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span> <span class="o">=</span> <span class="n">E</span><span class="p">,</span> <span class="n">reprojectionError</span> <span class="o">=</span> <span class="n">retval</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">stereoRigObj</span></div>
+    
+
+<div class="viewcode-block" id="phaseShiftWhite"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.phaseShiftWhite">[docs]</a><span class="k">def</span> <span class="nf">phaseShiftWhite</span><span class="p">(</span><span class="n">periods</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">cameraImages</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="o">=</span><span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span>
+                    <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">camIntrinsic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extended</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calibrate camera and projector using phase shifting and heterodyne</span>
+<span class="sd">    principle [Reich 1997]. Using center of white squares instead of</span>
+<span class="sd">    corners as targets.</span>
+<span class="sd">    </span>
+<span class="sd">    The center of a white square is well defined and less subject to</span>
+<span class="sd">    noise or uncertanty of the phase value.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    periods : list of lists</span>
+<span class="sd">        Periods of fringe used in the projector as list of lists.</span>
+<span class="sd">        First list is for the horizontal fringes, second for the vertical ones.</span>
+<span class="sd">        In descending order (e.g. 1280, 1024, 512, ...).</span>
+<span class="sd">    projectorResolution: tuple</span>
+<span class="sd">        Projector pixel resolution as (width, height).</span>
+<span class="sd">    cameraImages : list or tuple       </span>
+<span class="sd">        A list of lists (one per set) of image paths acquired by the camera.</span>
+<span class="sd">        Each set must be ordered, having 4 images for each period with</span>
+<span class="sd">        horizontal followed by vertical images.</span>
+<span class="sd">        In each set, last image is the one in normal light conditions.</span>
+<span class="sd">        At least 5-6 sets are suggested.</span>
+<span class="sd">    chessboardSize: tuple, optional</span>
+<span class="sd">        Chessboard *internal* dimensions as (cols, rows). Dimensions should be different to avoid ambiguity.</span>
+<span class="sd">        Default to (6,7).</span>
+<span class="sd">    squareSize : float, optional</span>
+<span class="sd">        If the square size is known, calibration can be in metric units. Default to 1.</span>
+<span class="sd">    camIntrinsic : numpy.ndarray, optional</span>
+<span class="sd">        A 3x3 matrix representing camera intrinsic parameters. If not given it will be calculated.</span>
+<span class="sd">    camIntrinsic : list, optional</span>
+<span class="sd">        Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).</span>
+<span class="sd">        If not given they will be calculated.</span>
+<span class="sd">    extended: bool</span>
+<span class="sd">        If True, `perViewErrors` of the stereo calibration are returned. Default to False.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    StereoRig</span>
+<span class="sd">        A StereoRig object</span>
+<span class="sd">    perViewErrors</span>
+<span class="sd">        Returned only if `extended` is True. For each pattern view, the</span>
+<span class="sd">        RMS error of camera and projector is returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    
+    <span class="c1"># Internal functions</span>
+    <span class="k">def</span> <span class="nf">getPhase</span><span class="p">(</span><span class="n">imgPaths</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get ordered images and retrieve wrapped phase map.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">imgPaths</span><span class="p">:</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+            <span class="n">I</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span>
+            
+        <span class="c1"># cos(theta + i*pi/2) expected  </span>
+        <span class="c1"># Output values in [0, 2pi)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">-</span><span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">I</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">I</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        
+    
+    <span class="k">def</span> <span class="nf">unwrap</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">theta1</span><span class="p">,</span> <span class="n">T0</span><span class="p">,</span> <span class="n">T1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given absolute phase `theta0`, wrapped phase `theta1` and their</span>
+<span class="sd">        respective periods `T0` and `T1`, unwrap `theta1`.</span>
+<span class="sd">        </span>
+<span class="sd">        Returned phase is normalized in [0, 2pi).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">((</span><span class="n">theta0</span><span class="o">*</span><span class="n">T0</span><span class="o">/</span><span class="n">T1</span> <span class="o">-</span> <span class="n">theta1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">theta1</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">k</span><span class="p">)</span><span class="o">*</span><span class="n">T1</span><span class="o">/</span><span class="n">T0</span>
+    
+    
+    <span class="k">def</span> <span class="nf">getProjCoord</span><span class="p">(</span><span class="n">phase_x</span><span class="p">,</span> <span class="n">phase_y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return projector coordinate corresponding to absolute phase values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">px</span> <span class="o">=</span> <span class="n">projectorResolution</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">phase_x</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">py</span> <span class="o">=</span> <span class="n">projectorResolution</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">phase_y</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">(</span><span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">)</span> <span class="p">)</span>
+    
+    
+    <span class="c1"># Prepare camera object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0),...</span>
+    <span class="n">objps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">3</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">objps</span><span class="p">[:,:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">0</span><span class="p">:</span><span class="n">chessboardSize</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">squareSize</span>
+    
+    <span class="n">cam_shape</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">cameraImages</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">cam_corners_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cam_objps_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">proj_corners_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">proj_objps_list</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1">#### Camera calibration</span>
+    <span class="n">cam_rvecs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cam_tvecs</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># Loop 1</span>
+    <span class="k">for</span> <span class="n">imageset</span> <span class="ow">in</span> <span class="n">cameraImages</span><span class="p">:</span>
+        
+        <span class="c1"># Get corners from normal.png as [(x1,y1), (x2,y2), ...]</span>
+        <span class="n">normal_img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">cv2</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+        <span class="n">res</span><span class="p">,</span> <span class="n">cam_corners</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findChessboardCorners</span><span class="p">(</span><span class="n">normal_img</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Chessboard not found in </span><span class="si">{</span><span class="n">imageset</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">!&#39;</span><span class="p">)</span>
+        
+        <span class="c1"># Subpixel refinement. Output as [(x1,y1), (x2,y2), ...]</span>
+        <span class="n">cam_corners_sub</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cornerSubPix</span><span class="p">(</span><span class="n">normal_img</span><span class="p">,</span> <span class="n">cam_corners</span><span class="p">,</span> <span class="n">DEFAULT_CORNERSUBPIX_WINSIZE</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span>
+        
+        <span class="c1"># Draw and display the corners</span>
+        <span class="c1">#img = cv2.drawChessboardCorners(normal_img, chessboardSize, cam_corners_sub, True)</span>
+        <span class="c1">#cv2.imshow(&#39;chessboard&#39;,img)</span>
+        <span class="c1">#cv2.waitKey(0)</span>
+        
+        <span class="n">cam_corners_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_corners_sub</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+        <span class="n">cam_objps_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objps</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    
+    <span class="c1"># Call OpenCV calibrate</span>
+    <span class="c1"># Calibrate camera only if intrinsic parameters are not given</span>
+    <span class="k">if</span> <span class="n">camIntrinsic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cam_rms</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">cam_rvecs</span><span class="p">,</span> <span class="n">cam_tvecs</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span>
+            <span class="n">cam_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list</span><span class="p">,</span> <span class="n">cam_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">objp</span><span class="p">,</span> <span class="n">corners</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cam_objps_list</span><span class="p">,</span> <span class="n">cam_corners_list</span><span class="p">):</span>
+            <span class="n">cam_rms</span><span class="p">,</span> <span class="n">cam_rvec</span><span class="p">,</span> <span class="n">cam_tvec</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">solvePnP</span><span class="p">(</span><span class="n">objp</span><span class="p">,</span> <span class="n">corners</span><span class="p">,</span> <span class="n">camIntrinsic</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="p">)</span> 
+            <span class="n">cam_rvecs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_rvec</span><span class="p">)</span>
+            <span class="n">cam_tvecs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cam_tvec</span><span class="p">)</span>
+        <span class="n">cam_int</span> <span class="o">=</span> <span class="n">camIntrinsic</span>
+        <span class="n">cam_dist</span> <span class="o">=</span> <span class="n">camDistCoeffs</span>
+    
+    
+    <span class="c1"># From camera corners, get centers of white squares</span>
+    <span class="n">cam_whiteCorners_list</span><span class="p">,</span> <span class="n">whiteObjps</span> <span class="o">=</span> <span class="n">_getWhiteCenters</span><span class="p">(</span><span class="n">cam_corners_list</span><span class="p">,</span>
+                        <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">,</span> <span class="n">squareSize</span><span class="p">)</span>
+    
+    <span class="n">whiteObjps</span> <span class="o">=</span> <span class="n">whiteObjps</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">cam_whiteObjps_list</span> <span class="o">=</span> <span class="p">[[</span><span class="n">whiteObjps</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cam_whiteCorners_list</span><span class="p">))]</span>
+    
+    <span class="c1"># Loop 2</span>
+    <span class="k">for</span> <span class="n">setnum</span><span class="p">,</span> <span class="n">imageset</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cameraImages</span><span class="p">):</span>
+        <span class="c1"># Get absolute phase using all the acquired fringes</span>
+        <span class="n">i</span><span class="o">=</span><span class="mi">0</span> <span class="c1"># counter</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">]</span> <span class="c1"># Horizontal and vertical absolute phases</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span><span class="n">T</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">periods</span><span class="p">[</span><span class="n">v</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">j</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span> <span class="c1"># if it is the first (maximum period)</span>
+                    <span class="n">phase</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">getPhase</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">4</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">phase2</span> <span class="o">=</span> <span class="n">getPhase</span><span class="p">(</span><span class="n">imageset</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">4</span><span class="p">])</span>
+                    <span class="n">phase</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">unwrap</span><span class="p">(</span><span class="n">phase</span><span class="p">[</span><span class="n">v</span><span class="p">],</span> <span class="n">phase2</span><span class="p">,</span> <span class="n">periods</span><span class="p">[</span><span class="n">v</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">T</span><span class="p">)</span>
+                
+                <span class="n">i</span><span class="o">+=</span><span class="mi">4</span> <span class="c1"># update counter</span>
+        
+        <span class="c1">### Find camera-projector correspondences</span>
+        <span class="c1">#cam_corners_sub shape (n, 1, 2)</span>
+        <span class="n">corners</span> <span class="o">=</span> <span class="n">cam_whiteCorners_list</span><span class="p">[</span><span class="n">setnum</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># shape (n, 2) [[x1,y1], [x2,y2], ...]</span>
+        <span class="n">corners</span> <span class="o">=</span> <span class="n">corners</span><span class="o">.</span><span class="n">T</span> <span class="c1"># (2, n)</span>
+        <span class="n">corners</span> <span class="o">=</span> <span class="n">corners</span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span> <span class="c1"># Swap to get (y,x) coords</span>
+        
+        <span class="c1"># Linear interpolation of non-integer coordinates</span>
+        <span class="n">phase_x</span> <span class="o">=</span> <span class="n">map_coordinates</span><span class="p">(</span><span class="n">phase</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">corners</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">phase_y</span> <span class="o">=</span> <span class="n">map_coordinates</span><span class="p">(</span><span class="n">phase</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">corners</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c1"># Get corresponding (x,y) values on projector</span>
+        <span class="n">proj_corners</span> <span class="o">=</span> <span class="n">getProjCoord</span><span class="p">(</span><span class="n">phase_x</span><span class="p">,</span><span class="n">phase_y</span><span class="p">)</span> <span class="c1"># Shape (n, 2)</span>
+        
+        <span class="n">proj_corners_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">proj_corners</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+        <span class="n">proj_objps_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">whiteObjps</span><span class="p">)</span>
+    
+    <span class="c1"># Calibrate projector</span>
+    <span class="n">proj_rms</span><span class="p">,</span> <span class="n">proj_int</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">,</span> <span class="n">proj_rvecs</span><span class="p">,</span> <span class="n">proj_tvecs</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span>
+        <span class="n">proj_objps_list</span><span class="p">,</span> <span class="n">proj_corners_list</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    # Calibrate projector WITHOUT LENS DISTORTION</span>
+<span class="sd">    proj_rms, proj_int, proj_dist, proj_rvecs, proj_tvecs = cv2.calibrateCamera(</span>
+<span class="sd">        proj_objps_list, proj_corners_list, projectorResolution, None, None, None, None, flags=cv2.CALIB_FIX_K1+cv2.CALIB_FIX_K2+cv2.CALIB_FIX_K3+cv2.CALIB_ZERO_TANGENT_DIST)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="c1"># Stereo calibrate</span>
+    <span class="n">retval</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">stereoCalibrate</span><span class="p">(</span>
+        <span class="n">proj_objps_list</span><span class="p">,</span> <span class="n">cam_whiteCorners_list</span><span class="p">,</span> <span class="n">proj_corners_list</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">proj_int</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_INTRINSIC</span><span class="p">)</span>
+
+    <span class="c1"># Build StereoRig object</span>
+    <span class="n">stereoRigObj</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">StereoRig</span><span class="p">(</span><span class="n">cam_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span> <span class="o">=</span> <span class="n">E</span><span class="p">,</span> <span class="n">reprojectionError</span> <span class="o">=</span> <span class="n">retval</span><span class="p">)</span>
+    
+    <span class="c1">#TEMP</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;cam_rms&quot;</span><span class="p">,</span> <span class="n">cam_rms</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;proj_rms&quot;</span><span class="p">,</span> <span class="n">proj_rms</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;stereo_rms&quot;</span><span class="p">,</span> <span class="n">retval</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">extended</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">perViewErrors</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">stereoCalibrateExtended</span><span class="p">(</span>
+            <span class="n">proj_objps_list</span><span class="p">,</span> <span class="n">cam_whiteCorners_list</span><span class="p">,</span> <span class="n">proj_corners_list</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">proj_int</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_INTRINSIC</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">stereoRigObj</span><span class="p">,</span> <span class="n">perViewErrors</span>
+    
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">stereoRigObj</span></div>
+
+
+<div class="viewcode-block" id="generateChessboardSVG"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.generateChessboardSVG">[docs]</a><span class="k">def</span> <span class="nf">generateChessboardSVG</span><span class="p">(</span><span class="n">chessboardSize</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">border</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Write the desired chessboard to a SVG file.</span>
+<span class="sd">    </span>
+<span class="sd">    *chessboardSize* is expressed as (columns, rows) tuple, counting *internal line* columns and rows </span>
+<span class="sd">    as OpenCV does (e.g. to obtain a 10x7 chessboard, use (9,6)).</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    chessboardSize : tuple</span>
+<span class="sd">        Size of the chessboard as (columns, rows).</span>
+<span class="sd">    filepath : string</span>
+<span class="sd">        File path where to save the SVG file.</span>
+<span class="sd">    squareSize : int</span>
+<span class="sd">        Side of the square in millimeters. Default to 20. However it may not be represented exactly, depending on software.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">chessboardSize</span>
+    <span class="n">cols</span><span class="o">+=</span><span class="mi">1</span>
+    <span class="n">rows</span><span class="o">+=</span><span class="mi">1</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;</span><span class="si">{</span><span class="n">cols</span><span class="o">*</span><span class="n">squareSize</span><span class="si">}</span><span class="s1">mm&quot; height=&quot;</span><span class="si">{</span><span class="n">rows</span><span class="o">*</span><span class="n">squareSize</span><span class="si">}</span><span class="s1">mm&quot; viewBox=&quot;0 0 </span><span class="si">{</span><span class="n">cols</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">rows</span><span class="si">}</span><span class="s1">&quot; style=&quot;border: </span><span class="si">{</span><span class="n">border</span><span class="si">}</span><span class="s1">mm solid #FFF;&quot;&gt;&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&lt;rect fill=&quot;#FFF&quot; x=&quot;0&quot; y=&quot;0&quot; width=&quot;</span><span class="si">{}</span><span class="s1">&quot; height=&quot;</span><span class="si">{}</span><span class="s1">&quot;/&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">))</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="s1">&#39;M0 0&#39;</span>
+        <span class="n">d</span> <span class="o">+=</span> <span class="s1">&#39;m0 2&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;H</span><span class="si">{}</span><span class="s1">v1H0z&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">((</span><span class="n">rows</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">)])</span> <span class="c1"># Build rows</span>
+        <span class="n">d</span> <span class="o">+=</span> <span class="s1">&#39;M1 0&#39;</span>
+        <span class="n">d</span> <span class="o">+=</span> <span class="s1">&#39;m2 0&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;V</span><span class="si">{}</span><span class="s1">h1V0z&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cols</span><span class="o">//</span><span class="mi">2</span><span class="p">)])</span> <span class="c1"># Build cols</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&lt;path fill=&quot;#000&quot; d=&quot;</span><span class="si">{}</span><span class="s1">&quot;/&gt;&lt;/svg&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+    
+    <span class="k">return</span></div>
+    
+        
+<div class="viewcode-block" id="getFundamentalMatrixFromProjections"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.getFundamentalMatrixFromProjections">[docs]</a><span class="k">def</span> <span class="nf">getFundamentalMatrixFromProjections</span><span class="p">(</span><span class="n">P1</span><span class="p">,</span><span class="n">P2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the fundamental matrix from two projection matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    The algorithm is adapted from an original lesson of Cristina Turrini, UNIMI, Trento (09/04/2017).</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    P1, P2 : numpy.ndarray</span>
+<span class="sd">        3x4 camera projection matrices.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    F : numpy.ndarray</span>
+<span class="sd">        The 3x3 fundamental matrix.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">X</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">P1</span><span class="p">[</span><span class="mi">1</span><span class="p">,:],</span> <span class="n">P1</span><span class="p">[</span><span class="mi">2</span><span class="p">,:])))</span>
+    <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">P1</span><span class="p">[</span><span class="mi">2</span><span class="p">,:],</span> <span class="n">P1</span><span class="p">[</span><span class="mi">0</span><span class="p">,:])))</span>
+    <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">P1</span><span class="p">[</span><span class="mi">0</span><span class="p">,:],</span> <span class="n">P1</span><span class="p">[</span><span class="mi">1</span><span class="p">,:])))</span>
+
+    <span class="n">Y</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">P2</span><span class="p">[</span><span class="mi">1</span><span class="p">,:],</span> <span class="n">P2</span><span class="p">[</span><span class="mi">2</span><span class="p">,:])))</span>
+    <span class="n">Y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">P2</span><span class="p">[</span><span class="mi">2</span><span class="p">,:],</span> <span class="n">P2</span><span class="p">[</span><span class="mi">0</span><span class="p">,:])))</span>
+    <span class="n">Y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">P2</span><span class="p">[</span><span class="mi">0</span><span class="p">,:],</span> <span class="n">P2</span><span class="p">[</span><span class="mi">1</span><span class="p">,:])))</span>
+
+    <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">F</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">X</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
+    
+    <span class="k">return</span> <span class="n">F</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../simplestereo.html" >simplestereo</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simplestereo.calibration</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, decadenza.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

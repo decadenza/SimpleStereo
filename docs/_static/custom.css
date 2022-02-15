@@ -1,0 +1,13 @@
+.function {
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+div.admonition-todo {
+    border-top: 2px solid yellow;
+    border-bottom: 2px solid yellow;
+    border-left: 2px solid yellow;
+    border-right: 2px solid yellow;
+    background-color: 2px solid rgba(255, 255, 0, 0.4);
+}
+

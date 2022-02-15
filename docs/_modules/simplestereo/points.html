@@ -1,0 +1,291 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>simplestereo.points &#8212; SimpleStereo 1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../simplestereo.html" accesskey="U">simplestereo</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simplestereo.points</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for simplestereo.points</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">points</span>
+<span class="sd">==============</span>
+<span class="sd">Functions to manage point clouds.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+
+
+<div class="viewcode-block" id="exportPLY"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.points.exportPLY">[docs]</a><span class="k">def</span> <span class="nf">exportPLY</span><span class="p">(</span><span class="n">points3D</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">referenceImage</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">6</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Export raw point cloud to PLY file (ASCII).</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    points3D : numpy.ndarray</span>
+<span class="sd">        Array of 3D points. The last dimension must contain ordered x,y,z coordinates.</span>
+<span class="sd">    filepath : str</span>
+<span class="sd">        File path for the PLY file (absolute or relative).</span>
+<span class="sd">    referenceImage : numpy.ndarray, optional</span>
+<span class="sd">        Reference image to extract color from. It must contain the same</span>
+<span class="sd">        number of points of `points3D`. Last dimension must be either</span>
+<span class="sd">        1 (grayscale) or 3 (BGR).</span>
+<span class="sd">        Default to None.</span>
+<span class="sd">    precision : int</span>
+<span class="sd">        Decimal places to save coordinates with. Higher precision causes</span>
+<span class="sd">        bigger file size.</span>
+<span class="sd">        Default to 6.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">originalShape</span> <span class="o">=</span> <span class="n">points3D</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">points3D</span> <span class="o">=</span> <span class="n">points3D</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">points3D</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;ply</span><span class="se">\n</span><span class="s2">format ascii 1.0</span><span class="se">\n</span><span class="s2">comment SimpleStereo point cloud export</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># Store the original array shape for future use</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;comment Original array shape </span><span class="si">{</span><span class="s1">&#39;x&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">originalShape</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;element vertex </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;property double x</span><span class="se">\n</span><span class="s2">property double y</span><span class="se">\n</span><span class="s2">property double z</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">referenceImage</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;end_header</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span> <span class="ow">in</span> <span class="n">points3D</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;{:.</span><span class="si">{p}</span><span class="s2">f} {:.</span><span class="si">{p}</span><span class="s2">f} {:.</span><span class="si">{p}</span><span class="s2">f}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">precision</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">referenceImage</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">points3D</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+                <span class="c1"># Assuming BGR image (OpenCV compatible) (3 color values)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;property uchar red</span><span class="se">\n</span><span class="s2">property uchar green</span><span class="se">\n</span><span class="s2">property uchar blue</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;end_header</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">referenceImage</span> <span class="o">=</span> <span class="n">referenceImage</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                    <span class="c1"># Precision limited to p decimal places.</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;{:.</span><span class="si">{p}</span><span class="s2">f} {:.</span><span class="si">{p}</span><span class="s2">f} {:.</span><span class="si">{p}</span><span class="s2">f} </span><span class="si">{:d}</span><span class="s2"> </span><span class="si">{:d}</span><span class="s2"> </span><span class="si">{:d}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">points3D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points3D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">points3D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> 
+                        <span class="n">referenceImage</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="n">referenceImage</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">referenceImage</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="n">precision</span><span class="p">))</span> <span class="c1"># Invert BGR to RGB</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Assuming grayscale image (1 color value)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;property uchar intensity</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;end_header</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">referenceImage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">referenceImage</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                    <span class="c1"># Precision limited to p decimal places.</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;{:.</span><span class="si">{p}</span><span class="s2">f} {:.</span><span class="si">{p}</span><span class="s2">f} {:.</span><span class="si">{p}</span><span class="s2">f} </span><span class="si">{:d}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">points3D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">points3D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">points3D</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> 
+                        <span class="n">referenceImage</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="n">precision</span><span class="p">))</span> <span class="c1"># Grayscale</span></div>
+    
+
+<div class="viewcode-block" id="importPLY"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.points.importPLY">[docs]</a><span class="k">def</span> <span class="nf">importPLY</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="o">*</span><span class="n">properties</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Import 3D coordinates from PLY file.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename : str</span>
+<span class="sd">        PLY file path.</span>
+<span class="sd">    *properties : argument list, optional</span>
+<span class="sd">        Property column positions to be extracted as `float`, in the</span>
+<span class="sd">        same order. Default to (0,1,2).</span>
+<span class="sd">        </span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.ndarray</span>
+<span class="sd">        Array of data values with shape (number of values, number of</span>
+<span class="sd">        properties).</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">    .. todo::</span>
+<span class="sd">        Automatically read PLY properties as `dict`.</span>
+<span class="sd">        Manage values other than `float`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">properties</span><span class="p">:</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+    
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;end_header&quot;</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">prop</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+            <span class="n">points</span><span class="o">.</span><span class="n">append</span><span class="p">([</span> <span class="nb">float</span><span class="p">(</span><span class="n">prop</span><span class="p">[</span><span class="n">x</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">properties</span> <span class="p">])</span>
+        
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="getAdimensional3DPoints"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.points.getAdimensional3DPoints">[docs]</a><span class="k">def</span> <span class="nf">getAdimensional3DPoints</span><span class="p">(</span><span class="n">disparityMap</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get adimensional 3D points from the disparity map.</span>
+<span class="sd">    </span>
+<span class="sd">    This is the adimensional version of</span>
+<span class="sd">    `RectifiedStereoRig.get3DPoints()`.</span>
+<span class="sd">    Useful to reconstruct non-metric 3D models from any disparity map</span>
+<span class="sd">    when the stereo rig object is not known.</span>
+<span class="sd">    It may lead to incorrect proportions.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    disparityMap : numpy.ndarray</span>
+<span class="sd">        A dense disparity map having same height and width of images.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.ndarray</span>
+<span class="sd">        Array of points having shape *(height,width,3)*, where at each y,x coordinates</span>
+<span class="sd">        a *(x,y,z)* point is associated.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    :meth:`simplestereo.RectifiedStereoRig.get3DPoints`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">disparityMap</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+    
+    <span class="n">b</span>   <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">fx</span>  <span class="o">=</span> <span class="n">width</span>
+    <span class="n">fy</span>  <span class="o">=</span> <span class="n">width</span>
+    <span class="n">cx1</span> <span class="o">=</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">cx2</span> <span class="o">=</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">a1</span>  <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">a2</span>  <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cy</span>  <span class="o">=</span> <span class="n">height</span><span class="o">/</span><span class="mi">2</span>
+    
+    <span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float64&#39;</span><span class="p">)</span>
+    
+    <span class="n">Q</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">a1</span><span class="o">/</span><span class="n">fy</span>
+    <span class="n">Q</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">a1</span><span class="o">*</span><span class="n">cy</span><span class="o">/</span><span class="n">fy</span> <span class="o">-</span> <span class="n">cx1</span>
+    
+    <span class="n">Q</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">fx</span><span class="o">/</span><span class="n">fy</span>
+    <span class="n">Q</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">cy</span><span class="o">*</span><span class="n">fx</span><span class="o">/</span><span class="n">fy</span>
+                             
+    <span class="n">Q</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">Q</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">fx</span>
+    
+    <span class="n">Q</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">a2</span><span class="o">-</span><span class="n">a1</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">fy</span><span class="o">*</span><span class="n">b</span><span class="p">)</span>
+    <span class="n">Q</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">b</span>                        
+    <span class="n">Q</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">a1</span><span class="o">-</span><span class="n">a2</span><span class="p">)</span><span class="o">*</span><span class="n">cy</span><span class="o">+</span><span class="p">(</span><span class="n">cx2</span><span class="o">-</span><span class="n">cx1</span><span class="p">)</span><span class="o">*</span><span class="n">fy</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">fy</span><span class="o">*</span><span class="n">b</span><span class="p">)</span>    
+    
+    <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">reprojectImageTo3D</span><span class="p">(</span><span class="n">disparityMap</span><span class="p">,</span> <span class="n">Q</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="distortPoints"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.points.distortPoints">[docs]</a><span class="k">def</span> <span class="nf">distortPoints</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">distCoeff</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Undistort relative coordinate points.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    points : list</span>
+<span class="sd">       List of lists (or tuples) of x,y points in relative coordinates </span>
+<span class="sd">       (already multiplied by the inverse intrinsic matrix and undistorted).</span>
+<span class="sd">    distCoeff : list</span>
+<span class="sd">        List of 4, 5 or 8 elements (see OpenCV).</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">        List of lists of distorted x,y points in relative coordinates</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    .. todo::</span>
+<span class="sd">        To be extended for (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]]) </span>
+<span class="sd">        vector of &gt;8 elements.</span>
+<span class="sd">        To use numpy.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">distCoeff</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">distCoeff</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+    <span class="n">nCoeff</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">distCoeff</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">nCoeff</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">8</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;distCoeff is not in a valid format! (length </span><span class="si">{</span><span class="n">nCoeff</span><span class="si">}</span><span class="s2"> unexpected)&quot;</span><span class="p">)</span>
+    
+    
+    <span class="n">k1</span><span class="p">,</span><span class="n">k2</span><span class="p">,</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">,</span><span class="n">k3</span><span class="p">,</span><span class="n">k4</span><span class="p">,</span><span class="n">k5</span><span class="p">,</span><span class="n">k6</span> <span class="o">=</span> <span class="n">distCoeff</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">8</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">distCoeff</span><span class="p">))</span>
+    
+    <span class="n">distPoints</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">r2</span> <span class="o">=</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">xd</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">k1</span><span class="o">*</span><span class="n">r2</span> <span class="o">+</span> <span class="n">k2</span><span class="o">*</span><span class="n">r2</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">k3</span><span class="o">*</span><span class="n">r2</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="n">k4</span><span class="o">*</span><span class="n">r2</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="n">k5</span><span class="o">*</span><span class="n">r2</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> <span class="n">k6</span><span class="o">*</span><span class="n">r2</span><span class="o">**</span><span class="mi">6</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">p1</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">y</span> <span class="o">+</span> <span class="n">p2</span><span class="o">*</span><span class="p">(</span><span class="n">r2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">yd</span> <span class="o">=</span> <span class="n">y</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">k1</span><span class="o">*</span><span class="n">r2</span> <span class="o">+</span> <span class="n">k2</span><span class="o">*</span><span class="n">r2</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">k3</span><span class="o">*</span><span class="n">r2</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="n">k4</span><span class="o">*</span><span class="n">r2</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="n">k5</span><span class="o">*</span><span class="n">r2</span><span class="o">**</span><span class="mi">5</span> <span class="o">+</span> <span class="n">k6</span><span class="o">*</span><span class="n">r2</span><span class="o">**</span><span class="mi">6</span><span class="p">)</span> <span class="o">+</span> <span class="n">p1</span><span class="o">*</span><span class="p">(</span><span class="n">r2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">p2</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">y</span>
+        <span class="n">distPoints</span><span class="o">.</span><span class="n">append</span><span class="p">([(</span><span class="n">xd</span><span class="p">,</span><span class="n">yd</span><span class="p">)])</span>
+    
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">distPoints</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../simplestereo.html" >simplestereo</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simplestereo.points</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, decadenza.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>
