@@ -55,11 +55,16 @@ SimpleStereo helps you with common tasks. You can calibrate a single camera as:
 
 ```python
 import simplestereo as ss
+
+# Path to your images
 calibrationImages = ["0.png","1.png","2.png",...]
+
 # Calibrate and build StereoRig object
 rig = ss.calibration.chessboardStereo( images, chessboardSize=(7,6), squareSize=60.5 )
+
 # Save rig object to file
 rig.save("myRig.json")
+
 # Optionally print some info
 print("Reprojection error:", rig.reprojectionError)
 print("Centers:", rig.getCenters())
