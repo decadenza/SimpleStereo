@@ -1,7 +1,8 @@
 # SimpleStereo
 Stereo vision made simple.
 
-SimpleStereo is a higher level framework for stereo vision applications. It is written in Python 3, with C++ extensions.
+SimpleStereo aims at being a higher level framework for stereo vision applications. It is written in Python 3, with C++ extensions.
+Documentation is available at https://decadenza.github.io/SimpleStereo/
 
 ## Dependencies
 * Python 3
