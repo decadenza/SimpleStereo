@@ -45,7 +45,7 @@ pip3 install .
 - [x] Gray code
 - [ ] De Brujin
 - [ ] Adapt structured light algorithms to work with two cameras
-- [x] StereoFTP (Lafiosca P. et al. [see full article and citation here](https://doi.org/10.3390/s22020433))
+- [x] StereoFTP (Lafiosca P. et al. [Automated Aircraft Dent Inspection via a Modified Fourier Transform Profilometry Algorithm](https://doi.org/10.3390/s22020433), Sensors, 2022)
 
 ### Unwrapping algorithms
 - [x] Infinite impulse response (Estrada et al.) 
