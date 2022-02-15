@@ -6,6 +6,7 @@ Contains different phase unwrapping strategies.
 
 from simplestereo import _unwrapping
 
+
 def infiniteImpulseResponse(phase, tau=1):
     """
     Unwrap a 2D phase map. 
@@ -28,12 +29,14 @@ def infiniteImpulseResponse(phase, tau=1):
     ndarray
         Unwrapped phase with same dimensions and type of `phase`.
         
+        
     See Also
     --------
-    https://doi.org/10.1016/j.optlaseng.2012.01.008
+    <https://doi.org/10.1016/j.optlaseng.2012.01.008>
+    
     
     .. todo::
-        If called twice, it does not work. To be fixed!
+        If called twice, it may not work. To be fixed!
     """
     return _unwrapping.infiniteImpulseResponse(phase, tau)
         

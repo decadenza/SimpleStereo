@@ -38,20 +38,22 @@ class StereoASW():
         detection and filling as in "Local stereo matching using geodesic support weights", Asmaa Hosni et al., 2009.
         If enabled, running time is roughly doubled.
         Default to False.
-        
-    ..warning::
-        It gets very slow for high resolution images or with high *winSize* or *maxDisparity* values.
     
-    ..todo::
-        Alternative version can be written like this: compute disparity map on every other pixel
-        with the traditional algorithm, then fill the remaining pixels using left-right disparity
-        boundaries. This proved to be 40-50% faster with no significant decrease in quality.
+    
+    .. todo::
+       Alternative version can be written like this: compute disparity map on every other pixel
+       with the traditional algorithm, then fill the remaining pixels using left-right disparity
+       boundaries. This proved to be 40-50% faster with no significant decrease in quality.
+    
+    
+    .. warning::
+       It gets very slow for high resolution images or with high *winSize* or *maxDisparity* values.
+    
         
-    Notes
-    -----
-    - This algorithm performs a 384x288 pixel image scan with maxDisparity=16 in less than 1 sec
-    using 4 CPUs (while other implementations need 60 sec, see DOI 10.1007/s11554-012-0313-2 with code "yk").
-    - To improve the final result, a smoothering filter could be applied.
+    .. note::
+       This algorithm performs a 384x288 pixel image scan with maxDisparity=16 in less than 1 sec
+       using 4 CPUs (while other implementations need 60 sec, see DOI 10.1007/s11554-012-0313-2 with code "yk").
+       To improve the final result, a smoothering filter could be applied.
 
     """
     def __init__(self, winSize=35, maxDisparity=16, minDisparity=0, gammaC=5, gammaP=17.5, consistent=False): 

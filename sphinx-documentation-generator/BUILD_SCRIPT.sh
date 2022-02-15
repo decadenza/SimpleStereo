@@ -1,7 +1,6 @@
-rm -r ../docs/html
-rm -r ../docs/doctrees
+rm -r ../docs/*
+>../docs/.nojekyll
 make html
-mv ./_build/html ../docs/
-mv ./_build/doctrees ../docs/
-cd ../docs/
+mv ./_build/html/* ../docs/
+rm -r ./_build/
 

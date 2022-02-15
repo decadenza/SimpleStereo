@@ -229,8 +229,10 @@ def drawCorrespondingEpipolarLines(img1, img2, F, x1=[], x2=[], color=(0,0,255),
     """
     Draw epipolar lines passing by given coordinates in img1 or img1.
     
-    The epipolar lines can be drawn on the images, knowing the fundamental matrix.
-    Please note that this is an in-place method, i.e. passed images will be modified directly.
+    The epipolar lines can be drawn on the images, knowing the
+    fundamental matrix.
+    Please note that this is an in-place method, i.e. passed images will
+    be modified directly.
     Distortion is *not* taken into account.
     
     Parameters
@@ -250,9 +252,9 @@ def drawCorrespondingEpipolarLines(img1, img2, F, x1=[], x2=[], color=(0,0,255),
     -------
     None
     
-    Notes
-    -----
-    This function needs *undistorted* images.
+    
+    .. note::
+        This function needs *undistorted* images.
     """
     def drawLineOnImg1(line):
         nonlocal img1

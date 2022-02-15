@@ -4,7 +4,7 @@ calibration
 Contains different calibration algorithms.
 
 .. todo::
-    - Implement circles calibration. N.B. after using ``cv2.findCirclesGrid()`` a point refinement algorithm is needed (like  ``cv2.cornerSubPix()`` does for the chessboard).
+    Implement circles calibration. N.B. after using ``cv2.findCirclesGrid()`` a point refinement algorithm is needed (like  ``cv2.cornerSubPix()`` does for the chessboard).
 """
 import os
 import warnings

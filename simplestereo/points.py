@@ -1,7 +1,7 @@
 '''
-postprocessing
+points
 ==============
-Functions to manage disparity maps and point clouds.
+Functions to manage point clouds.
 '''
 import numpy as np
 import cv2
@@ -85,7 +85,8 @@ def importPLY(filename, *properties):
         Array of data values with shape (number of values, number of
         properties).
         
-    ..todo::
+        
+    .. todo::
         Automatically read PLY properties as `dict`.
         Manage values other than `float`.
     """
@@ -128,9 +129,10 @@ def getAdimensional3DPoints(disparityMap):
         Array of points having shape *(height,width,3)*, where at each y,x coordinates
         a *(x,y,z)* point is associated.
     
+    
     See Also
     --------
-    :meth:`RectifiedStereoRig.get3DPoints`
+    :meth:`simplestereo.RectifiedStereoRig.get3DPoints`
     """
     height, width = disparityMap.shape[:2]
     
@@ -177,6 +179,7 @@ def distortPoints(points, distCoeff):
     -------
     list
         List of lists of distorted x,y points in relative coordinates
+    
     
     .. todo::
         To be extended for (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4[,τx,τy]]]]) 

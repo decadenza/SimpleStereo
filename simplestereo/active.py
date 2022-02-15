@@ -289,10 +289,10 @@ def findCentralStripe(image, color='r', sensitivity=0.5, interpolation='linear')
     numpy.ndarray
         x,y coordinates of stripe centers with shape (n,2). 
     
-    Notes
-    -----
-    The search is done along a single dimension, the x-axis.
-    Missing values are filled with nearest-value interpolation.
+    
+    .. note::
+       The search is done along a single dimension, the x-axis.
+       Missing values are filled with nearest-value interpolation.
     """
     
     assert sensitivity >= 0 and sensitivity <= 1, "Threshold must be in the interval [0,1]!"
@@ -407,13 +407,12 @@ class StereoFTP:
         numpy.ndarray
             Grayscale image.
         
-        .. todo::
-            Gamma correction can be implemented as a parameter.
         
-        Notes
-        -----
-        I've tried different approaches, but the simple `max` works best
-        at converting the stripe to white.
+        .. todo:: Gamma correction may be implemented as a parameter.
+           
+        .. note::
+           I've tried different approaches, but the simple `max`
+           works best at converting the stripe to white.
         """
         return np.max(img,axis=2)
         
@@ -438,11 +437,11 @@ class StereoFTP:
         -------
         Matrix of points with same width and height of camera resolution.
         
-        Notes
-        -----
-        Corresponding points on reference plane do not vary. They have to
-        be calculated only during initialization considering the chosen 
-        reference plane.
+        
+        .. note:: 
+           Corresponding points on reference plane do not vary. They have to
+           be calculated only during initialization considering the chosen 
+           reference plane.
         """
         
         w, h = self.stereoRig.res1
@@ -830,10 +829,6 @@ class StereoFTP:
         return finalPoints.reshape(roi_h,roi_w,3)
     
 
-########################################
-###### (c) Pasquale Lafiosca 2021 ######
-########################################
-# Work in progress...
 class StereoFTPAnaglyph(StereoFTP):
     """
     Manager of the Stereo Fourier Transform Profilometry using an
@@ -854,6 +849,9 @@ class StereoFTPAnaglyph(StereoFTP):
         Default to "red".
     stripeSensitivity : float, optional
         Sensitivity to find the stripe. See :func:`findCentralStripe()`.
+        
+        
+    .. note:: This is a work in progress.
     """
     
     @staticmethod
@@ -873,8 +871,8 @@ class StereoFTPAnaglyph(StereoFTP):
         numpy.ndarray
             Grayscale image as float.
         
-        .. todo::
-            Gamma correction can be implemented as a parameter.
+        
+        .. todo:: Gamma correction may be implemented as a parameter.
         
         """
         img = img[:,:,0].astype(float) - img[:,:,2].astype(float)
@@ -1140,12 +1138,12 @@ class GrayCode:
         the graycode pattern and its inverse images; used in 
         `getProjPixel` method. Default to 5.
     
-    Notes
-    -----
-    Projector distortion may be unaccurate, especially along border.
-    If this is the case, you can ignore it setting
-    `rig.distCoeffs2 == None` before passing `rig` to the constructor
-    or setting a narrow `roi`.
+    
+    .. note::
+        Projector distortion may be unaccurate, especially along border.
+        If this is the case, you can ignore it setting
+        `rig.distCoeffs2 == None` before passing `rig` to the constructor
+        or setting a narrow `roi`.
     """
     def __init__(self, rig, black_thr=40, white_thr=5):
         self.rig = rig
@@ -1181,9 +1179,10 @@ class GrayCode:
         numpy.ndarray
             Points with shape (n,1,3)
         
-        ..todo::
-            Add possibility to return point cloud in same image/roi
-            shape with NaN in invalid locations.
+        
+        .. todo::
+           Add possibility to return point cloud in same image/roi
+           shape with NaN in invalid locations.
         """
         widthC, heightC = self.rig.res1 # Camera resolution
         imgs = []
@@ -1473,12 +1472,12 @@ class GrayCodeDouble:
         the graycode pattern and its inverse images; used in 
         `getProjPixel` method. Default to 5.
     
-    Notes
-    -----
-    Projector distortion may be unaccurate, especially along border.
-    If this is the case, you can ignore it setting
-    `rig.distCoeffs2 == None` before passing `rig` to the constructor
-    or setting a narrow `roi`.
+    
+    .. todo::
+        Projector distortion may be unaccurate, especially along border.
+        If this is the case, you can ignore it setting
+        `rig.distCoeffs2 == None` before passing `rig` to the constructor
+        or setting a narrow `roi`.
     """
     def __init__(self, rig, projRes, black_thr=40, white_thr=5):
         self.rig = rig
@@ -1614,14 +1613,13 @@ def computeROI(img, blackThreshold=10, extraMargin=0):
         Default to 10.
     extraMargin : int, optional
         Extra safety margin to reduce to ROI. Default to 0.
+    
     Returns
     -------
     tuple
         ROI as tuple of integers (x,y,w,h).
     
-    Notes
-    -----
-    To rewrite completely. Not suitable for production. 
+    .. note:: To rewrite completely. Not suitable for production. 
     """
     if img.ndim>2:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -1754,9 +1752,8 @@ class StereoFTP_PhaseOnly:
         numpy.ndarray
             Grayscale image.
         
-        Todo
-        ----
-        Gamma correction can be implemented as a parameter.
+        
+        .. todo:: Gamma correction may be implemented as a parameter.
         """
         return np.max(img,axis=2)
     

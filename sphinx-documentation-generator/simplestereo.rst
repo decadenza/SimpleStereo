@@ -1,6 +1,14 @@
 simplestereo package
 ====================
 
+Module contents
+---------------
+
+.. automodule:: simplestereo
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   
 Submodules
 ----------
 
@@ -56,14 +64,6 @@ simplestereo.utils module
 -------------------------
 
 .. automodule:: simplestereo.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: simplestereo
    :members:
    :undoc-members:
    :show-inheritance:

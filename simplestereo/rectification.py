@@ -300,10 +300,11 @@ def loopRectify(rig):
     rectifiedStereoRigObj : RectifiedStereoRig
         An object of the RectifiedStereoRig class containing the rectifying homographies.
     
-    Notes
-    -----
-    Also an object of :meth:`simplestereo.RectifiedStereoRig` may be passed as input to recalculate its rectification
-    transformations (e.g. changing algorithm).
+    
+    .. note:: 
+       Also an object of :meth:`simplestereo.RectifiedStereoRig` may be
+       passed as input to recalculate its rectification
+       transformations (e.g. changing algorithm).
     """
     
     def findInitialGuess(A1, B1, A2, B2): # Internal use function
@@ -486,10 +487,10 @@ def getBestXShearingTransformation(rectHomography, dims):
     S : numpy.ndarray
         A 3x3 shearing (x axis) transform.
     
-    Notes
-    -----
-    All the tranformations applied to the images must be taken into account when computing disparity
-    for 3D reconstruction.
+    
+    .. note::
+       All the tranformations applied to the images must be taken into account when computing disparity
+       for 3D reconstruction.
     """
     a = rectHomography.dot([(dims[0]-1)/2, 0, 1]) # Top middlepoint
     b = rectHomography.dot([(dims[0]-1), (dims[1]-1)/2, 1]) # Right middlepoint
@@ -521,7 +522,8 @@ def directRectify(rig):
     
     Compute the 3x3 transformations to rectify a couple of stereo images
     with minimim perspective distortion.
-    This implementation provides direct analytic solution, without using minimization.
+    This implementation provides direct analytic solution, without using
+    minimization.
     
     Parameters
     ----------
@@ -532,6 +534,13 @@ def directRectify(rig):
     -------
     Rectify1, Rectify2 : numpy.ndarray
         3x3 rectification homographies.
+        
+        
+    See Also
+    --------
+    Lafiosca Pasquale and Ceccaroni Marta, "Rectifying homographies for 
+    stereo vision: analytical solution for minimal distortion", Lecture 
+    Notes in Networks and Systems, 2022.
     """
     # Load data from stereo rig
     A1 = rig.intrinsic1
