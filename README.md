@@ -39,7 +39,7 @@ pip3 install .
 
 ### Passive stereo matching algorithms
 - [x] Adaptive Support Weight algorithm (K. Yoon et al.)
-- [x] Geodesic Support Weight algorithm (*simplified implementation* from Asmaa Hosni et al.)
+- [x] Geodesic Support Weight algorithm (*simplified implementation*, credits Asmaa Hosni et al.)
 
 ### Active and Structured light algorithms
 - [x] Gray code
@@ -48,7 +48,7 @@ pip3 install .
 - [x] StereoFTP (Lafiosca P. et al. [Automated Aircraft Dent Inspection via a Modified Fourier Transform Profilometry Algorithm](https://doi.org/10.3390/s22020433), Sensors, 2022)
 
 ### Unwrapping algorithms
-- [x] Infinite impulse response (Estrada et al., [Noise robust linear dynamic system for phase unwrapping and smoothing](https://doi.org/10.1364/OE.19.005126), 2011) 
+- [x] Infinite impulse response (Estrada et al., [Noise robust linear dynamic system for phase unwrapping and smoothing](https://doi.org/10.1364/OE.19.005126), Optics Express, 2011) 
 
 ## Basic example
 SimpleStereo helps you with common tasks. You can calibrate a single camera as:
