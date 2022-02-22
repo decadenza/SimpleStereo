@@ -48,7 +48,7 @@ pip3 install .
 - [x] StereoFTP (Lafiosca P. et al. [Automated Aircraft Dent Inspection via a Modified Fourier Transform Profilometry Algorithm](https://doi.org/10.3390/s22020433), Sensors, 2022)
 
 ### Unwrapping algorithms
-- [x] Infinite impulse response (Estrada et al.) 
+- [x] Infinite impulse response (Estrada et al., [Noise robust linear dynamic system for phase unwrapping and smoothing](https://doi.org/10.1364/OE.19.005126), 2011) 
 
 ## Basic example
 SimpleStereo helps you with common tasks. You can calibrate a single camera as:
