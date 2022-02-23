@@ -32,10 +32,10 @@ pip3 install .
 - [x] Camera-projector calibration alternative version (`ss.calibration.chessboardProCamWhite`)
 
 ### Stereo rectification algorithms
-- [x] Fusiello et al. (`ss.rectification.fusielloRectify`)
+- [x] Fusiello et al., *A compact algorithm for rectification of stereo pairs*, 2000 (`ss.rectification.fusielloRectify`)
 - [x] Wrapper of OpenCV algorithm (`ss.rectification.stereoRectify`)
-- [x] Loop and Zhang (`ss.rectification.loopRectify`)
-- [x] Lafiosca and Ceccaroni (`ss.rectification.directRectify`, see also [DirectStereoRectification](https://github.com/decadenza/DirectStereoRectification))
+- [x] Loop and Zhang, *Computing rectifying homographies for stereo vision*, 1999 (`ss.rectification.loopRectify`)
+- [x] Lafiosca and Ceccaroni, *Rectifying homographies for stereo vision: analytical solution for minimal distortion*, 2022 (`ss.rectification.directRectify`, see also [DirectStereoRectification](https://github.com/decadenza/DirectStereoRectification))
 
 ### Passive stereo matching algorithms
 - [x] Adaptive Support Weight algorithm (K. Yoon et al.)
