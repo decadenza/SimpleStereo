@@ -38,7 +38,7 @@ pip3 install .
 - [x] Lafiosca and Ceccaroni, *Rectifying homographies for stereo vision: analytical solution for minimal distortion*, 2022 (`ss.rectification.directRectify`, see also [DirectStereoRectification](https://github.com/decadenza/DirectStereoRectification))
 
 ### Passive stereo matching algorithms
-- [x] Adaptive Support Weight algorithm (K. Yoon et al.)
+- [x] Adaptive Support Weight algorithm (K. Yoon et al., *Adaptive support-weight approach for correspondence search*, 2006)
 - [x] Geodesic Support Weight algorithm (*simplified implementation*, credits Asmaa Hosni et al.)
 
 ### Active and Structured light algorithms
