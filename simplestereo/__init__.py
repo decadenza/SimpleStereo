@@ -59,7 +59,7 @@ class StereoRig:
         This class follows OpenCV convention to set the origin of the world coordinate system into the first camera.
         Hence the first camera extrinsics parameters will always be identity matrix rotation and zero translation.
         If your world coordinate system is placed into a camera, you must convert it to use this class
-        (see :func:`ss.utils.moveExtrinsicOriginToFirstCamera`).
+        (see :func:`simplestereo.utils.moveExtrinsicOriginToFirstCamera`).
     
     """  
     def __init__(self, res1, res2, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F=None, E=None, reprojectionError=None):

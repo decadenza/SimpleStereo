@@ -99,7 +99,7 @@
 <span class="sd">        This class follows OpenCV convention to set the origin of the world coordinate system into the first camera.</span>
 <span class="sd">        Hence the first camera extrinsics parameters will always be identity matrix rotation and zero translation.</span>
 <span class="sd">        If your world coordinate system is placed into a camera, you must convert it to use this class</span>
-<span class="sd">        (see :func:`ss.utils.moveExtrinsicOriginToFirstCamera`).</span>
+<span class="sd">        (see :func:`simplestereo.utils.moveExtrinsicOriginToFirstCamera`).</span>
 <span class="sd">    </span>
 <span class="sd">    &quot;&quot;&quot;</span>  
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">res1</span><span class="p">,</span> <span class="n">res2</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reprojectionError</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
