@@ -61,7 +61,7 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
                 referenceImage = np.ravel(referenceImage)
                 for i in range(n):
                     # Precision limited to p decimal places.
-                    f.write("{:.{p}f} {:.{p}f} {:.{p}f} {:d}\n".format(
+                    f.write("{:.{p}f} {:.{p}f} {:.{p}f} {}\n".format(
                         points3D[i,0], points3D[i,1], points3D[i,2], 
                         referenceImage[i], p=precision)) # Grayscale
     
