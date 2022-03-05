@@ -56,15 +56,28 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
                         referenceImage[i,2], referenceImage[i,1], referenceImage[i,0], p=precision)) # Invert BGR to RGB
             else:
                 # Assuming grayscale image (1 color value)
-                f.write("property uchar intensity\n")
-                f.write("end_header\n")
                 referenceImage = np.ravel(referenceImage)
-                for i in range(n):
-                    # Precision limited to p decimal places.
-                    f.write("{:.{p}f} {:.{p}f} {:.{p}f} {}\n".format(
-                        points3D[i,0], points3D[i,1], points3D[i,2], 
-                        referenceImage[i], p=precision)) # Grayscale
-    
+                
+                # If intensity values are integers
+                if np.issubdtype(referenceImage.dtype, np.integer):
+                    f.write("property int intensity\n")
+                    f.write("end_header\n")
+                
+                    for i in range(n):
+                        # Precision limited to p decimal places.
+                        f.write("{:.{p}f} {:.{p}f} {:.{p}f} {:d}\n".format(
+                            points3D[i,0], points3D[i,1], points3D[i,2], 
+                            referenceImage[i], p=precision)) # Grayscale
+                # consider them as float
+                else:
+                    f.write("property float intensity\n")
+                    f.write("end_header\n")
+                
+                    for i in range(n):
+                        # Precision limited to p decimal places.
+                        f.write("{:.{p}f} {:.{p}f} {:.{p}f} {:{p}f}\n".format(
+                            points3D[i,0], points3D[i,1], points3D[i,2], 
+                            referenceImage[i], p=precision)) # Grayscale
 
 def importPLY(filename, *properties):
     """
