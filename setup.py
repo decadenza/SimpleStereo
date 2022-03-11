@@ -32,5 +32,5 @@ if __name__ == '__main__':
                                  include_dirs=[get_numpy_include()]
                                  ),
                         ],
-          
+          include_dirs = ['./simplestereo/headers'],
           )
