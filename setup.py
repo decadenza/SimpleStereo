@@ -23,13 +23,14 @@ if __name__ == '__main__':
           ext_modules = [
                         Extension(
                                 'simplestereo._passive', 
-                                ['./simplestereo/_passive.cpp'],
-                                include_dirs=[get_numpy_include(), './simplestereo/headers']
+                                ['simplestereo/_passive.cpp'],
+                                include_dirs=[get_numpy_include()]
                                 ),
                         Extension(
                                  'simplestereo._unwrapping',
-                                 ['./simplestereo/_unwrapping.cpp'],
+                                 ['simplestereo/_unwrapping.cpp'],
                                  include_dirs=[get_numpy_include()]
                                  ),
                         ],
+          include_dirs = ['simplestereo/headers']
           )
