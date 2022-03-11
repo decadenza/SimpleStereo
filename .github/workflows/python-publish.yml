@@ -8,12 +8,9 @@
 
 name: Upload Python Package
 
-#on:
-#  release:
-#    types: [published]
 on:
-  watch:
-    types: [started]
+  release:
+    types: [published]
 
 jobs:
   deploy:
