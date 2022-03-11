@@ -24,7 +24,7 @@ if __name__ == '__main__':
                         Extension(
                                 'simplestereo._passive', 
                                 ['./simplestereo/_passive.cpp'],
-                                include_dirs=[get_numpy_include()]
+                                include_dirs=[get_numpy_include(), './simplestereo/headers']
                                 ),
                         Extension(
                                  'simplestereo._unwrapping',
