@@ -12,14 +12,17 @@ Documentation is available at https://decadenza.github.io/SimpleStereo/
 * matplotlib (for data visualisation purposes)
 
 ## Installation
-Download the lastest version and unzip. Then, from the folder containing `setup.py`, run:
+### Option 1
+
+*PyPi package coming soon...*
+
+### Option 2
+Download the latest version and unzip. Then, from the folder containing `setup.py`, run:
 ```
 pip3 install .
 ```
 
-*PyPi package coming soon...*
-
-## Features and future work
+## Features and Future Work
 
 ### General
 * `StereoRig`, `RectifiedStereoRig` and `StructuredLightRig` classes to easily manage your stereo rigs and their calibration
