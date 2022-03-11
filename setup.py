@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 from setuptools import setup, Extension
 
 class get_numpy_include(object):
@@ -11,13 +10,7 @@ class get_numpy_include(object):
 
 if __name__ == '__main__':
          
-    setup(name='SimpleStereo',
-          version = "1.0",
-          description = "Stereo vision made simple",
-          author = "Pasquale Lafiosca",
-          author_email = "decadenza@protonmail.com",
-          url = "http://github.com/decadenza/SimpleStereo",
-          packages = ['simplestereo'],
+    setup(packages = ['simplestereo'],
           setup_requires = [
                             'numpy>=1.19',
                             ],
@@ -40,4 +33,4 @@ if __name__ == '__main__':
                                  ),
                         ],
           
-         )
+          )
