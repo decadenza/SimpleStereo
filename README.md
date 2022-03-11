@@ -13,8 +13,10 @@ Documentation is available at https://decadenza.github.io/SimpleStereo/
 
 ## Installation
 ### Option 1
-
-*PyPi package coming soon...*
+Install package from PyPI:
+```
+pip3 install simplestereo
+```
 
 ### Option 2
 Download the latest version and unzip. Then, from the folder containing `setup.py`, run:
