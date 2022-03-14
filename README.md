@@ -1,5 +1,5 @@
 # SimpleStereo
-Stereo vision made simple.
+Stereo Vision made Simple.
 
 SimpleStereo aims at being a higher level framework for stereo vision applications. It is written in Python 3, with C++ extensions.
 Documentation is available at https://decadenza.github.io/SimpleStereo/
