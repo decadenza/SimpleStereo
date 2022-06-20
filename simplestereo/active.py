@@ -115,8 +115,12 @@ def buildFringe(period, shift=0, dims=(1280,720), vertical=False, stripeColor=No
     
     if vertical is True:
         dims = (dims[1], dims[0]) # Swap dimensions
-        
-    row = np.iinfo(dtype).max * ((1 + np.cos(2*np.pi*(1/period)*(np.arange(dims[0], dtype=float) + shift)))/2)[np.newaxis,:]
+    
+    row = ((1 + np.cos(2*np.pi*(1/period)*(np.arange(dims[0], dtype=float) + shift)))/2)[np.newaxis,:]
+    
+    # If output is integer, use its max value as amplitude
+    if np.dtype(dtype).char in np.typecodes['AllInteger']:
+        row *= np.iinfo(dtype).max
     
     if stripeColor is not None:
         row = np.repeat(row[:, :, np.newaxis], 3, axis=2)
