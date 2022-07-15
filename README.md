@@ -63,7 +63,7 @@ More advanced examples available in the [examples](https://github.com/decadenza/
 - [x] Fusiello et al., *A compact algorithm for rectification of stereo pairs*, 2000 (`ss.rectification.fusielloRectify`)
 - [x] Wrapper of OpenCV algorithm (`ss.rectification.stereoRectify`)
 - [x] Loop and Zhang, *Computing rectifying homographies for stereo vision*, 1999 (`ss.rectification.loopRectify`)
-- [x] Lafiosca and Ceccaroni, *Rectifying homographies for stereo vision: analytical solution for minimal distortion*, 2022 (`ss.rectification.directRectify`, see also [DirectStereoRectification](https://github.com/decadenza/DirectStereoRectification))
+- [x] Lafiosca and Ceccaroni, *Rectifying homographies for stereo vision: analytical solution for minimal distortion*, 2022, https://doi.org/10.1007/978-3-031-10464-0_33 (`ss.rectification.directRectify`, see also [DirectStereoRectification](https://github.com/decadenza/DirectStereoRectification))
 
 ### Passive stereo matching algorithms
 - [x] Adaptive Support Weight algorithm (K. Yoon et al., *Adaptive support-weight approach for correspondence search*, 2006)
