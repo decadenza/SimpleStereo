@@ -1,7 +1,7 @@
 # SimpleStereo
 Stereo Vision Made Simple.
 
-SimpleStereo aims at being a higher level framework for stereo vision applications. It is written in Python 3, with C++ extensions.
+SimpleStereo aims at being a high level framework for stereo vision applications. It is written in Python 3, with C++ extensions.
 Documentation is available at https://decadenza.github.io/SimpleStereo/
 
 ## Dependencies
@@ -79,4 +79,5 @@ More advanced examples available in the [examples](https://github.com/decadenza/
 - [x] Infinite impulse response (Estrada et al., [Noise robust linear dynamic system for phase unwrapping and smoothing](https://doi.org/10.1364/OE.19.005126), Optics Express, 2011) 
 
 ## Contributions
-Reporting issues and proposing integrations of other stereo vision algorithms is highly encouraged!
+Reporting issues and proposing integrations of other stereo vision algorithms is highly encouraged and it will be acknowledged.
+Please share your thoughts!
