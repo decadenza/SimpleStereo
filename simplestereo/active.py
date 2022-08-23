@@ -366,6 +366,7 @@ class StereoFTP:
         Default to "red".
     stripeSensitivity : float, optional
         Sensitivity to find the stripe. See :func:`findCentralStripe()`.
+    
         
     .. note::
         Working details in the paper Pasquale Lafiosca et al.,
