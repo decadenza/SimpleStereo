@@ -366,6 +366,12 @@ class StereoFTP:
         Default to "red".
     stripeSensitivity : float, optional
         Sensitivity to find the stripe. See :func:`findCentralStripe()`.
+        
+    .. note::
+        Working details in the paper Pasquale Lafiosca et al.,
+        "Automated Aircraft Dent Inspection via a Modified Fourier
+        Transform Profilometry Algorithm",
+        Sensors, 2022, https://doi.org/10.3390/s22020433
     """
     
     def __init__(self, stereoRig, fringe, period, shift=0,
