@@ -78,11 +78,9 @@ def getFittingMatrices(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2,
     
     # Translation X (keep always at left border)
     if flipX == 1:
-        tX1 = -minX1 * scaleX
-        tX2 = -minX2 * scaleX
+        tX = -min(minX1, minX2) * scaleX
     else:
-        tX1 = -maxX1 * scaleX
-        tX2 = -maxX2 * scaleX
+        tX = -min(maxX1, maxX2) * scaleX
     
     # Translation Y (keep always at top border)
     if flipY == 1:
@@ -91,13 +89,12 @@ def getFittingMatrices(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2,
         tY = -maxY * scaleY 
     
     # Compensate zoom
-    tX1 -= destDims[0]*(zoom-1)/2
-    tX2 -= destDims[0]*(zoom-1)/2
+    tX -= destDims[0]*(zoom-1)/2
     tY -= destDims[1]*(zoom-1)/2
     
     # Final transformations    
-    K1 = np.array( [[scaleX,0,tX1], [0,scaleY,tY], [0,0,1]] )
-    K2 = np.array( [[scaleX,0,tX2], [0,scaleY,tY], [0,0,1]] )
+    K1 = np.array( [[scaleX,0,tX], [0,scaleY,tY], [0,0,1]] )
+    K2 = np.array( [[scaleX,0,tX], [0,scaleY,tY], [0,0,1]] )
     
     return K1, K2
     
