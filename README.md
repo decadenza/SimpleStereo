@@ -13,7 +13,7 @@ Documentation is available at https://decadenza.github.io/SimpleStereo/
 
 ## Installation
 ### Option 1
-Install package from PyPI:
+Install package from [PyPI](https://pypi.org/project/SimpleStereo/) with:
 ```
 pip3 install simplestereo
 ```
