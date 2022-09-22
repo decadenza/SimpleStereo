@@ -456,12 +456,12 @@ class RectifiedStereoRig(StereoRig):
         
         # Find fitting matrices, as additional correction of the new camera matrices (if any).
         # Useful e.g. to change destination image resolution or zoom.
-        Fit1, Fit2 = rectification.getFittingMatrices(self.intrinsic1, self.intrinsic2, self.rectHomography1, self.rectHomography2, self.res1, self.res2, self.distCoeffs1, self.distCoeffs2, destDims, zoom)
+        Fit = rectification.getFittingMatrix(self.intrinsic1, self.intrinsic2, self.rectHomography1, self.rectHomography2, self.res1, self.res2, self.distCoeffs1, self.distCoeffs2, destDims, zoom)
         
         # Isolate affine transformation applied after rectification
         # These would be the FINAL new camera intrinsics (needed for 3D reconstrunction)
-        self.K1 = Fit1.dot(self.rectHomography1).dot( self.intrinsic1 ).dot(self.Rcommon.T)
-        self.K2 = Fit2.dot(self.rectHomography2).dot( self.intrinsic2.dot(self.R) ).dot(self.Rcommon.T)
+        self.K1 = Fit.dot(self.rectHomography1).dot(self.intrinsic1).dot(self.Rcommon.T)
+        self.K2 = Fit.dot(self.rectHomography2).dot(self.intrinsic2.dot(self.R)).dot(self.Rcommon.T)
         
         # OpenCV requires the final rotations applied
         R1 = self.Rcommon

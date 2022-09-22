@@ -14,7 +14,7 @@ from scipy.linalg import null_space, cholesky
 import simplestereo as ss
 
 
-def getFittingMatrices(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2, distCoeffs1=None, distCoeffs2=None, destDims=None, zoom=1):
+def getFittingMatrix(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2, distCoeffs1=None, distCoeffs2=None, destDims=None, zoom=1):
     """
     Compute affine tranformation to fit the rectified images into desidered dimensions.
     
@@ -67,7 +67,7 @@ def getFittingMatrices(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2,
     if tL1[1]>bL1[1]:
         flipY = -1
     
-    # Scale X (choose (unique) scale X to best fit bigger image between left and right)
+    # Scale X (choose common scale X to best fit bigger image between left and right)
     if(maxX2 - minX2 > maxX1 - minX1):
         scaleX = flipX * zoom * destDims[0]/(maxX2 - minX2)
     else:
@@ -92,11 +92,10 @@ def getFittingMatrices(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2,
     tX -= destDims[0]*(zoom-1)/2
     tY -= destDims[1]*(zoom-1)/2
     
-    # Final transformations    
-    K1 = np.array( [[scaleX,0,tX], [0,scaleY,tY], [0,0,1]] )
-    K2 = np.array( [[scaleX,0,tX], [0,scaleY,tY], [0,0,1]] )
+    # Final affine transformation    
+    fitting = np.array( [[scaleX,0,tX], [0,scaleY,tY], [0,0,1]] )
     
-    return K1, K2
+    return fitting
     
 
 def _getCorners(H, intrinsicMatrix, dims, distCoeffs=None):

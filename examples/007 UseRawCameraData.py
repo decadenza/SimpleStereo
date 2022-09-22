@@ -20,7 +20,7 @@ saveFile = os.path.join(curPath,"res","0","rigRect.json")      # StereoRig file
 img1 = cv2.imread(os.path.join(imgPath,'left.png'))
 img2 = cv2.imread(os.path.join(imgPath,'right.png'))
 
-# Raw camera parameters (an NumPy arrays)
+# Raw camera parameters (as NumPy arrays)
 
 # Left intrinsics
 A1 = np.array([[ 960,   0, 960/2], 
