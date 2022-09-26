@@ -317,8 +317,8 @@ class RectifiedStereoRig(StereoRig):
         self.rectHomography1 = rectHomography1  # Rectification homographies
         self.rectHomography2 = rectHomography2
         
-        # Final intrinsic matrices that keep track of all affine transformations applied, are
-        # calculated in self.computeRectificationMaps() considering destination dimensions and zoom.
+        # Matrices that keep track of all affine transformations applied to left and right cameras.
+        # These calculated in self.computeRectificationMaps() considering destination dimensions and zoom.
         # N.B. These will be needed for depth reconstruction!
         self.K1 = None
         self.K2 = None
@@ -407,7 +407,7 @@ class RectifiedStereoRig(StereoRig):
         
         New projection matrices, after rectification, share the same orientation `Rcommon`,
         have only one horizontal displacement (the baseline) and
-        have new intrinsics (`K1` and `K2`) that depends on all the rigid manipulation done after rectification.
+        have new intrinsics that depends on all the rigid manipulation done after rectification.
         
         Returns
         -------
@@ -458,8 +458,8 @@ class RectifiedStereoRig(StereoRig):
         # Useful e.g. to change destination image resolution or zoom.
         Fit = rectification.getFittingMatrix(self.intrinsic1, self.intrinsic2, self.rectHomography1, self.rectHomography2, self.res1, self.res2, self.distCoeffs1, self.distCoeffs2, destDims, zoom)
         
-        # Isolate affine transformation applied after rectification
-        # These would be the FINAL new camera intrinsics (needed for 3D reconstrunction)
+        # Group all the transformations applied to rectify
+        # These would be needed for 3D reconstrunction
         self.K1 = Fit.dot(self.rectHomography1).dot(self.intrinsic1).dot(self.Rcommon.T)
         self.K2 = Fit.dot(self.rectHomography2).dot(self.intrinsic2.dot(self.R)).dot(self.Rcommon.T)
         
@@ -468,7 +468,6 @@ class RectifiedStereoRig(StereoRig):
         R2 = self.Rcommon.dot(self.R.T)
         
         # Recompute final maps considering fitting transformations too
-        #P1, P2 = self.getRectifiedProjectionMatrices()
         self.mapx1, self.mapy1 = cv2.initUndistortRectifyMap(self.intrinsic1, self.distCoeffs1, R1, self.K1, destDims, cv2.CV_32FC1)
         self.mapx2, self.mapy2 = cv2.initUndistortRectifyMap(self.intrinsic2, self.distCoeffs2, R2, self.K2, destDims, cv2.CV_32FC1)
         
