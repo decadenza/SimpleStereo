@@ -8,7 +8,6 @@ Documentation DOCSTRING follows numpy-style wherever possible.
 See https://numpydoc.readthedocs.io/en/latest/format.html
 
 .. todo::
-    - Add new rig class for structured light (projector + camera).
     - Add new rig class for uncalibrated stereo.
 """
 import json
