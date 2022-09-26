@@ -458,7 +458,7 @@ class RectifiedStereoRig(StereoRig):
         # Useful e.g. to change destination image resolution or zoom.
         Fit = rectification.getFittingMatrix(self.intrinsic1, self.intrinsic2, self.rectHomography1, self.rectHomography2, self.res1, self.res2, self.distCoeffs1, self.distCoeffs2, destDims, zoom)
         
-        # Group all the transformations applied to rectify
+        # Group all the transformations applied after rectification
         # These would be needed for 3D reconstrunction
         self.K1 = Fit.dot(self.rectHomography1).dot(self.intrinsic1).dot(self.Rcommon.T)
         self.K2 = Fit.dot(self.rectHomography2).dot(self.intrinsic2.dot(self.R)).dot(self.Rcommon.T)
