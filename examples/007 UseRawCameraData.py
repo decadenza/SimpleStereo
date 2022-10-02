@@ -62,8 +62,10 @@ rigRect.save(saveFile)
 # Rectify the images
 img1_rect, img2_rect = rigRect.rectifyImages(img1, img2)
 
+# Show images together
+visImg = np.hstack((img1_rect, img2_rect))
+
 # Show images
-cv2.imshow('LEFT rectified', img1_rect)
-cv2.imshow('RIGHT rectified', img2_rect)
+cv2.imshow('Rectified images', visImg)
 cv2.waitKey(0)
 cv2.destroyAllWindows()

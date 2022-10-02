@@ -1,6 +1,7 @@
 import sys
 import os
 
+import numpy as np
 import cv2
 
 import simplestereo as ss
@@ -25,15 +26,14 @@ img2 = cv2.imread(os.path.join(imgPath,'right.png'))
 # Simply rectify two images (it takes care of distortion too)
 img1_rect, img2_rect = rigRect.rectifyImages(img1, img2)
 
-# Draw some horizontal lines as reference (after rectification all horizontal lines are epipolar lines)
-for y in [289,332, 362]:
-    cv2.line(img1_rect, (0,y), (1280,y), color=(0,0,255), thickness=3)
-    cv2.line(img2_rect, (0,y), (1280,y), color=(0,0,255), thickness=3)
+# Show images together
+visImg = np.hstack((img1_rect, img2_rect))
 
-# Show images
-cv2.imshow('img1 Rectified', img1_rect)
-cv2.imshow('img2 Rectified', img2_rect)
+# Draw some horizontal lines as reference
+# (after rectification all horizontal lines are epipolar lines)
+for y in [289, 332, 362]:
+    cv2.line(visImg, (0,y), (visImg.shape[1],y), color=(0,0,255), thickness=2)
+
+cv2.imshow('Rectified images', visImg)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-
-print("Done!")
