@@ -34,7 +34,7 @@ import simplestereo as ss
 images = ["0.png","1.png","2.png",...]
 
 # Calibrate and build StereoRig object
-rig = ss.calibration.chessboardStereo(images, chessboardSize=(7,6), squareSize=60.5)
+rig = ss.calibration.chessboardSingle(images, chessboardSize=(7,6), squareSize=60.5)
 
 # Save rig object to file
 rig.save("myRig.json")
