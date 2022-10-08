@@ -31,9 +31,6 @@ SimpleStereo helps you with common tasks. You can calibrate two cameras and init
 import simplestereo as ss
 
 # Path to your images
-import simplestereo as ss
-
-# Path to your images
 images = [
     ("0_left.png", "0_right"),
     ("1_left.png", "1_right"),
