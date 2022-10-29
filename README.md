@@ -25,16 +25,21 @@ pip3 install .
 ```
 
 ## Basic example
-SimpleStereo helps you with common tasks. You can calibrate a single camera as:
+SimpleStereo helps you with common tasks. You can calibrate two cameras and initialise a `stereoRig` with:
 
 ```python
 import simplestereo as ss
 
 # Path to your images
-images = ["0.png","1.png","2.png",...]
+images = [
+    ("0_left.png", "0_right"),
+    ("1_left.png", "1_right"),
+    ("2_left.png", "2_right"),
+    ...
+    ]
 
 # Calibrate and build StereoRig object
-rig = ss.calibration.chessboardStereo(images, chessboardSize=(7,6), squareSize=60.5)
+rig = ss.calibration.chessboardStereo( images, chessboardSize=(7,6), squareSize=60.5 )
 
 # Save rig object to file
 rig.save("myRig.json")

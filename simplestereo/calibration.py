@@ -34,7 +34,8 @@ def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSiz
         Chessboard *internal* dimensions as (width, height). Dimensions should be different to avoid ambiguity.
         Default to (7,6).
     squareSize : float
-        If the square size is known, calibration can be in metric units. Default to 1.
+        Length of the square side in the chosen world units. For example, if the square size is set in mm, 
+        measures in the 3D reconstruction will be in mm. Default to 1.
     showImages : bool
         If True, each processed image is showed to check for correct chessboard detection.
         Default to False.
@@ -95,7 +96,8 @@ def chessboardStereo(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSiz
         Chessboard *internal* dimensions as (width, height). Dimensions should be different to avoid ambiguity.
         Default to (7,6).
     squareSize : float
-        If the square size is known, calibration can be in metric units. Default to 1.
+        Length of the square side in the chosen world units. For example, if the square size is set in mm, 
+        measures in the 3D reconstruction will be in mm. Default to 1.
         
     Returns
     ----------
