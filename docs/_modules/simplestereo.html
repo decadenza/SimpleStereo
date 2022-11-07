@@ -48,7 +48,6 @@
 <span class="sd">See https://numpydoc.readthedocs.io/en/latest/format.html</span>
 
 <span class="sd">.. todo::</span>
-<span class="sd">    - Add new rig class for structured light (projector + camera).</span>
 <span class="sd">    - Add new rig class for uncalibrated stereo.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">json</span>
@@ -357,8 +356,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography1</span> <span class="o">=</span> <span class="n">rectHomography1</span>  <span class="c1"># Rectification homographies</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography2</span> <span class="o">=</span> <span class="n">rectHomography2</span>
         
-        <span class="c1"># Final intrinsic matrices that keep track of all affine transformations applied, are</span>
-        <span class="c1"># calculated in self.computeRectificationMaps() considering destination dimensions and zoom.</span>
+        <span class="c1"># Matrices that keep track of all affine transformations applied to left and right cameras.</span>
+        <span class="c1"># These calculated in self.computeRectificationMaps() considering destination dimensions and zoom.</span>
         <span class="c1"># N.B. These will be needed for depth reconstruction!</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">K1</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">K2</span> <span class="o">=</span> <span class="kc">None</span>
@@ -447,7 +446,7 @@
 <span class="sd">        </span>
 <span class="sd">        New projection matrices, after rectification, share the same orientation `Rcommon`,</span>
 <span class="sd">        have only one horizontal displacement (the baseline) and</span>
-<span class="sd">        have new intrinsics (`K1` and `K2`) that depends on all the rigid manipulation done after rectification.</span>
+<span class="sd">        have new intrinsics that depends on all the rigid manipulation done after rectification.</span>
 <span class="sd">        </span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -462,7 +461,7 @@
         <span class="k">return</span> <span class="n">P1</span><span class="p">,</span> <span class="n">P2</span>  </div>
     
     
-<div class="viewcode-block" id="RectifiedStereoRig.computeRectificationMaps"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.computeRectificationMaps">[docs]</a>    <span class="k">def</span> <span class="nf">computeRectificationMaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">zoom</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="RectifiedStereoRig.computeRectificationMaps"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.computeRectificationMaps">[docs]</a>    <span class="k">def</span> <span class="nf">computeRectificationMaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the two maps to undistort and rectify the stereo pair.</span>
 <span class="sd">        </span>
@@ -475,8 +474,11 @@
 <span class="sd">        ----------</span>
 <span class="sd">        destDims: tuple, optional</span>
 <span class="sd">            Resolution of destination images as (width, height) tuple (default to first image resolution).</span>
-<span class="sd">        zoom: float, optional</span>
-<span class="sd">            Zoom on the final images. Default to 1.</span>
+<span class="sd">        alpha : float, optional</span>
+<span class="sd">            Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the corners of the original</span>
+<span class="sd">            images are preserved. If alpha=0, only valid rectangle is made visible.</span>
+<span class="sd">            Intermediate values produce a result in the middle. Extremely skewed camera positions</span>
+<span class="sd">            do not work well with alpha&lt;1.</span>
 <span class="sd">        </span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -496,10 +498,10 @@
         
         <span class="c1"># Find fitting matrices, as additional correction of the new camera matrices (if any).</span>
         <span class="c1"># Useful e.g. to change destination image resolution or zoom.</span>
-        <span class="n">Fit</span> <span class="o">=</span> <span class="n">rectification</span><span class="o">.</span><span class="n">getFittingMatrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">res1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">res2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">zoom</span><span class="p">)</span>
+        <span class="n">Fit</span> <span class="o">=</span> <span class="n">rectification</span><span class="o">.</span><span class="n">getFittingMatrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rectHomography2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">res1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">res2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
         
-        <span class="c1"># Isolate affine transformation applied after rectification</span>
-        <span class="c1"># These would be the FINAL new camera intrinsics (needed for 3D reconstrunction)</span>
+        <span class="c1"># Group all the transformations applied after rectification</span>
+        <span class="c1"># These would be needed for 3D reconstrunction</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">K1</span> <span class="o">=</span> <span class="n">Fit</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rectHomography1</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">K2</span> <span class="o">=</span> <span class="n">Fit</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rectHomography2</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">))</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
         
@@ -508,7 +510,6 @@
         <span class="n">R2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
         
         <span class="c1"># Recompute final maps considering fitting transformations too</span>
-        <span class="c1">#P1, P2 = self.getRectifiedProjectionMatrices()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mapx1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapy1</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">initUndistortRectifyMap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">R1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K1</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CV_32FC1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mapx2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapy2</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">initUndistortRectifyMap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K2</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CV_32FC1</span><span class="p">)</span></div>
         

@@ -55,7 +55,8 @@
 <span class="kn">import</span> <span class="nn">simplestereo</span> <span class="k">as</span> <span class="nn">ss</span>
 
 
-<div class="viewcode-block" id="getFittingMatrix"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.getFittingMatrix">[docs]</a><span class="k">def</span> <span class="nf">getFittingMatrix</span><span class="p">(</span><span class="n">intrinsicMatrix1</span><span class="p">,</span> <span class="n">intrinsicMatrix2</span><span class="p">,</span> <span class="n">H1</span><span class="p">,</span> <span class="n">H2</span><span class="p">,</span> <span class="n">dims1</span><span class="p">,</span> <span class="n">dims2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">zoom</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="getFittingMatrix"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.getFittingMatrix">[docs]</a><span class="k">def</span> <span class="nf">getFittingMatrix</span><span class="p">(</span><span class="n">intrinsicMatrix1</span><span class="p">,</span> <span class="n">intrinsicMatrix2</span><span class="p">,</span> <span class="n">H1</span><span class="p">,</span> <span class="n">H2</span><span class="p">,</span> <span class="n">dims1</span><span class="p">,</span> <span class="n">dims2</span><span class="p">,</span>
+                        <span class="n">distCoeffs1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute affine tranformation to fit the rectified images into desidered dimensions.</span>
 <span class="sd">    </span>
@@ -76,15 +77,18 @@
 <span class="sd">        Distortion coefficients in the order followed by OpenCV. If None is passed, zero distortion is assumed.</span>
 <span class="sd">    destDims : tuple, optional</span>
 <span class="sd">        Resolution of destination images as (width, height) tuple (default to the first image resolution).</span>
-<span class="sd">    zoom : float, optional</span>
-<span class="sd">        Zoom parameter to be applied to both images (default to 1). Used to remove unwanted portions of the images.</span>
+<span class="sd">    alpha : float, optional</span>
+<span class="sd">        Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the corners of the original</span>
+<span class="sd">        images are preserved. If alpha=0, only valid rectangle is made visible.</span>
+<span class="sd">        Intermediate values produce a result in the middle. Extremely skewed camera positions</span>
+<span class="sd">        do not work well with alpha&lt;1.</span>
 <span class="sd">        </span>
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    K1, K2 : numpy.ndarray</span>
-<span class="sd">        3x3 affine transformations to be used for the first and the second camera, respectively.</span>
-<span class="sd">        They will differ by a x-shift value only.</span>
+<span class="sd">    numpy.ndarray</span>
+<span class="sd">        3x3 affine transformation to be used both for the first and for the second camera.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    
     <span class="k">if</span> <span class="n">destDims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">destDims</span> <span class="o">=</span> <span class="n">dims1</span>
 
@@ -110,12 +114,12 @@
     
     <span class="c1"># Scale X (choose common scale X to best fit bigger image between left and right)</span>
     <span class="k">if</span><span class="p">(</span><span class="n">maxX2</span> <span class="o">-</span> <span class="n">minX2</span> <span class="o">&gt;</span> <span class="n">maxX1</span> <span class="o">-</span> <span class="n">minX1</span><span class="p">):</span>
-        <span class="n">scaleX</span> <span class="o">=</span> <span class="n">flipX</span> <span class="o">*</span> <span class="n">zoom</span> <span class="o">*</span> <span class="n">destDims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">maxX2</span> <span class="o">-</span> <span class="n">minX2</span><span class="p">)</span>
+        <span class="n">scaleX</span> <span class="o">=</span> <span class="n">flipX</span> <span class="o">*</span> <span class="n">destDims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">maxX2</span> <span class="o">-</span> <span class="n">minX2</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">scaleX</span> <span class="o">=</span> <span class="n">flipX</span> <span class="o">*</span> <span class="n">zoom</span> <span class="o">*</span> <span class="n">destDims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">maxX1</span> <span class="o">-</span> <span class="n">minX1</span><span class="p">)</span>
+        <span class="n">scaleX</span> <span class="o">=</span> <span class="n">flipX</span> <span class="o">*</span> <span class="n">destDims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">maxX1</span> <span class="o">-</span> <span class="n">minX1</span><span class="p">)</span>
     
     <span class="c1"># Scale Y (unique not to lose rectification) </span>
-    <span class="n">scaleY</span> <span class="o">=</span> <span class="n">flipY</span> <span class="o">*</span> <span class="n">zoom</span> <span class="o">*</span> <span class="n">destDims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">maxY</span> <span class="o">-</span> <span class="n">minY</span><span class="p">)</span>
+    <span class="n">scaleY</span> <span class="o">=</span> <span class="n">flipY</span> <span class="o">*</span> <span class="n">destDims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">maxY</span> <span class="o">-</span> <span class="n">minY</span><span class="p">)</span>
     
     <span class="c1"># Translation X (keep always at left border)</span>
     <span class="k">if</span> <span class="n">flipX</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -129,14 +133,34 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">tY</span> <span class="o">=</span> <span class="o">-</span><span class="n">maxY</span> <span class="o">*</span> <span class="n">scaleY</span> 
     
-    <span class="c1"># Compensate zoom</span>
-    <span class="n">tX</span> <span class="o">-=</span> <span class="n">destDims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">zoom</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
-    <span class="n">tY</span> <span class="o">-=</span> <span class="n">destDims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">zoom</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
-    
     <span class="c1"># Final affine transformation    </span>
-    <span class="n">fitting</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span> <span class="p">[[</span><span class="n">scaleX</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">tX</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">scaleY</span><span class="p">,</span><span class="n">tY</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]]</span> <span class="p">)</span>
+    <span class="n">Fit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span> <span class="p">[[</span><span class="n">scaleX</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">tX</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">scaleY</span><span class="p">,</span><span class="n">tY</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]]</span> <span class="p">)</span>
     
-    <span class="k">return</span> <span class="n">fitting</span></div>
+    <span class="k">if</span> <span class="n">alpha</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># Preserve all image corners</span>
+        <span class="k">return</span> <span class="n">Fit</span>
+    
+    <span class="k">if</span> <span class="n">alpha</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="c1"># Find inner rectangle for both images </span>
+    <span class="n">tL1</span><span class="p">,</span> <span class="n">tR1</span><span class="p">,</span> <span class="n">bR1</span><span class="p">,</span> <span class="n">bL1</span> <span class="o">=</span> <span class="n">_getCorners</span><span class="p">(</span><span class="n">Fit</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H1</span><span class="p">),</span> <span class="n">intrinsicMatrix1</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">)</span>
+    <span class="n">tL2</span><span class="p">,</span> <span class="n">tR2</span><span class="p">,</span> <span class="n">bR2</span><span class="p">,</span> <span class="n">bL2</span> <span class="o">=</span> <span class="n">_getCorners</span><span class="p">(</span><span class="n">Fit</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">H2</span><span class="p">),</span> <span class="n">intrinsicMatrix2</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">)</span>
+
+    <span class="n">left</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tL1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bL1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tL2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bL2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">tR1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bR1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tR2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bR2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">tL1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">tR1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">tL2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">tR2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">bottom</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">bL1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bR1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bL2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bR2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">destDims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">right</span><span class="o">-</span><span class="n">left</span><span class="p">),</span> <span class="n">destDims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">bottom</span><span class="o">-</span><span class="n">top</span><span class="p">))</span> <span class="c1"># Extra scaling parameter</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="n">s</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">alpha</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="c1"># As linear function of alpha</span>
+    
+    <span class="n">K</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">K</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">K</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
+    <span class="n">K</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">s</span> <span class="o">*</span> <span class="n">left</span>
+    <span class="n">K</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">s</span> <span class="o">*</span> <span class="n">top</span>
+    
+    <span class="k">return</span> <span class="n">K</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Fit</span><span class="p">)</span></div>
     
 
 <span class="k">def</span> <span class="nf">_getCorners</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">intrinsicMatrix</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">distCoeffs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -349,7 +373,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">D1</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">A1</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># Upper triangle so that A1 = D1.T.dot(D1)</span>
             <span class="n">D2</span> <span class="o">=</span> <span class="n">cholesky</span><span class="p">(</span><span class="n">A2</span><span class="p">,</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">except</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="c1"># If factorization fails because of negative eigenvalues</span>
             <span class="c1"># you may try to manage with it...</span>
             <span class="c1"># Eg. try to add a small value to diagonal elements</span>

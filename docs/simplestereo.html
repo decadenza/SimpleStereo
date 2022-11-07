@@ -53,7 +53,6 @@ See <a class="reference external" href="https://numpydoc.readthedocs.io/en/lates
 <div class="admonition-todo admonition" id="id1">
 <p class="admonition-title">Todo</p>
 <ul class="simple">
-<li><p>Add new rig class for structured light (projector + camera).</p></li>
 <li><p>Add new rig class for uncalibrated stereo.</p></li>
 </ul>
 </div>
@@ -79,7 +78,7 @@ after rectification.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="simplestereo.RectifiedStereoRig.computeRectificationMaps">
-<span class="sig-name descname"><span class="pre">computeRectificationMaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">destDims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo.html#RectifiedStereoRig.computeRectificationMaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.RectifiedStereoRig.computeRectificationMaps" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">computeRectificationMaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">destDims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo.html#RectifiedStereoRig.computeRectificationMaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.RectifiedStereoRig.computeRectificationMaps" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the two maps to undistort and rectify the stereo pair.</p>
 <p>This method wraps <code class="docutils literal notranslate"><span class="pre">cv2.initUndistortRectifyMap()</span></code> plus a custom fitting algorithm to keep image within dimensions.
 It modifies the original camera matrix applying affine transformations (x-y scale and translation, shear (x axis only))
@@ -89,7 +88,10 @@ This method is called in the constructor with default parameters and can be call
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>destDims</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Resolution of destination images as (width, height) tuple (default to first image resolution).</p></li>
-<li><p><strong>zoom</strong> (<em>float</em><em>, </em><em>optional</em>) – Zoom on the final images. Default to 1.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the corners of the original
+images are preserved. If alpha=0, only valid rectangle is made visible.
+Intermediate values produce a result in the middle. Extremely skewed camera positions
+do not work well with alpha&lt;1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -149,7 +151,7 @@ a <em>(x,y,z)</em> point is associated.</p>
 <dd><p>Calculate the projection matrices of camera 1 and camera 2 after rectification.</p>
 <p>New projection matrices, after rectification, share the same orientation <cite>Rcommon</cite>,
 have only one horizontal displacement (the baseline) and
-have new intrinsics (<cite>K1</cite> and <cite>K2</cite>) that depends on all the rigid manipulation done after rectification.</p>
+have new intrinsics that depends on all the rigid manipulation done after rectification.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p><ul class="simple">
@@ -163,7 +165,7 @@ have new intrinsics (<cite>K1</cite> and <cite>K2</cite>) that depends on all th
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simplestereo.RectifiedStereoRig.rectifyImages">
-<span class="sig-name descname"><span class="pre">rectifyImages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation=&lt;MagicMock</span> <span class="pre">id='140361061743152'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo.html#RectifiedStereoRig.rectifyImages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.RectifiedStereoRig.rectifyImages" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">rectifyImages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation=&lt;MagicMock</span> <span class="pre">id='140420611418192'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo.html#RectifiedStereoRig.rectifyImages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.RectifiedStereoRig.rectifyImages" title="Permalink to this definition">¶</a></dt>
 <dd><p>Undistort, rectify and apply affine transformation to a couple of images coming from the stereo rig.</p>
 <p><em>img1</em> and <em>img2</em> must be provided as in calibration (es. img1 is the left image, img2 the right one).
 This method is wraps <code class="docutils literal notranslate"><span class="pre">cv2.remap()</span></code> for two images of the stereo pair. The maps used are computed by
@@ -852,7 +854,7 @@ where x,y is the upper left corner. Default to None.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.active.buildAnaglyphFringe">
-<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildAnaglyphFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140361061093536'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildAnaglyphFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildAnaglyphFringe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildAnaglyphFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140420611220576'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildAnaglyphFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildAnaglyphFringe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build sinusoidal anaglyph fringe image.</p>
 <p>Assumes BGR images, using blue and red as complementary colors and
 green as central stripe. This allows to actually extract three
@@ -881,7 +883,7 @@ Default np.uint8 (max 255).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.active.buildBinaryFringe">
-<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildBinaryFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140361061127168'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildBinaryFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildBinaryFringe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildBinaryFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140420611206640'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildBinaryFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildBinaryFringe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build binary fringe image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -910,7 +912,7 @@ Default np.uint8 (max 255).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.active.buildFringe">
-<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140361061158720'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildFringe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140420611173728'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildFringe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build sinusoidal fringe image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1124,7 +1126,8 @@ RMS error of camera and projector is returned.</p></li>
 <li><p><strong>images</strong> (<em>list</em><em> or </em><em>tuple</em>) – A list (or tuple) of image paths, e.g. [“one.png”, “two.png”, …]</p></li>
 <li><p><strong>chessboardSize</strong> (<em>tuple</em>) – Chessboard <em>internal</em> dimensions as (width, height). Dimensions should be different to avoid ambiguity.
 Default to (7,6).</p></li>
-<li><p><strong>squareSize</strong> (<em>float</em>) – If the square size is known, calibration can be in metric units. Default to 1.</p></li>
+<li><p><strong>squareSize</strong> (<em>float</em>) – Length of the square side in the chosen world units. For example, if the square size is set in mm,
+measures in the 3D reconstruction will be in mm. Default to 1.</p></li>
 <li><p><strong>showImages</strong> (<em>bool</em>) – If True, each processed image is showed to check for correct chessboard detection.
 Default to False.</p></li>
 </ul>
@@ -1155,7 +1158,8 @@ right) of image paths, e.g. [(“oneL.png”,”oneR.png”),
 (“twoL.png”,”twoR.png”), …]</p></li>
 <li><p><strong>chessboardSize</strong> (<em>tuple</em>) – Chessboard <em>internal</em> dimensions as (width, height). Dimensions should be different to avoid ambiguity.
 Default to (7,6).</p></li>
-<li><p><strong>squareSize</strong> (<em>float</em>) – If the square size is known, calibration can be in metric units. Default to 1.</p></li>
+<li><p><strong>squareSize</strong> (<em>float</em>) – Length of the square side in the chosen world units. For example, if the square size is set in mm,
+measures in the 3D reconstruction will be in mm. Default to 1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1575,7 +1579,7 @@ for 3D reconstruction.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.rectification.getFittingMatrix">
-<span class="sig-prename descclassname"><span class="pre">simplestereo.rectification.</span></span><span class="sig-name descname"><span class="pre">getFittingMatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">intrinsicMatrix1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intrinsicMatrix2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distCoeffs1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distCoeffs2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destDims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zoom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/rectification.html#getFittingMatrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.rectification.getFittingMatrix" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">simplestereo.rectification.</span></span><span class="sig-name descname"><span class="pre">getFittingMatrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">intrinsicMatrix1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intrinsicMatrix2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">H2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distCoeffs1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distCoeffs2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destDims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/rectification.html#getFittingMatrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.rectification.getFittingMatrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute affine tranformation to fit the rectified images into desidered dimensions.</p>
 <p>After rectification usually the image is no more into the original image bounds.
 One can apply any transformation that do not affect disparity to fit the image into boundaries.
@@ -1593,12 +1597,14 @@ The algorithm may fail if one epipole is too close to the image.</p>
 <li><p><strong>distCoeffs1</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – Distortion coefficients in the order followed by OpenCV. If None is passed, zero distortion is assumed.</p></li>
 <li><p><strong>distCoeffs2</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – Distortion coefficients in the order followed by OpenCV. If None is passed, zero distortion is assumed.</p></li>
 <li><p><strong>destDims</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Resolution of destination images as (width, height) tuple (default to the first image resolution).</p></li>
-<li><p><strong>zoom</strong> (<em>float</em><em>, </em><em>optional</em>) – Zoom parameter to be applied to both images (default to 1). Used to remove unwanted portions of the images.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the corners of the original
+images are preserved. If alpha=0, only valid rectangle is made visible.
+Intermediate values produce a result in the middle. Extremely skewed camera positions
+do not work well with alpha&lt;1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>K1, K2</strong> – 3x3 affine transformations to be used for the first and the second camera, respectively.
-They will differ by a x-shift value only.</p>
+<dd class="field-even"><p>3x3 affine transformation to be used both for the first and for the second camera.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
