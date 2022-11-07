@@ -422,7 +422,7 @@ class RectifiedStereoRig(StereoRig):
         return P1, P2  
     
     
-    def computeRectificationMaps(self, destDims=None, zoom=1):
+    def computeRectificationMaps(self, destDims=None, alpha=1):
         """
         Compute the two maps to undistort and rectify the stereo pair.
         
@@ -435,8 +435,11 @@ class RectifiedStereoRig(StereoRig):
         ----------
         destDims: tuple, optional
             Resolution of destination images as (width, height) tuple (default to first image resolution).
-        zoom: float, optional
-            Zoom on the final images. Default to 1.
+        alpha : float, optional
+            Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the corners of the original
+            images are preserved. If alpha=0, only valid rectangle is made visible.
+            Intermediate values produce a result in the middle. Extremely skewed camera positions
+            do not work well with alpha<1.
         
         Returns
         -------
@@ -456,7 +459,7 @@ class RectifiedStereoRig(StereoRig):
         
         # Find fitting matrices, as additional correction of the new camera matrices (if any).
         # Useful e.g. to change destination image resolution or zoom.
-        Fit = rectification.getFittingMatrix(self.intrinsic1, self.intrinsic2, self.rectHomography1, self.rectHomography2, self.res1, self.res2, self.distCoeffs1, self.distCoeffs2, destDims, zoom)
+        Fit = rectification.getFittingMatrix(self.intrinsic1, self.intrinsic2, self.rectHomography1, self.rectHomography2, self.res1, self.res2, self.distCoeffs1, self.distCoeffs2, destDims, alpha)
         
         # Isolate affine transformation applied after rectification
         # These would be the FINAL new camera intrinsics (needed for 3D reconstrunction)
