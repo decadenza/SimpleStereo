@@ -14,7 +14,8 @@ from scipy.linalg import null_space, cholesky
 import simplestereo as ss
 
 
-def getFittingMatrix(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2, distCoeffs1=None, distCoeffs2=None, destDims=None, zoom=1):
+def getFittingMatrix(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2,
+                        distCoeffs1=None, distCoeffs2=None, destDims=None, alpha=1):
     """
     Compute affine tranformation to fit the rectified images into desidered dimensions.
     
@@ -35,15 +36,18 @@ def getFittingMatrix(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2, d
         Distortion coefficients in the order followed by OpenCV. If None is passed, zero distortion is assumed.
     destDims : tuple, optional
         Resolution of destination images as (width, height) tuple (default to the first image resolution).
-    zoom : float, optional
-        Zoom parameter to be applied to both images (default to 1). Used to remove unwanted portions of the images.
+    alpha : float, optional
+        Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the corners of the original
+        images are preserved. If alpha=0, only valid rectangle is made visible.
+        Intermediate values produce a result in the middle. Extremely skewed camera positions
+        do not work well with alpha<1.
         
     Returns
     -------
-    K1, K2 : numpy.ndarray
-        3x3 affine transformations to be used for the first and the second camera, respectively.
-        They will differ by a x-shift value only.
+    numpy.ndarray
+        3x3 affine transformation to be used both for the first and for the second camera.
     """
+    
     if destDims is None:
         destDims = dims1
 
@@ -69,12 +73,12 @@ def getFittingMatrix(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2, d
     
     # Scale X (choose common scale X to best fit bigger image between left and right)
     if(maxX2 - minX2 > maxX1 - minX1):
-        scaleX = flipX * zoom * destDims[0]/(maxX2 - minX2)
+        scaleX = flipX * destDims[0]/(maxX2 - minX2)
     else:
-        scaleX = flipX * zoom * destDims[0]/(maxX1 - minX1)
+        scaleX = flipX * destDims[0]/(maxX1 - minX1)
     
     # Scale Y (unique not to lose rectification) 
-    scaleY = flipY * zoom * destDims[1]/(maxY - minY)
+    scaleY = flipY * destDims[1]/(maxY - minY)
     
     # Translation X (keep always at left border)
     if flipX == 1:
@@ -88,14 +92,34 @@ def getFittingMatrix(intrinsicMatrix1, intrinsicMatrix2, H1, H2, dims1, dims2, d
     else:
         tY = -maxY * scaleY 
     
-    # Compensate zoom
-    tX -= destDims[0]*(zoom-1)/2
-    tY -= destDims[1]*(zoom-1)/2
-    
     # Final affine transformation    
-    fitting = np.array( [[scaleX,0,tX], [0,scaleY,tY], [0,0,1]] )
+    Fit = np.array( [[scaleX,0,tX], [0,scaleY,tY], [0,0,1]] )
     
-    return fitting
+    if alpha >= 1:
+        # Preserve all image corners
+        return Fit
+    
+    if alpha < 0:
+        alpha = 0
+    
+    # Find inner rectangle for both images 
+    tL1, tR1, bR1, bL1 = _getCorners(Fit.dot(H1), intrinsicMatrix1, destDims, distCoeffs1)
+    tL2, tR2, bR2, bL2 = _getCorners(Fit.dot(H2), intrinsicMatrix2, destDims, distCoeffs2)
+
+    left = max(tL1[0], bL1[0], tL2[0], bL2[0])
+    right = min(tR1[0], bR1[0], tR2[0], bR2[0])
+    top = max(tL1[1], tR1[1], tL2[1], tR2[1])
+    bottom = min(bL1[1], bR1[1], bL2[1], bR2[1])
+
+    s = max(destDims[0]/(right-left), destDims[1]/(bottom-top)) # Extra scaling parameter
+    s = (s-1)*(1-alpha) + 1 # As linear function of alpha
+    
+    K = np.eye(3)
+    K[0,0] = K[1,1] = s
+    K[0,2] = -s * left
+    K[1,2] = -s * top
+    
+    return K.dot(Fit)
     
 
 def _getCorners(H, intrinsicMatrix, dims, distCoeffs=None):
@@ -308,7 +332,7 @@ def loopRectify(rig):
         try:
             D1 = cholesky(A1, lower=True) # Upper triangle so that A1 = D1.T.dot(D1)
             D2 = cholesky(A2, lower=True)
-        except:
+        except Exception as e:
             # If factorization fails because of negative eigenvalues
             # you may try to manage with it...
             # Eg. try to add a small value to diagonal elements
