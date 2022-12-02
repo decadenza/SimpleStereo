@@ -63,7 +63,7 @@ More advanced examples available in the [examples](https://github.com/decadenza/
 - [x] Chessboard calibration (one and two cameras)
 - [x] Camera-projector calibration adapted (Moreno D. et al.), adapted from [procam](https://github.com/kamino410/procam-calibration) (`ss.calibration.chessboardProCam`)
 - [x] Camera-projector calibration alternative version (`ss.calibration.chessboardProCamWhite`)
-- [x] ArUco camera calibration algorithm
+- [ ] ArUco camera calibration algorithm
 
 ### Stereo rectification algorithms
 - [x] Fusiello et al., *A compact algorithm for rectification of stereo pairs*, 2000 (`ss.rectification.fusielloRectify`)
