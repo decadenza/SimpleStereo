@@ -299,7 +299,8 @@ def findCentralStripe(image, color='r', sensitivity=0.5, interpolation='linear')
        Missing values are filled with nearest-value interpolation.
     """
     
-    assert sensitivity >= 0 and sensitivity <= 1, "Threshold must be in the interval [0,1]!"
+    if not (sensitivity >= 0 and sensitivity <= 1):
+        raise ValueError("Threshold must be in the interval [0,1]!")
     
     h, w = image.shape[:2]
     maxValue = np.iinfo(image.dtype).max
