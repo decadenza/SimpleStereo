@@ -1,6 +1,6 @@
 """
 utils
-==========
+=====
 This module provides general utilities.
 """
 import os
@@ -66,13 +66,16 @@ class Capture:
         self.stop()
         self.video_capture.release()
     
+    
     def __enter__(self):
         return self
+    
     
     def __exit__(self, type, value, traceback):
         # To allow use in with statement
         self.__del__()
-          
+    
+    
     def start(self):
         """
         Start the capture in a separate thread.
@@ -101,11 +104,13 @@ class Capture:
             self.running = False
             self.t.join()
         return
-        
+    
+    
     def __loop(self):
         while(self.running):
             self.grab()
-            
+    
+    
     def get(self):
         """
         Retrieve the current frame.
@@ -116,6 +121,7 @@ class Capture:
         if not ret:
             return None
         return self.flip(self.frame, 1)
+    
     
     def setResolution(self, width, height):
         """
@@ -141,6 +147,7 @@ class Capture:
         # Set properties. Each returns === True on success.
         return self.video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, width) and self.video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
+    
     def setFrameRate(self, fps):
         """
         Set framerate of the camera.
@@ -163,7 +170,6 @@ class Capture:
             return False
         
         return self.video_capture.set(cv2.CAP_PROP_FPS, fps)
-
 
 
 def moveExtrinsicOriginToFirstCamera(R1,R2,t1,t2):
@@ -195,9 +201,6 @@ def moveExtrinsicOriginToFirstCamera(R1,R2,t1,t2):
     return R, t
     
 
-
-
-
 def getCrossProductMatrix(v):
     """
     Build the 3x3 antisymmetric matrix representing the cross product with v.
@@ -218,11 +221,6 @@ def getCrossProductMatrix(v):
     return np.array( [ [0, -v[2], v[1]], \
                        [v[2], 0, -v[0]], \
                        [-v[1], v[0], 0] ] , dtype=np.float)
-
-
-
-
-
 
 
 def drawCorrespondingEpipolarLines(img1, img2, F, x1=[], x2=[], color=(0,0,255), thickness=1):
