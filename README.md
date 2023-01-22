@@ -1,7 +1,7 @@
 # SimpleStereo
-Stereo Vision Made Simple.
+Stereo vision made Simple.
 
-SimpleStereo aims at being a high level framework for stereo vision applications. It is written in Python 3, with C++ extensions.
+SimpleStereo is a high level framework for stereo vision applications. It is written in Python 3, with C++ extensions.
 Documentation is available at https://decadenza.github.io/SimpleStereo/
 
 ## Dependencies
@@ -9,7 +9,7 @@ Documentation is available at https://decadenza.github.io/SimpleStereo/
 * NumPy
 * SciPy
 * OpenCV
-* matplotlib (for data visualisation purposes)
+* matplotlib (for data visualisation)
 
 ## Installation
 ### Option 1
@@ -19,7 +19,7 @@ pip3 install simplestereo
 ```
 
 ### Option 2
-Download the latest version and unzip. Then, from the folder containing `setup.py`, run:
+Clone or download the latest version and unzip. Then, from the folder containing `setup.py`, run:
 ```
 pip3 install .
 ```
@@ -86,4 +86,4 @@ More advanced examples available in the [examples](https://github.com/decadenza/
 
 ## Contributions
 Reporting issues and proposing integrations of other stereo vision algorithms is highly encouraged and it will be acknowledged.
-Please share your thoughts!
+Please share your issues!

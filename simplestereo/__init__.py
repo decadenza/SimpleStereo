@@ -357,12 +357,12 @@ class RectifiedStereoRig(StereoRig):
     
     Parameters
     ----------
-    Rcommon : np.array
+    Rcommon : numpy.ndarray
         3x3 matrices representing the new common camera orientation
         after rectification.
-    rectHomography1, rectHomography2 : np.array
+    rectHomography1, rectHomography2 : numpy.ndarray
         3x3 rectification homographies.
-    StereoRig:
+    StereoRig : StereoRig or sequence
         A StereoRig object or, *alternatively*, all the parameters of
         :meth:`simplestereo.StereoRig` (in the same order).
     """
