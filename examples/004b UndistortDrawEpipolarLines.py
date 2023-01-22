@@ -10,15 +10,15 @@ Rectify a couple of images using a RectifiedStereoRig
 
 # Paths
 curPath = os.path.dirname(os.path.realpath(__file__))
-imgPath = os.path.join(curPath,"res","0")
-loadFile = os.path.join(curPath,"res","0","rigRect.json")      # StereoRig file
+imgPath = os.path.join(curPath,"res","2")
+loadFile = os.path.join(curPath,"res","2","rigRect.json")      # StereoRig file
 
 # Load stereo rig from file
 rig = ss.RectifiedStereoRig.fromFile(loadFile)
 
 # Read right and left image (please ensure the order!!!)
-img1 = cv2.imread(os.path.join(imgPath,'left.png'))
-img2 = cv2.imread(os.path.join(imgPath,'right.png'))
+img1 = cv2.imread(os.path.join(imgPath,'lawn_L.png'))
+img2 = cv2.imread(os.path.join(imgPath,'lawn_R.png'))
 
 # Simply undistort two images (if distortion is present)
 img1, img2 = rig.undistortImages(img1, img2)

@@ -71,7 +71,7 @@ class StereoRig:
         self.R = R
         self.T = T              
         self.F = F
-        self.E = np.asarray(E) if E is not None else None
+        self.E = E
         self.reprojectionError = reprojectionError
 
     @property
@@ -128,7 +128,7 @@ class StereoRig:
     
     @F.setter
     def F(self, v):
-        self._F = np.asarray(v).reshape(3,3) if v is not None else None
+        self._F = np.asarray(v).reshape((3,3)) if v is not None else None
 
     @property
     def E(self):
@@ -136,7 +136,7 @@ class StereoRig:
     
     @E.setter
     def E(self, v):
-        self._E = np.asarray(v).reshape(3,3) if v is not None else None
+        self._E = np.asarray(v).reshape((3,3)) if v is not None else None
 
     @classmethod 
     def fromFile(cls, filepath):
@@ -197,7 +197,7 @@ class StereoRig:
                 out['E'] = self.E.tolist()
             if self.reprojectionError:
                 out['reprojectionError'] = self.reprojectionError
-            json.dump(out, f)
+            json.dump(out, f, indent=4)
             
     def getCenters(self):
         """
@@ -213,7 +213,7 @@ class StereoRig:
             3D coordinates of second camera center.
         """
         Po1, Po2 = self.getProjectionMatrices()
-        C1 = np.zeros(3)    # World origin is set in camera 1
+        C1 = np.zeros(3)    # World origin is set in camera 1.
         C2 = -np.linalg.inv(Po2[:,:3]).dot(Po2[:,3])
         return C1, C2
     
@@ -386,7 +386,30 @@ class RectifiedStereoRig(StereoRig):
         
         self.computeRectificationMaps()
     
-        
+    @property
+    def Rcommon(self):
+        return self._Rcommon
+
+    @Rcommon.setter
+    def Rcommon(self, v):
+        self._Rcommon = np.asarray(v).reshape((3,3))
+
+    @property
+    def rectHomography1(self):
+        return self._rectHomography1
+
+    @rectHomography1.setter
+    def rectHomography1(self, v):
+        self._rectHomography1 = np.asarray(v).reshape((3,3))
+
+    @property
+    def rectHomography2(self):
+        return self._rectHomography2
+
+    @rectHomography2.setter
+    def rectHomography2(self, v):
+        self._rectHomography2 = np.asarray(v).reshape((3,3))
+
     @classmethod 
     def fromFile(cls, filepath):
         """
@@ -405,19 +428,19 @@ class RectifiedStereoRig(StereoRig):
         with open(filepath, 'r') as f:
             data = json.load(f)
         
-        Rcommon = np.array(data.get('Rcommon'))
-        rectHomography1 = np.array(data.get('rectHomography1'))
-        rectHomography2 = np.array(data.get('rectHomography2'))
-        res1 = tuple(data.get('res1'))
-        res2 = tuple(data.get('res2'))
-        intrinsic1 = np.array(data.get('intrinsic1'))
-        intrinsic2 = np.array(data.get('intrinsic2'))
-        R = np.array(data.get('R'))
-        T = np.array(data.get('T'))              
-        distCoeffs1 = np.array(data.get('distCoeffs1'))
-        distCoeffs2 = np.array(data.get('distCoeffs2'))
-        F = np.array(data.get('F'))
-        E = np.array(data.get('E'))
+        Rcommon = data.get('Rcommon')
+        rectHomography1 = data.get('rectHomography1')
+        rectHomography2 = data.get('rectHomography2')
+        res1 = data.get('res1')
+        res2 = data.get('res2')
+        intrinsic1 = data.get('intrinsic1')
+        intrinsic2 = data.get('intrinsic2')
+        R = data.get('R')
+        T = data.get('T')             
+        distCoeffs1 = data.get('distCoeffs1')
+        distCoeffs2 = data.get('distCoeffs2')
+        F = data.get('F')
+        E = data.get('E')
         reprojectionError = data.get('reprojectionError')
         
         return cls(Rcommon, rectHomography1, rectHomography2, res1, res2, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F, E, reprojectionError)
@@ -453,7 +476,7 @@ class RectifiedStereoRig(StereoRig):
                 out['E'] = self.E.tolist()
             if self.reprojectionError:
                 out['reprojectionError'] = self.reprojectionError
-            json.dump(out, f)
+            json.dump(out, f, indent=4)
     
     
     def getRectifiedProjectionMatrices(self):
