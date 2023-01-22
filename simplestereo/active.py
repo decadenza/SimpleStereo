@@ -1595,7 +1595,7 @@ class GrayCodeDouble:
         p2 = cv2.perspectiveTransform(p2, self.Rectify2).reshape(-1,2)
         
         # Add ones as third coordinate
-        p1 = np.hstack( (p1,np.ones((pc.shape[0],1),dtype=np.float64)) )
+        p1 = np.hstack( (p1,np.ones((p1.shape[0],1),dtype=np.float64)) )
         
         # Get world points
         disparity = np.abs(p1[:,[0]] - p2[:,[0]])

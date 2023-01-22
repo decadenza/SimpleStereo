@@ -37,16 +37,16 @@ class StereoRig:
         
     Parameters
     ----------
-    res1, res2 : tuple
+    res1, res2 : sequence
         Resolution of camera as (width, height)  
-    intrinsic1, intrinsic2 : numpy.ndarray
+    intrinsic1, intrinsic2 : list or numpy.ndarray
         3x3 intrinsic camera matrix in the form [[fx, 0, tx], [0, fy, ty], [0, 0, 1]].
     distCoeffs1, distCoeffs2 : list or numpy.ndarray
         List of distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).
-    R : numpy.ndarray
-        Rotation matrix between the 1st and the 2nd camera coordinate systems as numpy.ndarray.
-    T : numpy.ndarray
-        Translation vector between the coordinate systems of the cameras as numpy.ndarray.
+    R : list or numpy.ndarray.
+        3x3 rotation matrix of shape between the 1st and the 2nd camera coordinate systems.
+    T : list or numpy.ndarray
+        Translation vector between the coordinate systems of the cameras.
     E : numpy.ndarray, optional
         Essential matrix as numpy.ndarray (default None) .
     F : numpy.ndarray, optional
@@ -64,17 +64,80 @@ class StereoRig:
     def __init__(self, res1, res2, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F=None, E=None, reprojectionError=None):
         self.res1 = res1
         self.res2 = res2
-        self.intrinsic1 = np.array(intrinsic1)
-        self.intrinsic2 = np.array(intrinsic2)
-        self.distCoeffs1 = np.array(distCoeffs1) if distCoeffs1 is not None else np.zeros(5) # Convert to numpy.ndarray
-        self.distCoeffs2 = np.array(distCoeffs2) if distCoeffs2 is not None else np.zeros(5)
-        self.R = np.array(R)
-        self.T = np.array(T).reshape((-1,1))              
-        self.F = np.array(F) if F is not None else None
-        self.E = np.array(E) if E is not None else None
+        self.intrinsic1 = intrinsic1
+        self.intrinsic2 = intrinsic2
+        self.distCoeffs1 = distCoeffs1
+        self.distCoeffs2 = distCoeffs2
+        self.R = R
+        self.T = T              
+        self.F = F
+        self.E = np.asarray(E) if E is not None else None
         self.reprojectionError = reprojectionError
+
+    @property
+    def intrinsic1(self):
+        return self._intrinsic1
     
-       
+    @intrinsic1.setter
+    def intrinsic1(self, v):
+        self._intrinsic1 = np.asarray(v) # Ensure numpy.ndarray.
+
+    @property
+    def intrinsic2(self):
+        return self._intrinsic2
+    
+    @intrinsic1.setter
+    def intrinsic2(self, v):
+        self._intrinsic2 = np.asarray(v) # Ensure numpy.ndarray.
+
+    @property
+    def distCoeffs1(self):
+        return self._distCoeffs1
+
+    @distCoeffs1.setter
+    def distCoeffs1(self, d):
+        self._distCoeffs1 = np.asarray(d) if d is not None else np.zeros(5) # Ensure numpy.ndarray or None.
+
+    @property
+    def distCoeffs2(self):
+        return self._distCoeffs2
+
+    @distCoeffs2.setter
+    def distCoeffs2(self, d):
+        self._distCoeffs2 = np.asarray(d) if d is not None else np.zeros(5)
+
+    @property
+    def R(self):
+        return self._R
+    
+    @R.setter
+    def R(self, v):
+        self._R = np.asarray(v).reshape((3,3))
+    
+    @property
+    def T(self):
+        return self._T
+    
+    @T.setter
+    def T(self, v):
+        self._T = np.asarray(v).reshape((-1,1))
+
+    @property
+    def F(self):
+        return self._F
+    
+    @F.setter
+    def F(self, v):
+        self._F = np.asarray(v).reshape(3,3) if v is not None else None
+
+    @property
+    def E(self):
+        return self._E
+    
+    @E.setter
+    def E(self, v):
+        self._E = np.asarray(v).reshape(3,3) if v is not None else None
+
     @classmethod 
     def fromFile(cls, filepath):
         """
@@ -95,19 +158,18 @@ class StereoRig:
         
         res1 = tuple(data.get('res1'))
         res2 = tuple(data.get('res2'))
-        intrinsic1 = np.array(data.get('intrinsic1'))
-        intrinsic2 = np.array(data.get('intrinsic2'))
-        R = np.array(data.get('R'))
-        T = np.array(data.get('T')).reshape((-1,1))              
-        distCoeffs1 = np.array(data.get('distCoeffs1'))
-        distCoeffs2 = np.array(data.get('distCoeffs2'))
-        F = np.array(data.get('F')) if data.get('F') else None
-        E = np.array(data.get('E')) if data.get('E') else None
+        intrinsic1 = data.get('intrinsic1')
+        intrinsic2 = data.get('intrinsic2')
+        R = data.get('R')
+        T = data.get('T')              
+        distCoeffs1 = data.get('distCoeffs1')
+        distCoeffs2 = data.get('distCoeffs2')
+        F = data.get('F')
+        E = data.get('E')
         reprojectionError = data.get('reprojectionError')
         
         return cls(res1, res2, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F, E, reprojectionError)
     
-        
     def save(self, filepath):
         """
         Save configuration to JSON file.
@@ -137,7 +199,6 @@ class StereoRig:
                 out['reprojectionError'] = self.reprojectionError
             json.dump(out, f)
             
-    
     def getCenters(self):
         """
         Calculate camera centers in world coordinates.
@@ -156,7 +217,6 @@ class StereoRig:
         C2 = -np.linalg.inv(Po2[:,:3]).dot(Po2[:,3])
         return C1, C2
     
-    
     def getBaseline(self):
         """
         Calculate the norm of the vector from camera 1 to camera 2.
@@ -168,7 +228,6 @@ class StereoRig:
         """
         C1, C2 = self.getCenters()
         return np.linalg.norm(C2) # No need to do C2 - C1 as C1 is always zero (origin of world system)
-    
     
     def getProjectionMatrices(self):
         """
@@ -184,7 +243,6 @@ class StereoRig:
         Po1 = np.hstack( (self.intrinsic1, np.zeros((3,1))) )
         Po2 = self.intrinsic2.dot( np.hstack( (self.R, self.T) ) )
         return Po1, Po2
-    
     
     def getFundamentalMatrix(self):
         """
@@ -212,7 +270,6 @@ class StereoRig:
                 
         return self.F
     
-    
     def getEssentialMatrix(self):
         """
         Returns the essential matrix E.
@@ -228,12 +285,11 @@ class StereoRig:
         -----
         The essential matrix has always a free scaling factor.
         """
-        if True or self.E is None:  # If E is not set, calculate it and update the object data.
+        if self.E is None:  # If E is not set, calculate it and update the object data.
             F = self.getFundamentalMatrix()
             self.E = self.intrinsic2.T.dot(F).dot(self.intrinsic1)
             
         return self.E
-    
     
     def undistortImages(self, img1, img2, changeCameras=False, alpha=1, destDims=None, centerPrincipalPoint=False):
         """
