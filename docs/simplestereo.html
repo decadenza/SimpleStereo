@@ -67,11 +67,11 @@ here the rectifying <em>homographies</em> (pixel domain) are taken as input, the
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>Rcommon</strong> (<em>np.array</em>) – 3x3 matrices representing the new common camera orientation
+<li><p><strong>Rcommon</strong> (<em>numpy.ndarray</em>) – 3x3 matrices representing the new common camera orientation
 after rectification.</p></li>
-<li><p><strong>rectHomography1</strong> (<em>np.array</em>) – 3x3 rectification homographies.</p></li>
-<li><p><strong>rectHomography2</strong> (<em>np.array</em>) – 3x3 rectification homographies.</p></li>
-<li><p><strong>StereoRig</strong> – A StereoRig object or, <em>alternatively</em>, all the parameters of
+<li><p><strong>rectHomography1</strong> (<em>numpy.ndarray</em>) – 3x3 rectification homographies.</p></li>
+<li><p><strong>rectHomography2</strong> (<em>numpy.ndarray</em>) – 3x3 rectification homographies.</p></li>
+<li><p><strong>StereoRig</strong> (<a class="reference internal" href="#simplestereo.StereoRig" title="simplestereo.StereoRig"><em>StereoRig</em></a><em> or </em><em>sequence</em>) – A StereoRig object or, <em>alternatively</em>, all the parameters of
 <a class="reference internal" href="#simplestereo.StereoRig" title="simplestereo.StereoRig"><code class="xref py py-meth docutils literal notranslate"><span class="pre">simplestereo.StereoRig()</span></code></a> (in the same order).</p></li>
 </ul>
 </dd>
@@ -165,7 +165,7 @@ have new intrinsics that depends on all the rigid manipulation done after rectif
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simplestereo.RectifiedStereoRig.rectifyImages">
-<span class="sig-name descname"><span class="pre">rectifyImages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation=&lt;MagicMock</span> <span class="pre">id='139689772134208'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo.html#RectifiedStereoRig.rectifyImages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.RectifiedStereoRig.rectifyImages" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">rectifyImages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation=&lt;MagicMock</span> <span class="pre">id='140294982611248'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo.html#RectifiedStereoRig.rectifyImages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.RectifiedStereoRig.rectifyImages" title="Permalink to this definition">¶</a></dt>
 <dd><p>Undistort, rectify and apply affine transformation to a couple of images coming from the stereo rig.</p>
 <p><em>img1</em> and <em>img2</em> must be provided as in calibration (es. img1 is the left image, img2 the right one).
 This method is wraps <code class="docutils literal notranslate"><span class="pre">cv2.remap()</span></code> for two images of the stereo pair. The maps used are computed by
@@ -212,14 +212,14 @@ They may be computed from camera parameters, if needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>res1</strong> (<em>tuple</em>) – Resolution of camera as (width, height)</p></li>
-<li><p><strong>res2</strong> (<em>tuple</em>) – Resolution of camera as (width, height)</p></li>
-<li><p><strong>intrinsic1</strong> (<em>numpy.ndarray</em>) – 3x3 intrinsic camera matrix in the form [[fx, 0, tx], [0, fy, ty], [0, 0, 1]].</p></li>
-<li><p><strong>intrinsic2</strong> (<em>numpy.ndarray</em>) – 3x3 intrinsic camera matrix in the form [[fx, 0, tx], [0, fy, ty], [0, 0, 1]].</p></li>
+<li><p><strong>res1</strong> (<em>sequence</em>) – Resolution of camera as (width, height)</p></li>
+<li><p><strong>res2</strong> (<em>sequence</em>) – Resolution of camera as (width, height)</p></li>
+<li><p><strong>intrinsic1</strong> (<em>list</em><em> or </em><em>numpy.ndarray</em>) – 3x3 intrinsic camera matrix in the form [[fx, 0, tx], [0, fy, ty], [0, 0, 1]].</p></li>
+<li><p><strong>intrinsic2</strong> (<em>list</em><em> or </em><em>numpy.ndarray</em>) – 3x3 intrinsic camera matrix in the form [[fx, 0, tx], [0, fy, ty], [0, 0, 1]].</p></li>
 <li><p><strong>distCoeffs1</strong> (<em>list</em><em> or </em><em>numpy.ndarray</em>) – List of distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).</p></li>
 <li><p><strong>distCoeffs2</strong> (<em>list</em><em> or </em><em>numpy.ndarray</em>) – List of distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).</p></li>
-<li><p><strong>R</strong> (<em>numpy.ndarray</em>) – Rotation matrix between the 1st and the 2nd camera coordinate systems as numpy.ndarray.</p></li>
-<li><p><strong>T</strong> (<em>numpy.ndarray</em>) – Translation vector between the coordinate systems of the cameras as numpy.ndarray.</p></li>
+<li><p><strong>R</strong> (<em>list</em><em> or </em><em>numpy.ndarray.</em>) – 3x3 rotation matrix of shape between the 1st and the 2nd camera coordinate systems.</p></li>
+<li><p><strong>T</strong> (<em>list</em><em> or </em><em>numpy.ndarray</em>) – Translation vector between the coordinate systems of the cameras.</p></li>
 <li><p><strong>E</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – Essential matrix as numpy.ndarray (default None) .</p></li>
 <li><p><strong>F</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – Fundamental matrix as numpy.ndarray (default None).</p></li>
 <li><p><strong>reprojectionError</strong> (<em>float</em><em>, </em><em>optional</em>) – Total reprojection error resulting from calibration (default None).</p></li>
@@ -230,6 +230,36 @@ If your world coordinate system is placed into a camera, you must convert it to 
 </ul>
 </dd>
 </dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="simplestereo.StereoRig.E">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">E</span></span><a class="headerlink" href="#simplestereo.StereoRig.E" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="simplestereo.StereoRig.F">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">F</span></span><a class="headerlink" href="#simplestereo.StereoRig.F" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="simplestereo.StereoRig.R">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">R</span></span><a class="headerlink" href="#simplestereo.StereoRig.R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="simplestereo.StereoRig.T">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">T</span></span><a class="headerlink" href="#simplestereo.StereoRig.T" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="simplestereo.StereoRig.distCoeffs1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">distCoeffs1</span></span><a class="headerlink" href="#simplestereo.StereoRig.distCoeffs1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="simplestereo.StereoRig.distCoeffs2">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">distCoeffs2</span></span><a class="headerlink" href="#simplestereo.StereoRig.distCoeffs2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="simplestereo.StereoRig.fromFile">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fromFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo.html#StereoRig.fromFile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.StereoRig.fromFile" title="Permalink to this definition">¶</a></dt>
@@ -326,6 +356,16 @@ If your world coordinate system is placed into a camera, you must convert it to 
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="simplestereo.StereoRig.intrinsic1">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">intrinsic1</span></span><a class="headerlink" href="#simplestereo.StereoRig.intrinsic1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="simplestereo.StereoRig.intrinsic2">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">intrinsic2</span></span><a class="headerlink" href="#simplestereo.StereoRig.intrinsic2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simplestereo.StereoRig.save">
@@ -854,7 +894,7 @@ where x,y is the upper left corner. Default to None.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.active.buildAnaglyphFringe">
-<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildAnaglyphFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='139689771380896'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildAnaglyphFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildAnaglyphFringe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildAnaglyphFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140294982195424'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildAnaglyphFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildAnaglyphFringe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build sinusoidal anaglyph fringe image.</p>
 <p>Assumes BGR images, using blue and red as complementary colors and
 green as central stripe. This allows to actually extract three
@@ -883,7 +923,7 @@ Default np.uint8 (max 255).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.active.buildBinaryFringe">
-<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildBinaryFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='139689771414528'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildBinaryFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildBinaryFringe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildBinaryFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140294981549984'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildBinaryFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildBinaryFringe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build binary fringe image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -912,7 +952,7 @@ Default np.uint8 (max 255).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.active.buildFringe">
-<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='139689771446080'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildFringe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140294982287216'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildFringe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build sinusoidal fringe image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
