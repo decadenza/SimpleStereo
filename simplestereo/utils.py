@@ -39,13 +39,13 @@ class Capture:
     Add support for other options (e.g. change focal length where supported).
     """
     def __init__(self, device = 0, flipY=False):
-        # Check if we're opening a video file
+        # Check if we're opening a video file.
         self.isFile = os.path.isfile(device)
         self.video_capture = cv2.VideoCapture(device)
-        # Flip around y axis if needed
+        # Flip around y axis, if needed.
         self.flip = cv2.flip if flipY else lambda f, *a, **k: f 
         self.running = False
-        # Keep this as attribute (needed for streaming)
+        # Keep this as attribute (needed for streaming).
         self.frame = None   
         
         if self.isFile:                             # If we are opening a video file
@@ -54,27 +54,23 @@ class Capture:
         else:                                       # If opening a webcam or a URL streaming
             self.grab = self.video_capture.grab     # that grabs continuously (grab() is fast)
             self.getFrame = self.video_capture.retrieve # and retrieve() (slower) the image only when needed
-            self.t=Thread(target=self.__loop)       # use a separate thread
+            self.t = Thread(target=self.__loop)       # use a separate thread
             self.t.daemon=True                          
         
-        # Check if capture is opened
+        # Check if capture is opened.
         if self.video_capture is None or not self.video_capture.isOpened():
             raise ValueError('Cannot open device!')
             
-    
     def __del__(self):
         self.stop()
         self.video_capture.release()
     
-    
     def __enter__(self):
         return self
-    
     
     def __exit__(self, type, value, traceback):
         # To allow use in with statement
         self.__del__()
-    
     
     def start(self):
         """
@@ -84,12 +80,11 @@ class Capture:
         The thread continuously calls ``grab()`` to stay updated to the last frame,
         while ``retrieve()`` is called only when the frame is actually needed.
         """
-        if self.isFile: # Do not start if it is file
+        if self.isFile: # Do not start if it is file.
             return
         self.running = True
         self.t.start()
         
-    
     def stop(self):
         """
         Stop the capture.
@@ -105,11 +100,9 @@ class Capture:
             self.t.join()
         return
     
-    
     def __loop(self):
         while(self.running):
             self.grab()
-    
     
     def get(self):
         """
@@ -121,7 +114,6 @@ class Capture:
         if not ret:
             return None
         return self.flip(self.frame, 1)
-    
     
     def setResolution(self, width, height):
         """
@@ -140,14 +132,31 @@ class Capture:
         bool
             True if the resolution was set successfully, False otherwise.
         """
-        # You cannot change resolution while running or on files
+        # You cannot change resolution while running or on files.
         if self.running or self.isFile:
             return False
         
-        # Set properties. Each returns === True on success.
-        return self.video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, width) and self.video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        # Set properties. Each returns True on success.
+        retval = (
+            self.video_capture.set(cv2.CAP_PROP_FRAME_WIDTH, width) and
+            self.video_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+            )
 
-    
+        if not retval:
+            return False
+
+        # Verify that resolution was set correctly.
+        retval = (
+            self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH) == width and
+            self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT) == height
+            )
+
+        return retval
+
+    def getResolution(self):
+        """ Return current resolution as (width, height) tuple. """
+        return self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH), self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
     def setFrameRate(self, fps):
         """
         Set framerate of the camera.
@@ -165,7 +174,7 @@ class Capture:
         bool
             True if the framerate was set successfully, False otherwise.
         """
-        # You cannot change resolution while running or on files
+        # You cannot change attributes while running or on files.
         if self.running or self.isFile:
             return False
         
