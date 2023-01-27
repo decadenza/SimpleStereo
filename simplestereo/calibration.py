@@ -306,7 +306,6 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
     if skipped>0:
         warnings.warn(f"{skipped} over {len(proj_objps_list)*chessboardSize[0]*chessboardSize[1]} skipped corners.")
     
-    #print('Initial solution of camera\'s intrinsic parameters')
     cam_rvecs = []
     cam_tvecs = []
     
@@ -594,10 +593,6 @@ def chessboardProCamWhite(images, projectorResolution, chessboardSize = DEFAULT_
     
     # Build StereoRig object
     stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
-    
-    print("cam_rms", cam_rms)
-    print("proj_rms", proj_rms)
-    print("stereo_rms", retval)
     
     if extended:
         _, _, _, _, _, _, _, _, _, perViewErrors = cv2.stereoCalibrateExtended(
@@ -961,11 +956,6 @@ def phaseShiftWhite(periods, projectorResolution, cameraImages, chessboardSize=D
 
     # Build StereoRig object
     stereoRigObj = ss.StereoRig(cam_shape[::-1], projectorResolution, intrinsic1, intrinsic2, distCoeffs1, distCoeffs2, R, T, F = F, E = E, reprojectionError = retval)
-    
-    #TEMP
-    print("cam_rms", cam_rms)
-    print("proj_rms", proj_rms)
-    print("stereo_rms", retval)
     
     if extended:
         _, _, _, _, _, _, _, _, _, perViewErrors = cv2.stereoCalibrateExtended(
