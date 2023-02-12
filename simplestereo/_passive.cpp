@@ -64,8 +64,8 @@ void workerASW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2, double 
                     for(j = 0; j < winSize; ++j) {
                         jj = d - padding + j;
                         kk = x - padding + j;
-                        if(jj<0 or kk<0) continue;
-                        if(jj>=width or kk>=width) break;
+                        if(jj<0 || kk<0) continue;
+                        if(jj>=width || kk>=width) break;
                         
                         // Build weight
                         w2[i*winSize+j] = proximityWeights[i*winSize + j] * 
@@ -154,8 +154,8 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
                     for(j = 0; j < winSize; ++j) {
                         jj = d-padding+j;
                         kk = x-padding+j;
-                        if(jj<0 or kk<0) continue;
-                        if(jj>=width or kk>=width) break;
+                        if(jj<0 || kk<0) continue;
+                        if(jj>=width || kk>=width) break;
                         // Build weight
                         w2[i*winSize+j] = proximityWeights[i*winSize + j] * 
                                    exp(-sqrt( pow(dataLab2[3*(ii*width + jj)  ] - dataLab2[3*(y*width+d)  ],2) +
@@ -219,8 +219,8 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
                 for(j = 0; j < winSize; ++j) {
                     jj = d-padding+j;
                     kk = x-padding+j;
-                    if(jj<0 or kk<0) continue;
-                    if(jj>=width or kk>=width) break;
+                    if(jj<0 || kk<0) continue;
+                    if(jj>=width || kk>=width) break;
                     // Build weight
                     w1[i*winSize+j] = proximityWeights[i*winSize + j] * 
                                exp(-sqrt( pow(dataLab1[3*(ii*width + jj)  ] - dataLab1[3*(y*width+d)  ],2) +
@@ -260,10 +260,10 @@ void workerASWconsistent(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data
             // Find limits
             left = j-1;
             right = j+1;
-            while(left>=0 and disparityMap[y*width + left] == -1){
+            while(left>=0 && disparityMap[y*width + left] == -1){
                 --left;
                 }
-            while(right<width and disparityMap[y*width + right] == -1){
+            while(right<width && disparityMap[y*width + right] == -1){
                 ++right;
                 }
             // Left and right contain the first non occluded pixel in that direction
@@ -306,20 +306,20 @@ PyObject *computeASW(PyObject *self, PyObject *args)
         }
     
     // Check input format
-    if (!(PyArray_TYPE(img1) == NPY_UBYTE and PyArray_TYPE(img1) == NPY_UBYTE)){
+    if (!(PyArray_TYPE(img1) == NPY_UBYTE && PyArray_TYPE(img1) == NPY_UBYTE)){
         // Raising an exception in C is done by setting the exception object or string and then returning NULL from the function.
         // See https://docs.python.org/3/c-api/exceptions.html
         PyErr_SetString(PyExc_TypeError, "Wrong type input!");
         return NULL;
         }
-    if (PyArray_NDIM(img1)!=3 or PyArray_NDIM(img1)!=PyArray_NDIM(img2) or 
-        PyArray_DIM(img1,2)!=3 or PyArray_DIM(img2,2)!=3 or
-        PyArray_DIM(img1,0)!=PyArray_DIM(img2,0) or
+    if (PyArray_NDIM(img1)!=3 || PyArray_NDIM(img1)!=PyArray_NDIM(img2) || 
+        PyArray_DIM(img1,2)!=3 || PyArray_DIM(img2,2)!=3 ||
+        PyArray_DIM(img1,0)!=PyArray_DIM(img2,0) ||
         PyArray_DIM(img1,1)!=PyArray_DIM(img2,1)){
         PyErr_SetString(PyExc_ValueError, "Wrong image dimensions!");
         return NULL;
         }
-    if (!(winSize>0 and winSize%2==1)) {
+    if (!(winSize>0 && winSize%2==1)) {
         PyErr_SetString(PyExc_ValueError, "winSize must be a positive odd number!");
         return NULL;
         }
@@ -442,16 +442,16 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                 for(i=0;i<tot;++i){                 // For every window pixel
                    yy = y-padding + i/winSize; // Whole image coordinates
                    xx = x-padding + i%winSize;
-                   if(xx<0 or yy<0) continue;           //Image left border
-                   if(xx>=width or yy>=height) break;  // Image right border
+                   if(xx<0 || yy<0) continue;           //Image left border
+                   if(xx>=width || yy>=height) break;  // Image right border
                    wBest = INFINITY;  
                    
                    for(k=0;k<=center;++k) // Find minimum in upper kernel
                    {
                        jj = y-padding + k/winSize; // Whole image coordinates (kernel)
                        kk = x-padding + k%winSize;
-                       if(jj<0 or kk<0) continue;
-                       if(jj>=height or kk>=width) break;
+                       if(jj<0 || kk<0) continue;
+                       if(jj>=height || kk>=width) break;
                        
                        // OVER THE UPPER KERNEL
                        temp = w[k] + sqrt( pow(data1[3*(yy*width + xx)  ] - data1[3*(jj*width + kk)  ],2)
@@ -467,16 +467,16 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                 for(i=tot-1;i>=0;--i){                 // For every window pixel
                    yy = y-padding + i/winSize; // Whole image coordinates
                    xx = x-padding + i%winSize;
-                   if(yy<0 or xx<0) continue;   
-                   if(yy>=height or xx>=width) break; 
+                   if(yy<0 || xx<0) continue;   
+                   if(yy>=height || xx>=width) break; 
                    wBest = INFINITY;  
                    
                    for(k=center;k<tot;++k) // Find minimum in upper kernel
                    {
                        jj = y-padding + k/winSize; // Whole image coordinates (kernel)
                        kk = x-padding + k%winSize;
-                       if(jj<0 or kk<0) continue;
-                       if(jj>=height or kk>=width) break;
+                       if(jj<0 || kk<0) continue;
+                       if(jj>=height || kk>=width) break;
                        
                        // OVER THE LOWER KERNEL
                        temp = w[k] + sqrt( pow(data1[3*(yy*width + xx)  ] - data1[3*(jj*width + kk)  ],2)
@@ -519,8 +519,8 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                         kk = x - padding + j;
                         jj = d - padding + j;
                         
-                        if( jj < 0 or kk < 0) continue;         // Image left border
-                        if( jj >= width or kk >= width) break;  // Image right border
+                        if( jj < 0 || kk < 0) continue;         // Image left border
+                        if( jj >= width || kk >= width) break;  // Image right border
                         
                         
                         // Update cost
@@ -563,17 +563,17 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                 // Forward pass (row major order)
                 for(i=0;i<tot;++i){                 // For every window pixel
                    yy = y-padding + i/winSize; // Whole image coordinates
-                   if(yy<0 or yy>=height) continue;   //Image y border
+                   if(yy<0 || yy>=height) continue;   //Image y border
                    xx = x-padding + i%winSize;
-                   if(xx<0 or xx>=width) continue;  // Image x border
+                   if(xx<0 || xx>=width) continue;  // Image x border
                    wBest = INFINITY;  
                    
                    for(k=0;k<=center;++k) // Find minimum in upper kernel
                    {
                        jj = y-padding + k/winSize; // Whole image coordinates (kernel)
-                       if(jj<0 or jj>=height) continue;
+                       if(jj<0 || jj>=height) continue;
                        kk = x-padding + k%winSize;
-                       if(kk<0 or kk>=width) continue;
+                       if(kk<0 || kk>=width) continue;
                        
                        // OVER THE UPPER KERNEL
                        temp = w[k] + sqrt( pow(data2[3*(yy*width + xx)  ] - data2[3*(jj*width + kk)  ],2)
@@ -588,17 +588,17 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                 // Backward pass (reverse row major order)
                 for(i=tot-1;i>=0;--i){                 // For every window pixel
                    yy = y-padding + i/winSize; // Whole image coordinates
-                   if(yy<0 or yy>=height) continue;   //Image y border
+                   if(yy<0 || yy>=height) continue;   //Image y border
                    xx = x-padding + i%winSize;
-                   if(xx<0 or xx>=width) continue;  // Image x border
+                   if(xx<0 || xx>=width) continue;  // Image x border
                    wBest = INFINITY;  
                    
                    for(k=center;k<tot;++k) // Find minimum in upper kernel
                    {
                        jj = y-padding + k/winSize; // Whole image coordinates (kernel)
-                       if(jj<0 or jj>=height) continue;
+                       if(jj<0 || jj>=height) continue;
                        kk = x-padding + k%winSize;
-                       if(kk<0 or kk>=width) continue;
+                       if(kk<0 || kk>=width) continue;
                        
                        // OVER THE LOWER KERNEL
                        temp = w[k] + sqrt( pow(data2[3*(yy*width + xx)  ] - data2[3*(jj*width + kk)  ],2)
@@ -635,8 +635,8 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
                         kk = x - padding + j;
                         jj = d - padding + j;
                         
-                        if( jj < 0 or kk < 0) continue;         // Image left border
-                        if( jj >= width or kk >= width) break;  // Image right border
+                        if( jj < 0 || kk < 0) continue;         // Image left border
+                        if( jj >= width || kk >= width) break;  // Image right border
                         
                         
                         // Update cost
@@ -671,10 +671,10 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
             // Find limits
             left = j-1;
             right = j+1;
-            while(left>=0 and disparityMap[y*width + left] == -1){
+            while(left>=0 && disparityMap[y*width + left] == -1){
                 --left;
                 }
-            while(right<width and disparityMap[y*width + right] == -1){
+            while(right<width && disparityMap[y*width + right] == -1){
                 ++right;
                 }
             // Left and right contain the first non occluded pixel in that direction
@@ -714,20 +714,20 @@ PyObject *computeGSW(PyObject *self, PyObject *args)
         }
     
     // Check input format
-    if (!(PyArray_TYPE(img1) == NPY_UBYTE and PyArray_TYPE(img1) == NPY_UBYTE)){
+    if (!(PyArray_TYPE(img1) == NPY_UBYTE && PyArray_TYPE(img1) == NPY_UBYTE)){
         // Raising an exception in C is done by setting the exception object or string and then returning NULL from the function.
         // See https://docs.python.org/3/c-api/exceptions.html
         PyErr_SetString(PyExc_TypeError, "Wrong type input!");
         return NULL;
         }
-    if (PyArray_NDIM(img1)!=3 or PyArray_NDIM(img1)!=PyArray_NDIM(img2) or 
-        PyArray_DIM(img1,2)!=3 or PyArray_DIM(img2,2)!=3 or
+    if (PyArray_NDIM(img1)!=3 || PyArray_NDIM(img1)!=PyArray_NDIM(img2) or 
+        PyArray_DIM(img1,2)!=3 || PyArray_DIM(img2,2)!=3 or
         PyArray_DIM(img1,0)!=PyArray_DIM(img2,0) or
         PyArray_DIM(img1,1)!=PyArray_DIM(img2,1)){
         PyErr_SetString(PyExc_ValueError, "Wrong image dimensions!");
         return NULL;
         }
-    if (!(winSize>0 and winSize%2==1)) {
+    if (!(winSize>0 && winSize%2==1)) {
         PyErr_SetString(PyExc_ValueError, "winSize must be a positive odd number!");
         return NULL;
         }
