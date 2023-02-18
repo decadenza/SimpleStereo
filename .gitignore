@@ -2,3 +2,4 @@
 docs/**
 SimpleStereo.egg-info/**
 build/**
+.vscode/**

@@ -352,7 +352,7 @@ PyObject *computeASW(PyObject *self, PyObject *args)
     int num_threads = std::thread::hardware_concurrency();
     
     
-    std::thread workersArr[num_threads];
+    std::thread* workersArr = new std::thread[num_threads];
     
     // Build proximity weights matrix
     double *proximityWeights = new double[winSize*winSize];
@@ -414,7 +414,7 @@ void workerGSW(SafeQueue<int> &jobs, npy_ubyte *data1, npy_ubyte *data2,
     int ii,jj,kk;
     int i,j,k,y,x,d;
     int tot = winSize*winSize;
-    float w[tot]; // Weights
+    float* w = new float[tot]; // Weights
     int center = (tot-1) / 2;
     int xx, yy;
     int left,right;
