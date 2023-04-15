@@ -11,3 +11,6 @@ div.admonition-todo {
     background-color: 2px solid rgba(255, 255, 0, 0.4);
 }
 
+div.sphinxsidebar {
+    overflow: auto;
+}
