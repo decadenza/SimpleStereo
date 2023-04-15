@@ -1,34 +1,33 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>simplestereo &#8212; SimpleStereo 1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/nature.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/custom.css" />
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
-    <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" /> 
+    <title>simplestereo._rigs &#8212; SimpleStereo 1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
+          <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
+          <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SimpleStereo 1 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">simplestereo</a></li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simplestereo._rigs</a></li> 
       </ul>
     </div>  
 
@@ -37,39 +36,30 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <h1>Source code for simplestereo</h1><div class="highlight"><pre>
+  <h1>Source code for simplestereo._rigs</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">simplestereo</span>
-<span class="sd">============</span>
-<span class="sd">Common classes and functions.</span>
+<span class="sd">_rigs</span>
+<span class="sd">=====</span>
 
+<span class="sd">Main classes loaded at package level.</span>
 
-<span class="sd">Documentation DOCSTRING follows numpy-style wherever possible.</span>
-<span class="sd">See https://numpydoc.readthedocs.io/en/latest/format.html</span>
+<span class="sd">See :py:module:`__init__.py`.</span>
+
 
 <span class="sd">.. todo::</span>
 <span class="sd">    - Add new rig class for uncalibrated stereo.</span>
 <span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">cv2</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">calibration</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">rectification</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">passive</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">active</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">unwrapping</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">points</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">utils</span>
 
 
-<span class="c1">### VERSION INFO</span>
-<span class="kn">import</span> <span class="nn">pkg_resources</span> <span class="c1"># part of setuptools</span>
-<span class="n">__version__</span> <span class="o">=</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s2">&quot;SimpleStereo&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">version</span>
-
-
-<div class="viewcode-block" id="StereoRig"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig">[docs]</a><span class="k">class</span> <span class="nc">StereoRig</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot; </span>
+<div class="viewcode-block" id="StereoRig"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StereoRig">[docs]</a><span class="k">class</span> <span class="nc">StereoRig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; </span>
 <span class="sd">    Keep together and manage all parameters of a calibrated stereo rig.</span>
 <span class="sd">    </span>
 <span class="sd">    The essential E and fundamental F matrices are optional as they are not always available.</span>
@@ -178,9 +168,9 @@
     <span class="k">def</span> <span class="nf">E</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
 
-<div class="viewcode-block" id="StereoRig.fromFile"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.fromFile">[docs]</a>    <span class="nd">@classmethod</span> 
+<div class="viewcode-block" id="StereoRig.fromFile"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StereoRig.fromFile">[docs]</a>    <span class="nd">@classmethod</span> 
     <span class="k">def</span> <span class="nf">fromFile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Alternative initialization of StereoRig object from JSON file.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -210,8 +200,8 @@
         
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">res1</span><span class="p">,</span> <span class="n">res2</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">reprojectionError</span><span class="p">)</span></div>
     
-<div class="viewcode-block" id="StereoRig.save"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="StereoRig.save"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StereoRig.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save configuration to JSON file.</span>
 <span class="sd">        </span>
 <span class="sd">        Save the current stereo rig configuration to a JSON file that can be loaded later.</span>
@@ -239,8 +229,8 @@
                 <span class="n">out</span><span class="p">[</span><span class="s1">&#39;reprojectionError&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reprojectionError</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
             
-<div class="viewcode-block" id="StereoRig.getCenters"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.getCenters">[docs]</a>    <span class="k">def</span> <span class="nf">getCenters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="StereoRig.getCenters"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StereoRig.getCenters">[docs]</a>    <span class="k">def</span> <span class="nf">getCenters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate camera centers in world coordinates.</span>
 <span class="sd">        </span>
 <span class="sd">        Anyway first camera will always be centered in zero (returned anyway).</span>
@@ -257,8 +247,8 @@
         <span class="n">C2</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">Po2</span><span class="p">[:,:</span><span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Po2</span><span class="p">[:,</span><span class="mi">3</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">C1</span><span class="p">,</span> <span class="n">C2</span></div>
     
-<div class="viewcode-block" id="StereoRig.getBaseline"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.getBaseline">[docs]</a>    <span class="k">def</span> <span class="nf">getBaseline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="StereoRig.getBaseline"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StereoRig.getBaseline">[docs]</a>    <span class="k">def</span> <span class="nf">getBaseline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the norm of the vector from camera 1 to camera 2.</span>
 <span class="sd">        </span>
 <span class="sd">        Returns</span>
@@ -269,8 +259,8 @@
         <span class="n">C1</span><span class="p">,</span> <span class="n">C2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getCenters</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">C2</span><span class="p">)</span> <span class="c1"># No need to do C2 - C1 as C1 is always zero (origin of world system)</span></div>
     
-<div class="viewcode-block" id="StereoRig.getProjectionMatrices"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.getProjectionMatrices">[docs]</a>    <span class="k">def</span> <span class="nf">getProjectionMatrices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="StereoRig.getProjectionMatrices"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StereoRig.getProjectionMatrices">[docs]</a>    <span class="k">def</span> <span class="nf">getProjectionMatrices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the projection matrices of camera 1 and camera 2.</span>
 <span class="sd">        </span>
 <span class="sd">        Returns</span>
@@ -284,8 +274,8 @@
         <span class="n">Po2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">R</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="p">)</span> <span class="p">)</span>
         <span class="k">return</span> <span class="n">Po1</span><span class="p">,</span> <span class="n">Po2</span></div>
     
-<div class="viewcode-block" id="StereoRig.getFundamentalMatrix"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.getFundamentalMatrix">[docs]</a>    <span class="k">def</span> <span class="nf">getFundamentalMatrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="StereoRig.getFundamentalMatrix"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StereoRig.getFundamentalMatrix">[docs]</a>    <span class="k">def</span> <span class="nf">getFundamentalMatrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the fundamental matrix F.</span>
 <span class="sd">        </span>
 <span class="sd">        If not set, F is computed from projection matrices using </span>
@@ -310,8 +300,8 @@
                 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">F</span></div>
     
-<div class="viewcode-block" id="StereoRig.getEssentialMatrix"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.getEssentialMatrix">[docs]</a>    <span class="k">def</span> <span class="nf">getEssentialMatrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="StereoRig.getEssentialMatrix"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StereoRig.getEssentialMatrix">[docs]</a>    <span class="k">def</span> <span class="nf">getEssentialMatrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the essential matrix E.</span>
 <span class="sd">        </span>
 <span class="sd">        If not set, E is computed from the fundamental matrix F and the camera matrices.</span>
@@ -331,8 +321,8 @@
             
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">E</span></div>
     
-<div class="viewcode-block" id="StereoRig.undistortImages"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StereoRig.undistortImages">[docs]</a>    <span class="k">def</span> <span class="nf">undistortImages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">,</span> <span class="n">changeCameras</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">centerPrincipalPoint</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="StereoRig.undistortImages"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StereoRig.undistortImages">[docs]</a>    <span class="k">def</span> <span class="nf">undistortImages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">,</span> <span class="n">changeCameras</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">centerPrincipalPoint</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Undistort two given images of the stereo rig.</span>
 <span class="sd">        </span>
 <span class="sd">        This method wraps `cv2.getOptimalNewCameraMatrix()` followed</span>
@@ -387,8 +377,8 @@
             <span class="k">return</span> <span class="n">img1_undist</span><span class="p">,</span> <span class="n">img2_undist</span></div></div>
           
         
-<div class="viewcode-block" id="RectifiedStereoRig"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig">[docs]</a><span class="k">class</span> <span class="nc">RectifiedStereoRig</span><span class="p">(</span><span class="n">StereoRig</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="RectifiedStereoRig"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.RectifiedStereoRig">[docs]</a><span class="k">class</span> <span class="nc">RectifiedStereoRig</span><span class="p">(</span><span class="n">StereoRig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Keep together and manage all parameters of a calibrated and rectified stereo rig.</span>
 <span class="sd">    </span>
 <span class="sd">    It includes all the parameters of StereoRig plus two rectifying homographies. Differently from OpenCV,</span>
@@ -450,9 +440,9 @@
     <span class="k">def</span> <span class="nf">rectHomography2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rectHomography2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
 
-<div class="viewcode-block" id="RectifiedStereoRig.fromFile"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.fromFile">[docs]</a>    <span class="nd">@classmethod</span> 
+<div class="viewcode-block" id="RectifiedStereoRig.fromFile"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.RectifiedStereoRig.fromFile">[docs]</a>    <span class="nd">@classmethod</span> 
     <span class="k">def</span> <span class="nf">fromFile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Alternative initialization of StereoRigRectified object from JSON file.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -484,10 +474,9 @@
         <span class="n">reprojectionError</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;reprojectionError&#39;</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">Rcommon</span><span class="p">,</span> <span class="n">rectHomography1</span><span class="p">,</span> <span class="n">rectHomography2</span><span class="p">,</span> <span class="n">res1</span><span class="p">,</span> <span class="n">res2</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">reprojectionError</span><span class="p">)</span></div>
-    
         
-<div class="viewcode-block" id="RectifiedStereoRig.save"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="RectifiedStereoRig.save"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.RectifiedStereoRig.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save configuration to JSON file.</span>
 <span class="sd">        </span>
 <span class="sd">        Save the current stereo rig configuration to a JSON file that can be loaded later.</span>
@@ -518,9 +507,8 @@
                 <span class="n">out</span><span class="p">[</span><span class="s1">&#39;reprojectionError&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reprojectionError</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
     
-    
-<div class="viewcode-block" id="RectifiedStereoRig.getRectifiedProjectionMatrices"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.getRectifiedProjectionMatrices">[docs]</a>    <span class="k">def</span> <span class="nf">getRectifiedProjectionMatrices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="RectifiedStereoRig.getRectifiedProjectionMatrices"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.RectifiedStereoRig.getRectifiedProjectionMatrices">[docs]</a>    <span class="k">def</span> <span class="nf">getRectifiedProjectionMatrices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate the projection matrices of camera 1 and camera 2 after rectification.</span>
 <span class="sd">        </span>
 <span class="sd">        New projection matrices, after rectification, share the same orientation `Rcommon`,</span>
@@ -539,9 +527,8 @@
         <span class="n">P2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K2</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Rcommon</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="o">-</span><span class="n">C2</span><span class="p">[:,</span><span class="kc">None</span><span class="p">])</span> <span class="p">)</span> <span class="p">)</span>
         <span class="k">return</span> <span class="n">P1</span><span class="p">,</span> <span class="n">P2</span>  </div>
     
-    
-<div class="viewcode-block" id="RectifiedStereoRig.computeRectificationMaps"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.computeRectificationMaps">[docs]</a>    <span class="k">def</span> <span class="nf">computeRectificationMaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="RectifiedStereoRig.computeRectificationMaps"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.RectifiedStereoRig.computeRectificationMaps">[docs]</a>    <span class="k">def</span> <span class="nf">computeRectificationMaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the two maps to undistort and rectify the stereo pair.</span>
 <span class="sd">        </span>
 <span class="sd">        This method wraps ``cv2.initUndistortRectifyMap()`` plus a custom fitting algorithm to keep image within dimensions. </span>
@@ -592,9 +579,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">mapx1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapy1</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">initUndistortRectifyMap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">R1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K1</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CV_32FC1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mapx2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapy2</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">initUndistortRectifyMap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intrinsic2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">K2</span><span class="p">,</span> <span class="n">destDims</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CV_32FC1</span><span class="p">)</span></div>
         
-        
-<div class="viewcode-block" id="RectifiedStereoRig.rectifyImages"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.rectifyImages">[docs]</a>    <span class="k">def</span> <span class="nf">rectifyImages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_LINEAR</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="RectifiedStereoRig.rectifyImages"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.RectifiedStereoRig.rectifyImages">[docs]</a>    <span class="k">def</span> <span class="nf">rectifyImages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_LINEAR</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Undistort, rectify and apply affine transformation to a couple of images coming from the stereo rig.</span>
 <span class="sd">        </span>
 <span class="sd">        *img1* and *img2* must be provided as in calibration (es. img1 is the left image, img2 the right one).</span>
@@ -619,9 +605,8 @@
         
         <span class="k">return</span> <span class="n">img1_rect</span><span class="p">,</span> <span class="n">img2_rect</span></div>
     
-    
-<div class="viewcode-block" id="RectifiedStereoRig.get3DPoints"><a class="viewcode-back" href="../simplestereo.html#simplestereo.RectifiedStereoRig.get3DPoints">[docs]</a>    <span class="k">def</span> <span class="nf">get3DPoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">disparityMap</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="RectifiedStereoRig.get3DPoints"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.RectifiedStereoRig.get3DPoints">[docs]</a>    <span class="k">def</span> <span class="nf">get3DPoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">disparityMap</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the 3D points in the space from the disparity map.</span>
 <span class="sd">        </span>
 <span class="sd">        If the calibration was done with real world units (e.g. millimeters),</span>
@@ -652,7 +637,7 @@
         <span class="c1"># rectification, they should)</span>
         <span class="c1"># Accepts different x-shear terms (generally not used)</span>
         <span class="c1"># cx1 is not the same of cx2</span>
-        <span class="c1"># cy1 is equal cy2 (as images are rectified)</span>
+        <span class="c1"># cy1 is equal cy2 (as images are rectified).</span>
         
         <span class="n">b</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getBaseline</span><span class="p">()</span>
         <span class="n">fx</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K1</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
@@ -682,8 +667,8 @@
         <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">reprojectImageTo3D</span><span class="p">(</span><span class="n">disparityMap</span><span class="p">,</span> <span class="n">Q</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="StructuredLightRig"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StructuredLightRig">[docs]</a><span class="k">class</span> <span class="nc">StructuredLightRig</span><span class="p">(</span><span class="n">StereoRig</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="StructuredLightRig"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StructuredLightRig">[docs]</a><span class="k">class</span> <span class="nc">StructuredLightRig</span><span class="p">(</span><span class="n">StereoRig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    StereoRig child class with structured light methods.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
@@ -694,7 +679,6 @@
                 
         <span class="bp">self</span><span class="o">.</span><span class="n">_computeMatrices</span><span class="p">()</span>
     
-    
     <span class="k">def</span> <span class="nf">_computeMatrices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">R1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">R2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="n">rectification</span><span class="o">.</span><span class="n">_lowLevelRectify</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>    
         <span class="c1">### Get inverse common orientation and extend to 4x4 transform</span>
@@ -703,11 +687,11 @@
         <span class="n">R_inv</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">R_inv</span> <span class="o">=</span> <span class="n">R_inv</span>
     
-<div class="viewcode-block" id="StructuredLightRig.fromFile"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StructuredLightRig.fromFile">[docs]</a>    <span class="k">def</span> <span class="nf">fromFile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="StructuredLightRig.fromFile"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StructuredLightRig.fromFile">[docs]</a>    <span class="k">def</span> <span class="nf">fromFile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">StructuredLightRig</span><span class="p">(</span><span class="n">StereoRig</span><span class="o">.</span><span class="n">fromFile</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
         
-<div class="viewcode-block" id="StructuredLightRig.triangulate"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StructuredLightRig.triangulate">[docs]</a>    <span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">camPoints</span><span class="p">,</span> <span class="n">projPoints</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="StructuredLightRig.triangulate"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StructuredLightRig.triangulate">[docs]</a>    <span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">camPoints</span><span class="p">,</span> <span class="n">projPoints</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given camera-projector correspondences, proceed with</span>
 <span class="sd">        triangulation.</span>
 <span class="sd">        </span>
@@ -754,9 +738,8 @@
         
         <span class="k">return</span> <span class="n">finalPoints</span></div>
     
-    
-<div class="viewcode-block" id="StructuredLightRig.undistortCameraImage"><a class="viewcode-back" href="../simplestereo.html#simplestereo.StructuredLightRig.undistortCameraImage">[docs]</a>    <span class="k">def</span> <span class="nf">undistortCameraImage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imgObj</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="StructuredLightRig.undistortCameraImage"><a class="viewcode-back" href="../../simplestereo.html#simplestereo._rigs.StructuredLightRig.undistortCameraImage">[docs]</a>    <span class="k">def</span> <span class="nf">undistortCameraImage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imgObj</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Undistort camera image.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -781,13 +764,13 @@
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
-    <form class="search" action="../search.html" method="get">
+    <form class="search" action="../../search.html" method="get">
       <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -796,19 +779,19 @@
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="../genindex.html" title="General Index"
+          <a href="../../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../py-modindex.html" title="Python Module Index"
+          <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">SimpleStereo 1 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">simplestereo</a></li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">simplestereo._rigs</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, decadenza.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+        &#169; Copyright 2023, decadenza.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

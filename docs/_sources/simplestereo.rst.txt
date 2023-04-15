@@ -12,6 +12,14 @@ Module contents
 Submodules
 ----------
 
+simplestereo._rigs module
+--------------------------
+
+.. automodule:: simplestereo._rigs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 simplestereo.active module
 --------------------------
 

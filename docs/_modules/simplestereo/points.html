@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,10 +10,9 @@
     <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
   </head><body>
@@ -27,8 +26,7 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../simplestereo.html" accesskey="U">simplestereo</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">simplestereo.points</a></li> 
       </ul>
     </div>  
@@ -49,7 +47,7 @@
 
 
 <div class="viewcode-block" id="exportPLY"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.points.exportPLY">[docs]</a><span class="k">def</span> <span class="nf">exportPLY</span><span class="p">(</span><span class="n">points3D</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">referenceImage</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">6</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Export raw point cloud to PLY file (ASCII).</span>
 <span class="sd">    </span>
 <span class="sd">    Parameters</span>
@@ -76,7 +74,7 @@
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;ply</span><span class="se">\n</span><span class="s2">format ascii 1.0</span><span class="se">\n</span><span class="s2">comment SimpleStereo point cloud export</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="c1"># Store the original array shape for future use</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;comment Original array shape </span><span class="si">{</span><span class="s1">&#39;x&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">originalShape</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;comment Original array shape </span><span class="si">{</span><span class="s1">&#39;x&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">originalShape</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;element vertex </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;property double x</span><span class="se">\n</span><span class="s2">property double y</span><span class="se">\n</span><span class="s2">property double z</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
         
@@ -121,7 +119,7 @@
                             <span class="n">referenceImage</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">p</span><span class="o">=</span><span class="n">precision</span><span class="p">))</span> <span class="c1"># Grayscale</span></div>
 
 <div class="viewcode-block" id="importPLY"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.points.importPLY">[docs]</a><span class="k">def</span> <span class="nf">importPLY</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="o">*</span><span class="n">properties</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Import 3D coordinates from PLY file.</span>
 <span class="sd">    </span>
 <span class="sd">    Parameters</span>
@@ -163,7 +161,7 @@
 
 
 <div class="viewcode-block" id="getAdimensional3DPoints"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.points.getAdimensional3DPoints">[docs]</a><span class="k">def</span> <span class="nf">getAdimensional3DPoints</span><span class="p">(</span><span class="n">disparityMap</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get adimensional 3D points from the disparity map.</span>
 <span class="sd">    </span>
 <span class="sd">    This is the adimensional version of</span>
@@ -218,7 +216,7 @@
 
 
 <div class="viewcode-block" id="distortPoints"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.points.distortPoints">[docs]</a><span class="k">def</span> <span class="nf">distortPoints</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">distCoeff</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Undistort relative coordinate points.</span>
 <span class="sd">    </span>
 <span class="sd">    Parameters</span>
@@ -276,7 +274,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -292,13 +290,12 @@
              >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">SimpleStereo 1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="../simplestereo.html" >simplestereo</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">simplestereo.points</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, decadenza.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+        &#169; Copyright 2023, decadenza.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

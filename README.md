@@ -84,6 +84,21 @@ More advanced examples available in the [examples](https://github.com/decadenza/
 ### Unwrapping algorithms
 - [x] Infinite impulse response (Estrada et al., [Noise robust linear dynamic system for phase unwrapping and smoothing](https://doi.org/10.1364/OE.19.005126), Optics Express, 2011) 
 
+## Documentation
+Documentation follows [numpydoc style guide](https://numpydoc.readthedocs.io/en/latest/format.html).
+
+Install documentation prerequisites with:
+```
+pip install Sphinx numpydoc
+```
+
+Build documentation with:
+```
+cd sphinx-documentation-generator
+sh BUILD_SCRIPT.sh
+cd ..
+```
+
 ## Contributions
 Reporting issues and proposing integrations of other stereo vision algorithms is highly encouraged and it will be acknowledged.
 Please share your issues!

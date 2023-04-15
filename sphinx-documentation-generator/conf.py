@@ -35,7 +35,7 @@ autodoc_mock_imports = MOCK_MODULES
 # -- Project information -----------------------------------------------------
 
 project = 'SimpleStereo'
-copyright = '2022, decadenza'
+copyright = '2023, decadenza'
 author = 'decadenza'
 
 # The full version, including alpha/beta/rc tags
@@ -52,7 +52,8 @@ extensions = [
                 'sphinx.ext.coverage',
                 'sphinx.ext.napoleon',
                 'sphinx.ext.todo',
-                'sphinx.ext.viewcode'
+                'sphinx.ext.viewcode',
+                'numpydoc'
              ]
 
 # Display todos by setting to True
