@@ -1,4 +1,5 @@
 /* C++ extension for phase unwrapping algorithms */
+#define _USE_MATH_DEFINES
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <numpy/arrayobject.h>
@@ -76,7 +77,11 @@ PyObject *infiniteImpulseResponse(PyObject *self, PyObject *args)
     npy_intp dims[2] = {h, w};
     PyArrayObject *unwrapped = (PyArrayObject *) PyArray_Zeros(2, dims, PyArray_DTYPE(phase), 0);
     
-    bool s[h][w];
+    bool** s = new bool*[h];
+    for(int i = 0; i < h; i++) {
+        s[i] = new bool[w];
+    }
+
     int y;
     int x;
     int S;

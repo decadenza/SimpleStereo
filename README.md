@@ -12,6 +12,9 @@ Documentation is available at https://decadenza.github.io/SimpleStereo/
 * matplotlib (for data visualisation)
 
 ## Installation
+
+Before starting, be sure to have the latest `setuptools` package by running `pip install --upgrade setuptools`. Then proceed with one of the two options below.
+
 ### Option 1
 Install package from [PyPI](https://pypi.org/project/SimpleStereo/) with:
 ```
@@ -23,6 +26,15 @@ Clone or download the latest version and unzip. Then, from the folder containing
 ```
 pip3 install .
 ```
+
+### Windows users troubleshooting
+
+If during installation you get, together with other messages, the following error:
+```
+error: Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+```
+Please install the Microsoft C++ Build Tools as indicated. These are required to build C++ extensions that are part of SimpleStereo.
+More information about compiling on Windows is available at [https://wiki.python.org/moin/WindowsCompilers](https://wiki.python.org/moin/WindowsCompilers).
 
 ## Basic example
 SimpleStereo helps you with common tasks. You can calibrate two cameras and initialise a `stereoRig` with:
@@ -50,7 +62,7 @@ print("Centers:", rig.getCenters())
 print("Baseline:", rig.getBaseline())
 ```
     
-More advanced examples available in the [examples](https://github.com/decadenza/SimpleStereo/tree/master/examples) folder.
+More examples available in the [examples](https://github.com/decadenza/SimpleStereo/tree/master/examples) folder.
 
 ## Features and Future Work
 

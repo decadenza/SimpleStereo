@@ -720,9 +720,9 @@ PyObject *computeGSW(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_TypeError, "Wrong type input!");
         return NULL;
         }
-    if (PyArray_NDIM(img1)!=3 || PyArray_NDIM(img1)!=PyArray_NDIM(img2) or 
-        PyArray_DIM(img1,2)!=3 || PyArray_DIM(img2,2)!=3 or
-        PyArray_DIM(img1,0)!=PyArray_DIM(img2,0) or
+    if (PyArray_NDIM(img1)!=3 || PyArray_NDIM(img1)!=PyArray_NDIM(img2) || 
+        PyArray_DIM(img1,2)!=3 || PyArray_DIM(img2,2)!=3 ||
+        PyArray_DIM(img1,0)!=PyArray_DIM(img2,0) ||
         PyArray_DIM(img1,1)!=PyArray_DIM(img2,1)){
         PyErr_SetString(PyExc_ValueError, "Wrong image dimensions!");
         return NULL;
@@ -751,7 +751,7 @@ PyObject *computeGSW(PyObject *self, PyObject *args)
     SafeQueue<int> jobs; // Jobs queue
     int num_threads = std::thread::hardware_concurrency();
     
-    std::thread workersArr[num_threads];
+    std::thread* workersArr = new std::thread[num_threads];
     
     
     // Put each image row in queue
