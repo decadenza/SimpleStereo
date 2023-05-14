@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
 
-<html lang="en">
+<html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,9 +10,10 @@
     <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
   </head><body>
@@ -53,7 +54,7 @@
 
 
 <div class="viewcode-block" id="StereoASW"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoASW">[docs]</a><span class="k">class</span> <span class="nc">StereoASW</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Custom implementation of &quot;Adaptive Support-Weight Approach</span>
 <span class="sd">    for Correspondence Search&quot;, K. Yoon, I. Kweon, 2006.</span>
 <span class="sd">    </span>
@@ -109,7 +110,7 @@
         
     
 <div class="viewcode-block" id="StereoASW.compute"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoASW.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute disparity map for BGR images.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -136,7 +137,7 @@
 
 
 <div class="viewcode-block" id="StereoGSW"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoGSW">[docs]</a><span class="k">class</span> <span class="nc">StereoGSW</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    *Incomplete* implementation of &quot;Local stereo matching using geodesic support weights&quot;,</span>
 <span class="sd">    Asmaa Hosni, Michael Bleyer, Margrit Gelautz and Christoph Rhemann (2009).</span>
 <span class="sd">    </span>
@@ -184,7 +185,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bins</span> <span class="o">=</span> <span class="n">bins</span>
         
 <div class="viewcode-block" id="StereoGSW.compute"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoGSW.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute disparity map for 3-color channel images.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         
@@ -213,7 +214,7 @@
     </form>
     </div>
 </div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -234,7 +235,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2023, decadenza.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

@@ -1,19 +1,20 @@
 
 <!DOCTYPE html>
 
-<html lang="en">
+<html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>package &#8212; SimpleStereo 1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx_highlight.js"></script>
-    <link rel="icon" href="_static/favicon.ico"/>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
   </head><body>
@@ -37,7 +38,7 @@
           <div class="body" role="main">
             
   <section id="package">
-<h1>package<a class="headerlink" href="#package" title="Permalink to this heading">¶</a></h1>
+<h1>package<a class="headerlink" href="#package" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="simplestereo.html">simplestereo package</a><ul>
@@ -48,122 +49,26 @@
 <li class="toctree-l2"><a class="reference internal" href="simplestereo.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="simplestereo.html#module-simplestereo._rigs">simplestereo._rigs module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="simplestereo.html#rigs">_rigs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.RectifiedStereoRig"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.RectifiedStereoRig.Rcommon"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.Rcommon</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.RectifiedStereoRig.computeRectificationMaps"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.computeRectificationMaps()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.RectifiedStereoRig.fromFile"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.fromFile()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.RectifiedStereoRig.get3DPoints"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.get3DPoints()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.RectifiedStereoRig.getRectifiedProjectionMatrices"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.getRectifiedProjectionMatrices()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.RectifiedStereoRig.rectHomography1"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.rectHomography1</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.RectifiedStereoRig.rectHomography2"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.rectHomography2</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.RectifiedStereoRig.rectifyImages"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.rectifyImages()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.RectifiedStereoRig.save"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.save()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig"><code class="docutils literal notranslate"><span class="pre">StereoRig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.E"><code class="docutils literal notranslate"><span class="pre">StereoRig.E</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.F"><code class="docutils literal notranslate"><span class="pre">StereoRig.F</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.R"><code class="docutils literal notranslate"><span class="pre">StereoRig.R</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.T"><code class="docutils literal notranslate"><span class="pre">StereoRig.T</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.distCoeffs1"><code class="docutils literal notranslate"><span class="pre">StereoRig.distCoeffs1</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.distCoeffs2"><code class="docutils literal notranslate"><span class="pre">StereoRig.distCoeffs2</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.fromFile"><code class="docutils literal notranslate"><span class="pre">StereoRig.fromFile()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.getBaseline"><code class="docutils literal notranslate"><span class="pre">StereoRig.getBaseline()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.getCenters"><code class="docutils literal notranslate"><span class="pre">StereoRig.getCenters()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.getEssentialMatrix"><code class="docutils literal notranslate"><span class="pre">StereoRig.getEssentialMatrix()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.getFundamentalMatrix"><code class="docutils literal notranslate"><span class="pre">StereoRig.getFundamentalMatrix()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.getProjectionMatrices"><code class="docutils literal notranslate"><span class="pre">StereoRig.getProjectionMatrices()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.intrinsic1"><code class="docutils literal notranslate"><span class="pre">StereoRig.intrinsic1</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.intrinsic2"><code class="docutils literal notranslate"><span class="pre">StereoRig.intrinsic2</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.save"><code class="docutils literal notranslate"><span class="pre">StereoRig.save()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StereoRig.undistortImages"><code class="docutils literal notranslate"><span class="pre">StereoRig.undistortImages()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StructuredLightRig"><code class="docutils literal notranslate"><span class="pre">StructuredLightRig</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StructuredLightRig.fromFile"><code class="docutils literal notranslate"><span class="pre">StructuredLightRig.fromFile()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StructuredLightRig.triangulate"><code class="docutils literal notranslate"><span class="pre">StructuredLightRig.triangulate()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo._rigs.StructuredLightRig.undistortCameraImage"><code class="docutils literal notranslate"><span class="pre">StructuredLightRig.undistortCameraImage()</span></code></a></li>
-</ul>
-</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="simplestereo.html#module-simplestereo.active">simplestereo.active module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="simplestereo.html#active">active</a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.GrayCode"><code class="docutils literal notranslate"><span class="pre">GrayCode</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.active.GrayCode.getCloud"><code class="docutils literal notranslate"><span class="pre">GrayCode.getCloud()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.GrayCodeDouble"><code class="docutils literal notranslate"><span class="pre">GrayCodeDouble</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.active.GrayCodeDouble.getCloud"><code class="docutils literal notranslate"><span class="pre">GrayCodeDouble.getCloud()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.GrayCodeSingle"><code class="docutils literal notranslate"><span class="pre">GrayCodeSingle</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTP"><code class="docutils literal notranslate"><span class="pre">StereoFTP</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTP.convertGrayscale"><code class="docutils literal notranslate"><span class="pre">StereoFTP.convertGrayscale()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTP.getCloud"><code class="docutils literal notranslate"><span class="pre">StereoFTP.getCloud()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTPAnaglyph"><code class="docutils literal notranslate"><span class="pre">StereoFTPAnaglyph</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTPAnaglyph.convertGrayscale"><code class="docutils literal notranslate"><span class="pre">StereoFTPAnaglyph.convertGrayscale()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTPAnaglyph.getCloud"><code class="docutils literal notranslate"><span class="pre">StereoFTPAnaglyph.getCloud()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTP_Mapping"><code class="docutils literal notranslate"><span class="pre">StereoFTP_Mapping</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTP_Mapping.getCloud"><code class="docutils literal notranslate"><span class="pre">StereoFTP_Mapping.getCloud()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTP_PhaseOnly"><code class="docutils literal notranslate"><span class="pre">StereoFTP_PhaseOnly</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTP_PhaseOnly.convertGrayscale"><code class="docutils literal notranslate"><span class="pre">StereoFTP_PhaseOnly.convertGrayscale()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.active.StereoFTP_PhaseOnly.getPhase"><code class="docutils literal notranslate"><span class="pre">StereoFTP_PhaseOnly.getPhase()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.buildAnaglyphFringe"><code class="docutils literal notranslate"><span class="pre">buildAnaglyphFringe()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.buildBinaryFringe"><code class="docutils literal notranslate"><span class="pre">buildBinaryFringe()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.buildFringe"><code class="docutils literal notranslate"><span class="pre">buildFringe()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.computeROI"><code class="docutils literal notranslate"><span class="pre">computeROI()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.findCentralStripe"><code class="docutils literal notranslate"><span class="pre">findCentralStripe()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.active.generateGrayCodeImgs"><code class="docutils literal notranslate"><span class="pre">generateGrayCodeImgs()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="simplestereo.html#module-simplestereo.calibration">simplestereo.calibration module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="simplestereo.html#calibration">calibration</a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.calibration.chessboardProCam"><code class="docutils literal notranslate"><span class="pre">chessboardProCam()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.calibration.chessboardProCamWhite"><code class="docutils literal notranslate"><span class="pre">chessboardProCamWhite()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.calibration.chessboardSingle"><code class="docutils literal notranslate"><span class="pre">chessboardSingle()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.calibration.chessboardStereo"><code class="docutils literal notranslate"><span class="pre">chessboardStereo()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.calibration.generateChessboardSVG"><code class="docutils literal notranslate"><span class="pre">generateChessboardSVG()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.calibration.getFundamentalMatrixFromProjections"><code class="docutils literal notranslate"><span class="pre">getFundamentalMatrixFromProjections()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.calibration.phaseShift"><code class="docutils literal notranslate"><span class="pre">phaseShift()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.calibration.phaseShiftWhite"><code class="docutils literal notranslate"><span class="pre">phaseShiftWhite()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="simplestereo.html#module-simplestereo.passive">simplestereo.passive module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="simplestereo.html#passive">passive</a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.passive.StereoASW"><code class="docutils literal notranslate"><span class="pre">StereoASW</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.passive.StereoASW.compute"><code class="docutils literal notranslate"><span class="pre">StereoASW.compute()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.passive.StereoGSW"><code class="docutils literal notranslate"><span class="pre">StereoGSW</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.passive.StereoGSW.compute"><code class="docutils literal notranslate"><span class="pre">StereoGSW.compute()</span></code></a></li>
-</ul>
-</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="simplestereo.html#module-simplestereo.points">simplestereo.points module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="simplestereo.html#points">points</a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.points.distortPoints"><code class="docutils literal notranslate"><span class="pre">distortPoints()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.points.exportPLY"><code class="docutils literal notranslate"><span class="pre">exportPLY()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.points.getAdimensional3DPoints"><code class="docutils literal notranslate"><span class="pre">getAdimensional3DPoints()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.points.importPLY"><code class="docutils literal notranslate"><span class="pre">importPLY()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="simplestereo.html#module-simplestereo.rectification">simplestereo.rectification module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="simplestereo.html#rectification">rectification</a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.rectification.fusielloRectify"><code class="docutils literal notranslate"><span class="pre">fusielloRectify()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.rectification.getBestXShearingTransformation"><code class="docutils literal notranslate"><span class="pre">getBestXShearingTransformation()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.rectification.getFittingMatrix"><code class="docutils literal notranslate"><span class="pre">getFittingMatrix()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.rectification.loopRectify"><code class="docutils literal notranslate"><span class="pre">loopRectify()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.rectification.stereoRectify"><code class="docutils literal notranslate"><span class="pre">stereoRectify()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="simplestereo.html#module-simplestereo.unwrapping">simplestereo.unwrapping module</a><ul>
@@ -172,18 +77,6 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="simplestereo.html#module-simplestereo.utils">simplestereo.utils module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="simplestereo.html#utils">utils</a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.utils.Capture"><code class="docutils literal notranslate"><span class="pre">Capture</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.utils.Capture.get"><code class="docutils literal notranslate"><span class="pre">Capture.get()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.utils.Capture.getResolution"><code class="docutils literal notranslate"><span class="pre">Capture.getResolution()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.utils.Capture.setFrameRate"><code class="docutils literal notranslate"><span class="pre">Capture.setFrameRate()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.utils.Capture.setResolution"><code class="docutils literal notranslate"><span class="pre">Capture.setResolution()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.utils.Capture.start"><code class="docutils literal notranslate"><span class="pre">Capture.start()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="simplestereo.html#simplestereo.utils.Capture.stop"><code class="docutils literal notranslate"><span class="pre">Capture.stop()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.utils.drawCorrespondingEpipolarLines"><code class="docutils literal notranslate"><span class="pre">drawCorrespondingEpipolarLines()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.utils.getCrossProductMatrix"><code class="docutils literal notranslate"><span class="pre">getCrossProductMatrix()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="simplestereo.html#simplestereo.utils.moveExtrinsicOriginToFirstCamera"><code class="docutils literal notranslate"><span class="pre">moveExtrinsicOriginToFirstCamera()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -215,7 +108,7 @@
     </form>
     </div>
 </div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -235,7 +128,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2023, decadenza.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

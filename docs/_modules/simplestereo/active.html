@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
 
-<html lang="en">
+<html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,9 +10,10 @@
     <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
-    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
   </head><body>
@@ -60,7 +61,7 @@
 
 
 <div class="viewcode-block" id="generateGrayCodeImgs"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.generateGrayCodeImgs">[docs]</a><span class="k">def</span> <span class="nf">generateGrayCodeImgs</span><span class="p">(</span><span class="n">targetDir</span><span class="p">,</span> <span class="n">resolution</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate Gray Codes and save it to PNG images.</span>
 <span class="sd">    </span>
 <span class="sd">    Starts from the couple of images *0.png* and *1.png* (one is the</span>
@@ -104,7 +105,7 @@
 
 
 <span class="k">def</span> <span class="nf">_getCentralPeak</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get maximum intensity pixel position in a fringe with central stripe</span>
 <span class="sd">    built from :func:`ss.active.buildFringe`.</span>
 <span class="sd">    </span>
@@ -124,7 +125,7 @@
     
 
 <div class="viewcode-block" id="buildFringe"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.buildFringe">[docs]</a><span class="k">def</span> <span class="nf">buildFringe</span><span class="p">(</span><span class="n">period</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="mi">1280</span><span class="p">,</span><span class="mi">720</span><span class="p">),</span> <span class="n">vertical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stripeColor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Build sinusoidal fringe image.</span>
 <span class="sd">    </span>
 <span class="sd">    Parameters</span>
@@ -188,7 +189,7 @@
 
 
 <div class="viewcode-block" id="buildBinaryFringe"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.buildBinaryFringe">[docs]</a><span class="k">def</span> <span class="nf">buildBinaryFringe</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="mi">1280</span><span class="p">,</span><span class="mi">720</span><span class="p">),</span> <span class="n">vertical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stripeColor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Build binary fringe image.</span>
 <span class="sd">    </span>
 <span class="sd">    Parameters</span>
@@ -253,7 +254,7 @@
     
 
 <div class="viewcode-block" id="buildAnaglyphFringe"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.buildAnaglyphFringe">[docs]</a><span class="k">def</span> <span class="nf">buildAnaglyphFringe</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="mi">1280</span><span class="p">,</span><span class="mi">720</span><span class="p">),</span> <span class="n">vertical</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Build sinusoidal anaglyph fringe image.</span>
 <span class="sd">    </span>
 <span class="sd">    Assumes BGR images, using blue and red as complementary colors and</span>
@@ -309,7 +310,7 @@
     
     
 <div class="viewcode-block" id="findCentralStripe"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.findCentralStripe">[docs]</a><span class="k">def</span> <span class="nf">findCentralStripe</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">sensitivity</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Find coordinates of a colored stripe in the image.</span>
 <span class="sd">    </span>
 <span class="sd">    Search is done with subpixel accuracy only along the x-axis</span>
@@ -388,7 +389,7 @@
 <span class="c1">###### (c) Pasquale Lafiosca 2020 ######</span>
 <span class="c1">########################################</span>
 <div class="viewcode-block" id="StereoFTP"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTP">[docs]</a><span class="k">class</span> <span class="nc">StereoFTP</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Manager of the Stereo Fourier Transform Profilometry.</span>
 <span class="sd">    </span>
 <span class="sd">    Parameters</span>
@@ -442,7 +443,7 @@
     
 <div class="viewcode-block" id="StereoFTP.convertGrayscale"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTP.convertGrayscale">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">convertGrayscale</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert to grayscale using max.</span>
 <span class="sd">        </span>
 <span class="sd">        This keeps highest BGR value over the central stripe</span>
@@ -469,7 +470,7 @@
         
     
     <span class="k">def</span> <span class="nf">_getProjectorMapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">interpolation</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">INTER_CUBIC</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Find projector image points corresponding to each camera pixel</span>
 <span class="sd">        after projection on reference plane to build coordinates and</span>
 <span class="sd">        virtual reference image (as seen from camera)</span>
@@ -532,7 +533,7 @@
     
     
     <span class="k">def</span> <span class="nf">_calculateCameraFrequency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objPoints</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Estimate fc from system geometry, fp and object points value.</span>
 <span class="sd">        </span>
 <span class="sd">        Draw a plane at given z distance in front of the camera.</span>
@@ -598,7 +599,7 @@
         <span class="k">return</span> <span class="mi">1</span><span class="o">/</span><span class="n">Tc</span>    
     
     <span class="k">def</span> <span class="nf">_triangulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">camPoints</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">roi</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        For each camera undistorted point (c_x, c_y) and corresponding </span>
 <span class="sd">        projector x-value p_x, find 3D point using Fundamental matrix.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -645,7 +646,7 @@
         
         
 <div class="viewcode-block" id="StereoFTP.getCloud"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTP.getCloud">[docs]</a>    <span class="k">def</span> <span class="nf">getCloud</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imgObj</span><span class="p">,</span> <span class="n">radius_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">unwrappingMethod</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Process an image and get the point cloud.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -804,7 +805,7 @@
         <span class="n">ep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ep</span>
         
         <span class="c1">### Find k values from central stripe</span>
-<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        # Calculate absolute phase shift [S. Zhang 2006 Novel method...]</span>
 <span class="sd">        theta_shift = phaseUnwrapped[cam_indexes[:,1],cam_indexes[:,0]]</span>
 <span class="sd">        theta_shift = np.mean(theta_shift)</span>
@@ -881,7 +882,7 @@
     
 
 <div class="viewcode-block" id="StereoFTPAnaglyph"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTPAnaglyph">[docs]</a><span class="k">class</span> <span class="nc">StereoFTPAnaglyph</span><span class="p">(</span><span class="n">StereoFTP</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Manager of the Stereo Fourier Transform Profilometry using an</span>
 <span class="sd">    anaglyph pattern build with :func:`buildAnaglyphFringe`.</span>
 <span class="sd">    </span>
@@ -907,7 +908,7 @@
     
 <div class="viewcode-block" id="StereoFTPAnaglyph.convertGrayscale"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTPAnaglyph.convertGrayscale">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">convertGrayscale</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert to grayscale using Guo et al., &quot;Improved fourier</span>
 <span class="sd">        transform profilometry for the automatic measurement of 3D</span>
 <span class="sd">        object shapes&quot;, 1990.</span>
@@ -932,7 +933,7 @@
         
     
 <div class="viewcode-block" id="StereoFTPAnaglyph.getCloud"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTPAnaglyph.getCloud">[docs]</a>    <span class="k">def</span> <span class="nf">getCloud</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imgObj</span><span class="p">,</span> <span class="n">radius_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">unwrappingMethod</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Process an anaglyph image and get the point cloud.</span>
 <span class="sd">        </span>
 <span class="sd">        The pattern expected to be projected on the object is the one </span>
@@ -1091,7 +1092,7 @@
         <span class="n">ep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ep</span>
         
         <span class="c1">### Find k values from central stripe</span>
-<span class="w">        </span><span class="sd">&#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        # Calculate absolute phase shift [S. Zhang 2006 Novel method...]</span>
 <span class="sd">        theta_shift = phaseUnwrapped[cam_indexes[:,1],cam_indexes[:,0]]</span>
 <span class="sd">        theta_shift = np.mean(theta_shift)</span>
@@ -1167,7 +1168,7 @@
         <span class="k">return</span> <span class="n">finalPoints</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">roi_h</span><span class="p">,</span><span class="n">roi_w</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span></div></div>
 
 <div class="viewcode-block" id="GrayCode"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.GrayCode">[docs]</a><span class="k">class</span> <span class="nc">GrayCode</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrapper for the Gray code method from OpenCV.</span>
 <span class="sd">    </span>
 <span class="sd">    Structured-light implementation using camera-projector</span>
@@ -1211,7 +1212,7 @@
     
         
 <div class="viewcode-block" id="GrayCode.getCloud"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.GrayCode.getCloud">[docs]</a>    <span class="k">def</span> <span class="nf">getCloud</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">images</span><span class="p">,</span> <span class="n">roi</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the 3D point calculation from a list of images.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -1303,7 +1304,7 @@
     
     
 <div class="viewcode-block" id="StereoFTP_Mapping"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTP_Mapping">[docs]</a><span class="k">class</span> <span class="nc">StereoFTP_Mapping</span><span class="p">(</span><span class="n">StereoFTP</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Manager of the classic Stereo Fourier Transform Profilometry.</span>
 <span class="sd">    </span>
 <span class="sd">    Classic method (does not use a virtual reference plane) but it does</span>
@@ -1328,7 +1329,7 @@
     
     
 <div class="viewcode-block" id="StereoFTP_Mapping.getCloud"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTP_Mapping.getCloud">[docs]</a>    <span class="k">def</span> <span class="nf">getCloud</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imgObj</span><span class="p">,</span> <span class="n">radius_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">unwrappingMethod</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Process an image and get the point cloud.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -1500,7 +1501,7 @@
 <span class="n">GrayCodeSingle</span> <span class="o">=</span> <span class="n">GrayCode</span>
 
 <div class="viewcode-block" id="GrayCodeDouble"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.GrayCodeDouble">[docs]</a><span class="k">class</span> <span class="nc">GrayCodeDouble</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wrapper for the Gray code method from OpenCV.</span>
 <span class="sd">    </span>
 <span class="sd">    Conventional active stereo implementation, i.e. using two calibrated cameras and</span>
@@ -1545,7 +1546,7 @@
         <span class="c1">#self.R_inv[3,3] = 1</span>
         
 <div class="viewcode-block" id="GrayCodeDouble.getCloud"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.GrayCodeDouble.getCloud">[docs]</a>    <span class="k">def</span> <span class="nf">getCloud</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">images</span><span class="p">,</span> <span class="n">roi1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">roi2</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the 3D point calculation from a list of images.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -1648,7 +1649,7 @@
 
 
 <div class="viewcode-block" id="computeROI"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.computeROI">[docs]</a><span class="k">def</span> <span class="nf">computeROI</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">blackThreshold</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">extraMargin</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Exclude black regions along borders.</span>
 <span class="sd">    </span>
 <span class="sd">    Usually the projector does not illuminate the whole image area.</span>
@@ -1740,7 +1741,7 @@
 <span class="c1">### TEMP FOR EXPERIMENTS</span>
 <span class="c1">### Return phase shift and phase of object only (NO 3D)</span>
 <div class="viewcode-block" id="StereoFTP_PhaseOnly"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTP_PhaseOnly">[docs]</a><span class="k">class</span> <span class="nc">StereoFTP_PhaseOnly</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Manager of the Stereo Fourier Transform Profilometry.</span>
 <span class="sd">    </span>
 <span class="sd">    Parameters</span>
@@ -1787,7 +1788,7 @@
     
 <div class="viewcode-block" id="StereoFTP_PhaseOnly.convertGrayscale"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTP_PhaseOnly.convertGrayscale">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">convertGrayscale</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert to grayscale using max.</span>
 <span class="sd">        </span>
 <span class="sd">        This keeps highest BGR value over the central stripe</span>
@@ -1810,7 +1811,7 @@
     
     
     <span class="k">def</span> <span class="nf">_getProjectorMapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">interpolation</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">INTER_CUBIC</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Find projector image points corresponding to each camera pixel</span>
 <span class="sd">        after projection on reference plane to build coordinates and</span>
 <span class="sd">        virtual reference image (as seen from camera)</span>
@@ -1873,7 +1874,7 @@
     
     
     <span class="k">def</span> <span class="nf">_calculateCameraFrequency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objPoints</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Estimate fc from system geometry, fp and object points value.</span>
 <span class="sd">        </span>
 <span class="sd">        Draw a plane at given z distance in front of the camera.</span>
@@ -1939,7 +1940,7 @@
         <span class="k">return</span> <span class="mi">1</span><span class="o">/</span><span class="n">Tc</span>    
     
     <span class="k">def</span> <span class="nf">_triangulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">camPoints</span><span class="p">,</span> <span class="n">p_x</span><span class="p">,</span> <span class="n">roi</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        For each camera undistorted point (c_x, c_y) and corresponding </span>
 <span class="sd">        projector x-value p_x, find 3D point using Fundamental matrix.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1987,7 +1988,7 @@
         
     
 <div class="viewcode-block" id="StereoFTP_PhaseOnly.getPhase"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.active.StereoFTP_PhaseOnly.getPhase">[docs]</a>    <span class="k">def</span> <span class="nf">getPhase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">imgObj</span><span class="p">,</span> <span class="n">radius_factor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Process an image and get the point cloud.</span>
 <span class="sd">        </span>
 <span class="sd">        Parameters</span>
@@ -2128,7 +2129,7 @@
     </form>
     </div>
 </div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -2149,7 +2150,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2023, decadenza.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>
