@@ -16,7 +16,7 @@ if __name__ == '__main__':
                             ],
           install_requires = [
                              'numpy>=1.19',
-                             'opencv-contrib-python', # >=4.5, <=4.5.3 
+                             'opencv-contrib-python>=4.5', # Originally <=4.5.3 
                              'scipy>=1.4',
                              'matplotlib>=3',
                              ],
