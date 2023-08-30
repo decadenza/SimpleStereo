@@ -1,7 +1,7 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,10 +10,9 @@
     <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
   </head><body>
@@ -51,7 +50,7 @@
 
 
 <div class="viewcode-block" id="Capture"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture">[docs]</a><span class="k">class</span> <span class="nc">Capture</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Capture a video stream continuously.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture a video stream continuously.</span>
 <span class="sd">    </span>
 <span class="sd">    Allows to capture a video stream in a separate thread and grab the current frame when needed, </span>
 <span class="sd">    minimizing lags for streaming and webcams.</span>
@@ -113,7 +112,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="fm">__del__</span><span class="p">()</span>
     
 <div class="viewcode-block" id="Capture.start"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Start the capture in a separate thread.</span>
 <span class="sd">        </span>
 <span class="sd">        No need to call this for video files.</span>
@@ -126,7 +125,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
         
 <div class="viewcode-block" id="Capture.stop"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Stop the capture.</span>
 <span class="sd">        </span>
 <span class="sd">        When finished, remember to call this method to **stop the capturing thread**.</span>
@@ -145,7 +144,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">grab</span><span class="p">()</span>
     
 <div class="viewcode-block" id="Capture.get"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Retrieve the current frame.</span>
 <span class="sd">        </span>
 <span class="sd">        Returns None if there is no frame (e.g. end of video file).</span>
@@ -156,7 +155,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frame</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
     
 <div class="viewcode-block" id="Capture.setResolution"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.setResolution">[docs]</a>    <span class="k">def</span> <span class="nf">setResolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set resolution of the camera.</span>
 <span class="sd">        </span>
 <span class="sd">        Do not call this for video files or when the thread is running.</span>
@@ -194,11 +193,11 @@
         <span class="k">return</span> <span class="n">retval</span></div>
 
 <div class="viewcode-block" id="Capture.getResolution"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.getResolution">[docs]</a>    <span class="k">def</span> <span class="nf">getResolution</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Return current resolution as (width, height) tuple. &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Return current resolution as (width, height) tuple. &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">CAP_PROP_FRAME_WIDTH</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_capture</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">CAP_PROP_FRAME_HEIGHT</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Capture.setFrameRate"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.Capture.setFrameRate">[docs]</a>    <span class="k">def</span> <span class="nf">setFrameRate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fps</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set framerate of the camera.</span>
 <span class="sd">        </span>
 <span class="sd">        Do not call this for video files or when the thread is running.</span>
@@ -222,7 +221,7 @@
 
 
 <div class="viewcode-block" id="moveExtrinsicOriginToFirstCamera"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.moveExtrinsicOriginToFirstCamera">[docs]</a><span class="k">def</span> <span class="nf">moveExtrinsicOriginToFirstCamera</span><span class="p">(</span><span class="n">R1</span><span class="p">,</span><span class="n">R2</span><span class="p">,</span><span class="n">t1</span><span class="p">,</span><span class="n">t2</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Center extrinsic parameters world coordinate system into camera 1.</span>
 <span class="sd">    </span>
 <span class="sd">    Compute R (rotation from camera 1 to camera 2) and T (translation from camera 1 to camera 2) as used in OpenCV</span>
@@ -251,7 +250,7 @@
     
 
 <div class="viewcode-block" id="getCrossProductMatrix"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.getCrossProductMatrix">[docs]</a><span class="k">def</span> <span class="nf">getCrossProductMatrix</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Build the 3x3 antisymmetric matrix representing the cross product with v.</span>
 <span class="sd">    </span>
 <span class="sd">    In literature this is often indicated as [v]\ :subscript:`x`.</span>
@@ -273,7 +272,7 @@
 
 
 <div class="viewcode-block" id="drawCorrespondingEpipolarLines"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.utils.drawCorrespondingEpipolarLines">[docs]</a><span class="k">def</span> <span class="nf">drawCorrespondingEpipolarLines</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">x1</span><span class="o">=</span><span class="p">[],</span> <span class="n">x2</span><span class="o">=</span><span class="p">[],</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">255</span><span class="p">),</span> <span class="n">thickness</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Draw epipolar lines passing by given coordinates in img1 or img1.</span>
 <span class="sd">    </span>
 <span class="sd">    The epipolar lines can be drawn on the images, knowing the</span>
@@ -361,7 +360,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -382,7 +381,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2023, decadenza.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>

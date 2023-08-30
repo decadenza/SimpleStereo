@@ -1,20 +1,19 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>simplestereo package &#8212; SimpleStereo 1 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/nature.css" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="icon" href="_static/favicon.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Welcome to SimpleStereo’s documentation!" href="index.html" /> 
@@ -42,23 +41,23 @@
           <div class="body" role="main">
             
   <section id="simplestereo-package">
-<h1>simplestereo package<a class="headerlink" href="#simplestereo-package" title="Permalink to this headline">¶</a></h1>
+<h1>simplestereo package<a class="headerlink" href="#simplestereo-package" title="Permalink to this heading">¶</a></h1>
 <section id="module-simplestereo">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-simplestereo" title="Permalink to this headline">¶</a></h2>
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-simplestereo" title="Permalink to this heading">¶</a></h2>
 <section id="simplestereo">
-<h3>simplestereo<a class="headerlink" href="#simplestereo" title="Permalink to this headline">¶</a></h3>
+<h3>simplestereo<a class="headerlink" href="#simplestereo" title="Permalink to this heading">¶</a></h3>
 <p>Module initialization.</p>
 <p>Documentation DOCSTRING follows numpy-style wherever possible.
 See <a class="reference external" href="https://numpydoc.readthedocs.io/en/latest/format.html">https://numpydoc.readthedocs.io/en/latest/format.html</a></p>
 </section>
 </section>
 <section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
 </section>
 <section id="module-simplestereo._rigs">
-<span id="simplestereo-rigs-module"></span><h2>simplestereo._rigs module<a class="headerlink" href="#module-simplestereo._rigs" title="Permalink to this headline">¶</a></h2>
+<span id="simplestereo-rigs-module"></span><h2>simplestereo._rigs module<a class="headerlink" href="#module-simplestereo._rigs" title="Permalink to this heading">¶</a></h2>
 <section id="rigs">
-<h3>_rigs<a class="headerlink" href="#rigs" title="Permalink to this headline">¶</a></h3>
+<h3>_rigs<a class="headerlink" href="#rigs" title="Permalink to this heading">¶</a></h3>
 <p>Main classes loaded at package level.</p>
 <p>See <a href="#id1"><span class="problematic" id="id2">:py:module:`__init__.py`</span></a>.</p>
 <div class="admonition-todo admonition" id="id3">
@@ -67,16 +66,17 @@ See <a class="reference external" href="https://numpydoc.readthedocs.io/en/lates
 <li><p>Add new rig class for uncalibrated stereo.</p></li>
 </ul>
 </div>
+</section>
 <dl class="py class">
 <dt class="sig sig-object py" id="simplestereo._rigs.RectifiedStereoRig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simplestereo._rigs.</span></span><span class="sig-name descname"><span class="pre">RectifiedStereoRig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Rcommon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rectHomography1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rectHomography2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/_rigs.html#RectifiedStereoRig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo._rigs.RectifiedStereoRig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><code class="xref py py-class docutils literal notranslate"><span class="pre">simplestereo._rigs.StereoRig</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><code class="xref py py-class docutils literal notranslate"><span class="pre">StereoRig</span></code></a></p>
 <p>Keep together and manage all parameters of a calibrated and rectified stereo rig.</p>
 <p>It includes all the parameters of StereoRig plus two rectifying homographies. Differently from OpenCV,
 here the rectifying <em>homographies</em> (pixel domain) are taken as input, the ones commonly referred in literature, and
 <strong>not</strong> the rectification transformation in the object space.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>Rcommon</strong> (<em>numpy.ndarray</em>) – 3x3 matrices representing the new common camera orientation
 after rectification.</p></li>
@@ -86,7 +86,7 @@ after rectification.</p></li>
 <code class="xref py py-meth docutils literal notranslate"><span class="pre">simplestereo.StereoRig()</span></code> (in the same order).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Attributes</dt>
+<dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt><strong>E</strong></dt><dd></dd>
 <dt><strong>F</strong></dt><dd></dd>
@@ -103,11 +103,7 @@ after rectification.</p></li>
 </dd>
 </dl>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.computeRectificationMaps" title="simplestereo._rigs.RectifiedStereoRig.computeRectificationMaps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">computeRectificationMaps</span></code></a>([destDims, alpha])</p></td>
 <td><p>Compute the two maps to undistort and rectify the stereo pair.</p></td>
@@ -161,7 +157,7 @@ It modifies the original camera matrix applying affine transformations (x-y scal
 without losing rectification. The two new maps are stored internally.
 This method is called in the constructor with default parameters and can be called later to change its settings.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>destDims</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Resolution of destination images as (width, height) tuple (default to first image resolution).</p></li>
 <li><p><strong>alpha</strong> (<em>float</em><em>, </em><em>optional</em>) – Scaling parameter between 0 and 1 to be applied to both images. If alpha=1 (default), the corners of the original
@@ -170,7 +166,7 @@ Intermediate values produce a result in the middle. Extremely skewed camera posi
 do not work well with alpha&lt;1.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -188,13 +184,13 @@ For each camera, the function computes homography H as the rectification transfo
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fromFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/_rigs.html#RectifiedStereoRig.fromFile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo._rigs.RectifiedStereoRig.fromFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alternative initialization of StereoRigRectified object from JSON file.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – Path of the JSON file containing saved parameters of the stereo rig.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>An object of StereoRigRectified class.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>StereoRigRectified</p>
 </dd>
 </dl>
@@ -208,14 +204,14 @@ For each camera, the function computes homography H as the rectification transfo
 the output would be in the same units. The world origin will be in the
 left camera.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>disparityMap</strong> (<em>numpy.ndarray</em>) – A dense disparity map having same height and width of images.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Array of points having shape <em>(height,width,3)</em>, where at each y,x coordinates
 a <em>(x,y,z)</em> point is associated.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -229,7 +225,7 @@ a <em>(x,y,z)</em> point is associated.</p>
 have only one horizontal displacement (the baseline) and
 have new intrinsics that depends on all the rigid manipulation done after rectification.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
 <li><p><em>numpy.ndarray</em> – The 3x4 projection matrix of the first camera.</p></li>
 <li><p><em>numpy.ndarray</em> – The 3x4 projection matrix of the second camera.</p></li>
@@ -251,24 +247,24 @@ have new intrinsics that depends on all the rigid manipulation done after rectif
 
 <dl class="py method">
 <dt class="sig sig-object py" id="simplestereo._rigs.RectifiedStereoRig.rectifyImages">
-<span class="sig-name descname"><span class="pre">rectifyImages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation=&lt;MagicMock</span> <span class="pre">id='139737847878272'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/_rigs.html#RectifiedStereoRig.rectifyImages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo._rigs.RectifiedStereoRig.rectifyImages" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">rectifyImages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolation=&lt;MagicMock</span> <span class="pre">id='140581085517952'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/_rigs.html#RectifiedStereoRig.rectifyImages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo._rigs.RectifiedStereoRig.rectifyImages" title="Permalink to this definition">¶</a></dt>
 <dd><p>Undistort, rectify and apply affine transformation to a couple of images coming from the stereo rig.</p>
 <p><em>img1</em> and <em>img2</em> must be provided as in calibration (es. img1 is the left image, img2 the right one).
 This method is wraps <code class="docutils literal notranslate"><span class="pre">cv2.remap()</span></code> for two images of the stereo pair. The maps used are computed by
 <a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.computeRectificationMaps" title="simplestereo._rigs.RectifiedStereoRig.computeRectificationMaps"><code class="xref py py-meth docutils literal notranslate"><span class="pre">computeRectificationMaps()</span></code></a> during initialization (with default parameters).
 <a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.computeRectificationMaps" title="simplestereo._rigs.RectifiedStereoRig.computeRectificationMaps"><code class="xref py py-meth docutils literal notranslate"><span class="pre">computeRectificationMaps()</span></code></a> can be called before calling this method to change mapping settings (e.g. final resolution).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>img1</strong> (<em>cv2.Mat</em>) – A couple of OpenCV images taken with the stereo rig (ordered).</p></li>
 <li><p><strong>img2</strong> (<em>cv2.Mat</em>) – A couple of OpenCV images taken with the stereo rig (ordered).</p></li>
 <li><p><strong>interpolation</strong> (<em>int</em><em>, </em><em>optional</em>) – OpenCV <em>InterpolationFlag</em>. The most common are <code class="docutils literal notranslate"><span class="pre">cv2.INTER_NEAREST</span></code>, <code class="docutils literal notranslate"><span class="pre">cv2.INTER_LINEAR</span></code> (default) and <code class="docutils literal notranslate"><span class="pre">cv2.INTER_CUBIC</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>img1_rect, img2_rect</strong> – The undistorted images.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>cv2.Mat</p>
 </dd>
 </dl>
@@ -280,7 +276,7 @@ This method is wraps <code class="docutils literal notranslate"><span class="pre
 <dd><p>Save configuration to JSON file.</p>
 <p>Save the current stereo rig configuration to a JSON file that can be loaded later.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – Path where to save the JSON file containing the parameters of the stereo rig.</p>
 </dd>
 </dl>
@@ -296,7 +292,7 @@ This method is wraps <code class="docutils literal notranslate"><span class="pre
 <p>The essential E and fundamental F matrices are optional as they are not always available.
 They may be computed from camera parameters, if needed.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>res1</strong> (<em>sequence</em>) – Resolution of camera as (width, height)</p></li>
 <li><p><strong>res2</strong> (<em>sequence</em>) – Resolution of camera as (width, height)</p></li>
@@ -315,7 +311,7 @@ If your world coordinate system is placed into a camera, you must convert it to 
 (see <a class="reference internal" href="#simplestereo.utils.moveExtrinsicOriginToFirstCamera" title="simplestereo.utils.moveExtrinsicOriginToFirstCamera"><code class="xref py py-func docutils literal notranslate"><span class="pre">simplestereo.utils.moveExtrinsicOriginToFirstCamera()</span></code></a>).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Attributes</dt>
+<dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt><strong>E</strong></dt><dd></dd>
 <dt><strong>F</strong></dt><dd></dd>
@@ -329,11 +325,7 @@ If your world coordinate system is placed into a camera, you must convert it to 
 </dd>
 </dl>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo._rigs.StereoRig.fromFile" title="simplestereo._rigs.StereoRig.fromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fromFile</span></code></a>(filepath)</p></td>
 <td><p>Alternative initialization of StereoRig object from JSON file.</p></td>
@@ -396,13 +388,13 @@ If your world coordinate system is placed into a camera, you must convert it to 
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fromFile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/_rigs.html#StereoRig.fromFile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo._rigs.StereoRig.fromFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alternative initialization of StereoRig object from JSON file.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – Path of the JSON file containing saved parameters of the stereo rig.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>An object of StereoRig class.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig">StereoRig</a></p>
 </dd>
 </dl>
@@ -413,10 +405,10 @@ If your world coordinate system is placed into a camera, you must convert it to 
 <span class="sig-name descname"><span class="pre">getBaseline</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/_rigs.html#StereoRig.getBaseline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo._rigs.StereoRig.getBaseline" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the norm of the vector from camera 1 to camera 2.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Length of the baseline in world units.</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>float</p>
 </dd>
 </dl>
@@ -428,7 +420,7 @@ If your world coordinate system is placed into a camera, you must convert it to 
 <dd><p>Calculate camera centers in world coordinates.</p>
 <p>Anyway first camera will always be centered in zero (returned anyway).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
 <li><p><em>numpy.ndarray</em> – 3D coordinates of first camera center (always zero).</p></li>
 <li><p><em>numpy.ndarray</em> – 3D coordinates of second camera center.</p></li>
@@ -444,10 +436,10 @@ If your world coordinate system is placed into a camera, you must convert it to 
 <dd><p>Returns the essential matrix E.</p>
 <p>If not set, E is computed from the fundamental matrix F and the camera matrices.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>E</strong> – The 3x3 essential matrix.</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -462,10 +454,10 @@ If your world coordinate system is placed into a camera, you must convert it to 
 <p>If not set, F is computed from projection matrices using
 <a class="reference internal" href="#simplestereo.calibration.getFundamentalMatrixFromProjections" title="simplestereo.calibration.getFundamentalMatrixFromProjections"><code class="xref py py-func docutils literal notranslate"><span class="pre">simplestereo.calibration.getFundamentalMatrixFromProjections()</span></code></a>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>F</strong> – The 3x3 fundamental matrix.</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -478,7 +470,7 @@ If your world coordinate system is placed into a camera, you must convert it to 
 <span class="sig-name descname"><span class="pre">getProjectionMatrices</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/_rigs.html#StereoRig.getProjectionMatrices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo._rigs.StereoRig.getProjectionMatrices" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate the projection matrices of camera 1 and camera 2.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
 <li><p><em>numpy.ndarray</em> – The 3x4 projection matrix of the first camera.</p></li>
 <li><p><em>numpy.ndarray</em> – The 3x4 projection matrix of the second camera.</p></li>
@@ -504,7 +496,7 @@ If your world coordinate system is placed into a camera, you must convert it to 
 <dd><p>Save configuration to JSON file.</p>
 <p>Save the current stereo rig configuration to a JSON file that can be loaded later.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – Path where to save the JSON file containing the parameters of the stereo rig.</p>
 </dd>
 </dl>
@@ -521,7 +513,7 @@ otherwise all the parameters of
 <cite>cv2.getOptimalNewCameraMatrix()</cite> are considered when
 undistorting the images.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>img1</strong> (<em>cv2.Mat</em>) – A couple of OpenCV images taken with the stereo rig (ordered).</p></li>
 <li><p><strong>img2</strong> (<em>cv2.Mat</em>) – A couple of OpenCV images taken with the stereo rig (ordered).</p></li>
@@ -535,7 +527,7 @@ with some extra black images. Values in the middle are accepted too (default to 
 <li><p><strong>centerPrincipalPoint</strong> (<em>bool</em>) – If True the principal point is centered within the images (default to False).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><strong>img1_undist, img2_undist</strong> (<em>cv2.Mat</em>) – The undistorted images.</p></li>
 <li><p><strong>cameraMatrixNew1, cameraMatrixNew2</strong> (<em>numpy.ndarray</em>) – If <em>changeCameras</em> is set to True, the new camera matrices are returned too.</p></li>
@@ -554,10 +546,10 @@ with some extra black images. Values in the middle are accepted too (default to 
 <dl class="py class">
 <dt class="sig sig-object py" id="simplestereo._rigs.StructuredLightRig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simplestereo._rigs.</span></span><span class="sig-name descname"><span class="pre">StructuredLightRig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/_rigs.html#StructuredLightRig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo._rigs.StructuredLightRig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><code class="xref py py-class docutils literal notranslate"><span class="pre">simplestereo._rigs.StereoRig</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><code class="xref py py-class docutils literal notranslate"><span class="pre">StereoRig</span></code></a></p>
 <p>StereoRig child class with structured light methods.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Attributes</dt>
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>E</strong></dt><dd></dd>
 <dt><strong>F</strong></dt><dd></dd>
@@ -571,11 +563,7 @@ with some extra black images. Values in the middle are accepted too (default to 
 </dd>
 </dl>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo._rigs.StructuredLightRig.fromFile" title="simplestereo._rigs.StructuredLightRig.fromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fromFile</span></code></a>()</p></td>
 <td><p>Alternative initialization of StereoRig object from JSON file.</p></td>
@@ -614,13 +602,13 @@ with some extra black images. Values in the middle are accepted too (default to 
 <span class="sig-name descname"><span class="pre">fromFile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/_rigs.html#StructuredLightRig.fromFile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo._rigs.StructuredLightRig.fromFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alternative initialization of StereoRig object from JSON file.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>filepath</strong> (<em>str</em>) – Path of the JSON file containing saved parameters of the stereo rig.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>An object of StereoRig class.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig">StereoRig</a></p>
 </dd>
 </dl>
@@ -632,7 +620,7 @@ with some extra black images. Values in the middle are accepted too (default to 
 <dd><p>Given camera-projector correspondences, proceed with
 triangulation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>camPoints</strong> (<em>numpy.ndarray</em>) – Ordered corresponding coordinates as (x, y) couples from
 camera and projector. Last dimension must be 2.
@@ -642,7 +630,7 @@ camera and projector. Last dimension must be 2.
 Camera points must be already undistorted.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>3D coordinates with shape (-1, 1, 3).</p>
 </dd>
 </dl>
@@ -653,10 +641,10 @@ Camera points must be already undistorted.</p></li>
 <span class="sig-name descname"><span class="pre">undistortCameraImage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imgObj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/_rigs.html#StructuredLightRig.undistortCameraImage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo._rigs.StructuredLightRig.undistortCameraImage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Undistort camera image.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>imgObj</strong> (<em>numpy.ndarray</em>) – Camera image.</p>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>Undistorted image.</p>
 </dd>
 </dl>
@@ -665,15 +653,15 @@ Camera points must be already undistorted.</p></li>
 </dd></dl>
 
 </section>
-</section>
 <section id="module-simplestereo.active">
-<span id="simplestereo-active-module"></span><h2>simplestereo.active module<a class="headerlink" href="#module-simplestereo.active" title="Permalink to this headline">¶</a></h2>
+<span id="simplestereo-active-module"></span><h2>simplestereo.active module<a class="headerlink" href="#module-simplestereo.active" title="Permalink to this heading">¶</a></h2>
 <section id="active">
-<h3>active<a class="headerlink" href="#active" title="Permalink to this headline">¶</a></h3>
+<h3>active<a class="headerlink" href="#active" title="Permalink to this heading">¶</a></h3>
 <p>Contains classes to manage active stereo algorithms and helper
 functions.
 This module contains both conventional active stereo (2 cameras +
 projector) and structured-light (1 camera + projector) methods.</p>
+</section>
 <dl class="py class">
 <dt class="sig sig-object py" id="simplestereo.active.GrayCode">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">GrayCode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">black_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">white_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#GrayCode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.GrayCode" title="Permalink to this definition">¶</a></dt>
@@ -682,7 +670,7 @@ projector) and structured-light (1 camera + projector) methods.</p>
 <p>Structured-light implementation using camera-projector
 calibrated rig.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rig</strong> (<a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><em>StereoRig</em></a>) – A stereo rig object with camera in position 1 (world origin) and projector in
 position 2.</p></li>
@@ -705,11 +693,7 @@ If this is the case, you can ignore it setting
 or setting a narrow <cite>roi</cite>.</p>
 </div>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo.active.GrayCode.getCloud" title="simplestereo.active.GrayCode.getCloud"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getCloud</span></code></a>(images[, roi])</p></td>
 <td><p>Perform the 3D point calculation from a list of images.</p></td>
@@ -721,7 +705,7 @@ or setting a narrow <cite>roi</cite>.</p>
 <span class="sig-name descname"><span class="pre">getCloud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">images</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#GrayCode.getCloud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.GrayCode.getCloud" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform the 3D point calculation from a list of images.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>images</strong> (<em>list</em><em> or </em><em>tuple</em>) – A list of image <em>paths</em> acquired by the camera.
 Each set must be ordered like all the Gray code patterns
@@ -731,10 +715,10 @@ Any following extra image will be ignored (es. full white).</p></li>
 where x,y is the upper left corner. Default to None.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Points with shape (n,1,3)</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -755,7 +739,7 @@ shape with NaN in invalid locations.</p>
 <p>Conventional active stereo implementation, i.e. using two calibrated cameras and
 one uncalibrated projector.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rig</strong> (<a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><em>StereoRig</em></a>) – A stereo rig object with two cameras.</p></li>
 <li><p><strong>projRes</strong> (<em>tuple</em>) – Projector resolution as (width, height).</p></li>
@@ -778,11 +762,7 @@ If this is the case, you can ignore it setting
 or setting a narrow <cite>roi</cite>.</p>
 </div>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo.active.GrayCodeDouble.getCloud" title="simplestereo.active.GrayCodeDouble.getCloud"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getCloud</span></code></a>(images[, roi1, roi2])</p></td>
 <td><p>Perform the 3D point calculation from a list of images.</p></td>
@@ -794,7 +774,7 @@ or setting a narrow <cite>roi</cite>.</p>
 <span class="sig-name descname"><span class="pre">getCloud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">images</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi1</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi2</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#GrayCodeDouble.getCloud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.GrayCodeDouble.getCloud" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform the 3D point calculation from a list of images.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>images</strong> (<em>list</em><em> or </em><em>tuple</em>) – A list (or tuple) of 2 dimensional tuples (ordered left and
 right) of image paths, e.g. [(“oneL.png”,”oneR.png”),
@@ -808,10 +788,10 @@ Default to None.</p></li>
 <li><p><strong>roi2</strong> (<em>tuple</em><em>, </em><em>optional</em>) – As <cite>roi1</cite>, but for camera 2.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Points with shape (n,1,3)</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -822,7 +802,7 @@ Default to None.</p></li>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="simplestereo.active.GrayCodeSingle">
 <span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">GrayCodeSingle</span></span><a class="headerlink" href="#simplestereo.active.GrayCodeSingle" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#simplestereo.active.GrayCode" title="simplestereo.active.GrayCode"><code class="xref py py-class docutils literal notranslate"><span class="pre">simplestereo.active.GrayCode</span></code></a></p>
+<dd><p>alias of <a class="reference internal" href="#simplestereo.active.GrayCode" title="simplestereo.active.GrayCode"><code class="xref py py-class docutils literal notranslate"><span class="pre">GrayCode</span></code></a></p>
 </dd></dl>
 
 <dl class="py class">
@@ -831,7 +811,7 @@ Default to None.</p></li>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Manager of the Stereo Fourier Transform Profilometry.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>stereoRig</strong> (<a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><em>StereoRig</em></a>) – A stereo rig object with camera in position 1 (world origin) and projector in
 position 2.</p></li>
@@ -852,11 +832,7 @@ Transform Profilometry Algorithm”,
 Sensors, 2022, <a class="reference external" href="https://doi.org/10.3390/s22020433">https://doi.org/10.3390/s22020433</a></p>
 </div>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo.active.StereoFTP.convertGrayscale" title="simplestereo.active.StereoFTP.convertGrayscale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convertGrayscale</span></code></a>(img)</p></td>
 <td><p>Convert to grayscale using max.</p></td>
@@ -873,13 +849,13 @@ Sensors, 2022, <a class="reference external" href="https://doi.org/10.3390/s2202
 <p>This keeps highest BGR value over the central stripe
 (e.g. (0,0,255) -&gt; 255), allowing the FFT to work properly.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>image</strong> (<em>numpy.ndarray</em>) – BGR image.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Grayscale image.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -899,7 +875,7 @@ works best at converting the stripe to white.</p>
 <span class="sig-name descname"><span class="pre">getCloud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imgObj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unwrappingMethod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#StereoFTP.getCloud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.StereoFTP.getCloud" title="Permalink to this definition">¶</a></dt>
 <dd><p>Process an image and get the point cloud.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>imgObj</strong> (<em>numpy.ndarray</em>) – BGR image acquired by the camera.</p></li>
 <li><p><strong>radius_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – Radius factor of the pass-band filter. Default to 0.5.</p></li>
@@ -909,7 +885,7 @@ where x,y is the upper left corner. Default to None.</p></li>
 as the only argument. If None (default), <a href="#id7"><span class="problematic" id="id8">`</span></a>np.unwrap`is used.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>Point cloud with shape (height,width,3), with height and width</em></p></li>
 <li><p>same as the input image or selected <cite>roi</cite>.</p></li>
@@ -924,11 +900,11 @@ as the only argument. If None (default), <a href="#id7"><span class="problematic
 <dl class="py class">
 <dt class="sig sig-object py" id="simplestereo.active.StereoFTPAnaglyph">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">StereoFTPAnaglyph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stereoRig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fringe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeSensitivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#StereoFTPAnaglyph"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.StereoFTPAnaglyph" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#simplestereo.active.StereoFTP" title="simplestereo.active.StereoFTP"><code class="xref py py-class docutils literal notranslate"><span class="pre">simplestereo.active.StereoFTP</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#simplestereo.active.StereoFTP" title="simplestereo.active.StereoFTP"><code class="xref py py-class docutils literal notranslate"><span class="pre">StereoFTP</span></code></a></p>
 <p>Manager of the Stereo Fourier Transform Profilometry using an
 anaglyph pattern build with <a class="reference internal" href="#simplestereo.active.buildAnaglyphFringe" title="simplestereo.active.buildAnaglyphFringe"><code class="xref py py-func docutils literal notranslate"><span class="pre">buildAnaglyphFringe()</span></code></a>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>stereoRig</strong> (<a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><em>StereoRig</em></a>) – A stereo rig object with camera in position 1 (world origin) and projector in
 position 2.</p></li>
@@ -946,11 +922,7 @@ Default to “red”.</p></li>
 <p>This is a work in progress.</p>
 </div>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo.active.StereoFTPAnaglyph.convertGrayscale" title="simplestereo.active.StereoFTPAnaglyph.convertGrayscale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convertGrayscale</span></code></a>(img)</p></td>
 <td><p>Convert to grayscale using Guo et al., &quot;Improved fourier transform profilometry for the automatic measurement of 3D object shapes&quot;, 1990.</p></td>
@@ -967,13 +939,13 @@ Default to “red”.</p></li>
 transform profilometry for the automatic measurement of 3D
 object shapes”, 1990.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>image</strong> (<em>numpy.ndarray</em>) – BGR image.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Grayscale image as float.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -990,7 +962,7 @@ object shapes”, 1990.</p>
 <p>The pattern expected to be projected on the object is the one
 produced by <cite>:func:buildAnaglyphFringe</cite>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>imgObj</strong> (<em>numpy.ndarray</em>) – BGR image acquired by the camera.</p></li>
 <li><p><strong>radius_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – Radius factor of the pass-band filter. Default to 0.5.</p></li>
@@ -1000,7 +972,7 @@ where x,y is the upper left corner. Default to None.</p></li>
 as the only argument. If None (default), <a href="#id10"><span class="problematic" id="id11">`</span></a>np.unwrap`is used.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>Point cloud with shape (height,width,3), with height and width</em></p></li>
 <li><p>same as the input image or selected <cite>roi</cite>.</p></li>
@@ -1015,12 +987,12 @@ as the only argument. If None (default), <a href="#id10"><span class="problemati
 <dl class="py class">
 <dt class="sig sig-object py" id="simplestereo.active.StereoFTP_Mapping">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">StereoFTP_Mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stereoRig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fringe</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'red'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeSensitivity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#StereoFTP_Mapping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.StereoFTP_Mapping" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#simplestereo.active.StereoFTP" title="simplestereo.active.StereoFTP"><code class="xref py py-class docutils literal notranslate"><span class="pre">simplestereo.active.StereoFTP</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#simplestereo.active.StereoFTP" title="simplestereo.active.StereoFTP"><code class="xref py py-class docutils literal notranslate"><span class="pre">StereoFTP</span></code></a></p>
 <p>Manager of the classic Stereo Fourier Transform Profilometry.</p>
 <p>Classic method (does not use a virtual reference plane) but it does
 use the automatic band-pass estimation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>stereoRig</strong> (<a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><em>StereoRig</em></a>) – A stereo rig object with camera in position 1 (world origin) and projector in
 position 2.</p></li>
@@ -1034,11 +1006,7 @@ Default to “red”.</p></li>
 </dd>
 </dl>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">convertGrayscale</span></code>(img)</p></td>
 <td><p>Convert to grayscale using max.</p></td>
@@ -1053,7 +1021,7 @@ Default to “red”.</p></li>
 <span class="sig-name descname"><span class="pre">getCloud</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imgObj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unwrappingMethod</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#StereoFTP_Mapping.getCloud"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.StereoFTP_Mapping.getCloud" title="Permalink to this definition">¶</a></dt>
 <dd><p>Process an image and get the point cloud.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>imgObj</strong> (<em>numpy.ndarray</em>) – BGR image acquired by the camera.</p></li>
 <li><p><strong>radius_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – Radius factor of the pass-band filter. Default to 0.5.</p></li>
@@ -1063,7 +1031,7 @@ where x,y is the upper left corner. Default to None.</p></li>
 as the only argument. If None (default), <a href="#id12"><span class="problematic" id="id13">`</span></a>np.unwrap`is used.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>Point cloud with shape (height,width,3), with height and width</em></p></li>
 <li><p>same as the input image or selected <cite>roi</cite>.</p></li>
@@ -1081,7 +1049,7 @@ as the only argument. If None (default), <a href="#id12"><span class="problemati
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Manager of the Stereo Fourier Transform Profilometry.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>stereoRig</strong> (<a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><em>StereoRig</em></a>) – A stereo rig object with camera in position 1 (world origin) and projector in
 position 2.</p></li>
@@ -1095,11 +1063,7 @@ Default to “red”.</p></li>
 </dd>
 </dl>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo.active.StereoFTP_PhaseOnly.convertGrayscale" title="simplestereo.active.StereoFTP_PhaseOnly.convertGrayscale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convertGrayscale</span></code></a>(img)</p></td>
 <td><p>Convert to grayscale using max.</p></td>
@@ -1116,13 +1080,13 @@ Default to “red”.</p></li>
 <p>This keeps highest BGR value over the central stripe
 (e.g. (0,0,255) -&gt; 255), allowing the FFT to work properly.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>image</strong> (<em>numpy.ndarray</em>) – BGR image.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Grayscale image.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -1137,7 +1101,7 @@ Default to “red”.</p></li>
 <span class="sig-name descname"><span class="pre">getPhase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">imgObj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#StereoFTP_PhaseOnly.getPhase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.StereoFTP_PhaseOnly.getPhase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Process an image and get the point cloud.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>imgObj</strong> (<em>numpy.ndarray</em>) – BGR image acquired by the camera.</p></li>
 <li><p><strong>radius_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – Radius factor of the pass-band filter. Default to 0.5.</p></li>
@@ -1145,7 +1109,7 @@ Default to “red”.</p></li>
 where x,y is the upper left corner. Default to None.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>Point cloud with shape (height,width,3), with height and width</em></p></li>
 <li><p>same as the input image or selected <cite>roi</cite>.</p></li>
@@ -1159,7 +1123,7 @@ where x,y is the upper left corner. Default to None.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.active.buildAnaglyphFringe">
-<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildAnaglyphFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='139737846905152'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildAnaglyphFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildAnaglyphFringe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildAnaglyphFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140581084609120'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildAnaglyphFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildAnaglyphFringe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build sinusoidal anaglyph fringe image.</p>
 <p>Assumes BGR images, using blue and red as complementary colors and
 green as central stripe. This allows to actually extract three
@@ -1167,7 +1131,7 @@ different images from a single scan. Red and blue can be subtracted
 to suppress DC component. Green serves the purpose to obtain a
 reference phase in the FTP algorithm.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>period</strong> (<em>float</em>) – Fringe period along x axis, in pixels.</p></li>
 <li><p><strong>shift</strong> (<em>float</em>) – Shift to apply. Default to 0.</p></li>
@@ -1177,10 +1141,10 @@ reference phase in the FTP algorithm.</p>
 Default np.uint8 (max 255).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Fringe image.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -1188,10 +1152,10 @@ Default np.uint8 (max 255).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.active.buildBinaryFringe">
-<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildBinaryFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='139737847606336'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildBinaryFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildBinaryFringe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildBinaryFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140581084546096'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildBinaryFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildBinaryFringe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build binary fringe image.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>period</strong> (<em>int</em>) – Fringe period along x axis, in pixels. An integer is expected.
 If a float is passed, it will be converted to integer.</p></li>
@@ -1206,10 +1170,10 @@ Default to None (no stripe drawn).</p></li>
 Default np.uint8 (max 255).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Fringe image.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -1217,10 +1181,10 @@ Default np.uint8 (max 255).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.active.buildFringe">
-<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='139737847192592'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildFringe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">simplestereo.active.</span></span><span class="sig-name descname"><span class="pre">buildFringe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims=(1280</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">720)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripeColor=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;MagicMock</span> <span class="pre">id='140581084574480'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/active.html#buildFringe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.active.buildFringe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Build sinusoidal fringe image.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>period</strong> (<em>float</em>) – Fringe period along x axis, in pixels.</p></li>
 <li><p><strong>shift</strong> (<em>float</em><em>, </em><em>optional</em>) – Shift to apply. Default to 0.</p></li>
@@ -1234,10 +1198,10 @@ Default to None (no stripe drawn).</p></li>
 Default np.uint8 (max 255).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Fringe image.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -1251,7 +1215,7 @@ Default np.uint8 (max 255).</p></li>
 This function attempts to find the region of interest as a rectangle
 inside the biggest contour.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>img</strong> (<em>numpy.ndarray</em>) – Camera image with black borders.</p></li>
 <li><p><strong>blackThreshold</strong> (<em>int</em><em>, </em><em>optional</em>) – Threshold for the black regions between 0 and 255.
@@ -1259,7 +1223,7 @@ Default to 10.</p></li>
 <li><p><strong>extraMargin</strong> (<em>int</em><em>, </em><em>optional</em>) – Extra safety margin to reduce to ROI. Default to 0.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>tuple</em> – ROI as tuple of integers (x,y,w,h).</p></li>
 <li><p><em>.. note:: To rewrite completely. Not suitable for production.</em></p></li>
@@ -1276,7 +1240,7 @@ Default to 10.</p></li>
 <p>Search is done with subpixel accuracy only along the x-axis
 direction.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>image</strong> (<em>numpy.ndarray</em>) – BGR image with a colored vertical stripe.</p></li>
 <li><p><strong>color</strong> (<em>str</em><em>, </em><em>optional</em>) – Color of the original stripe as ‘blue’,’green’ or ‘red’.
@@ -1286,10 +1250,10 @@ Default to ‘red’.</p></li>
 <li><p><strong>interpolation</strong> (<em>str</em>) – See <cite>scipy.interpolate.interp1d</cite> <cite>kind</cite> parameter.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>x,y coordinates of stripe centers with shape (n,2).</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -1310,32 +1274,32 @@ First half contains vertical stripes, followed by horizontal ones.
 The function stores also a <em>black.png</em> and <em>white.png</em> images for
 threshold calibration.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>targetDir</strong> (<em>string</em>) – Path to the directory where to save Gray codes. Directory is created if not exists.</p></li>
 <li><p><strong>resolution</strong> (<em>tuple</em>) – Pixel dimensions of the images as (width, height) tuple (to be matched with projector resolution).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Number of generated patterns (black and white are <em>not</em> considered in this count).</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 </section>
-</section>
 <section id="module-simplestereo.calibration">
-<span id="simplestereo-calibration-module"></span><h2>simplestereo.calibration module<a class="headerlink" href="#module-simplestereo.calibration" title="Permalink to this headline">¶</a></h2>
+<span id="simplestereo-calibration-module"></span><h2>simplestereo.calibration module<a class="headerlink" href="#module-simplestereo.calibration" title="Permalink to this heading">¶</a></h2>
 <section id="calibration">
-<h3>calibration<a class="headerlink" href="#calibration" title="Permalink to this headline">¶</a></h3>
+<h3>calibration<a class="headerlink" href="#calibration" title="Permalink to this heading">¶</a></h3>
 <p>Contains different calibration algorithms.</p>
 <div class="admonition-todo admonition" id="id15">
 <p class="admonition-title">Todo</p>
 <p>Implement circles calibration. N.B. after using <code class="docutils literal notranslate"><span class="pre">cv2.findCirclesGrid()</span></code> a point refinement algorithm is needed (like  <code class="docutils literal notranslate"><span class="pre">cv2.cornerSubPix()</span></code> does for the chessboard).</p>
 </div>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.calibration.chessboardProCam">
 <span class="sig-prename descclassname"><span class="pre">simplestereo.calibration.</span></span><span class="sig-name descname"><span class="pre">chessboardProCam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">images</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projectorResolution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chessboardSize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(6,</span> <span class="pre">7)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">squareSize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">black_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">white_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camIntrinsic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camDistCoeffs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/calibration.html#chessboardProCam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.calibration.chessboardProCam" title="Permalink to this definition">¶</a></dt>
@@ -1345,7 +1309,7 @@ and based on the paper of Daniel Moreno and Gabriel Taubin, “Simple, accurate,
 robust projector-camera calibration”, DOI: 10.1109/3DIMPVT.2012.77.
 The camera will be put in world origin.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>images</strong> (<em>list</em><em> or </em><em>tuple</em>) – A list of lists (one per set) of image paths acquired by the camera.
 Each set must be ordered like all the Gray code patterns (see <code class="docutils literal notranslate"><span class="pre">cv2.structured_light_GrayCodePattern</span></code>)
@@ -1366,7 +1330,7 @@ If not given they will be calculated.</p></li>
 <li><p><strong>normalize</strong> (<em>bool</em>) – If True, the images are min-max normalized before processing. Default to False.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>StereoRig</em> – A StereoRig object</p></li>
 <li><p><em>.. todo::</em> – Iteratively exclude images that have high reprojection errors and re-calibrate.</p></li>
@@ -1386,7 +1350,7 @@ and based on the paper of Daniel Moreno and Gabriel Taubin, “Simple, accurate,
 robust projector-camera calibration”, DOI: 10.1109/3DIMPVT.2012.77.
 The camera will be put in world origin.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>images</strong> (<em>list</em><em> or </em><em>tuple</em>) – A list of lists (one per set) of image paths acquired by the camera.
 Each set must be ordered like all the Gray code patterns (see <code class="docutils literal notranslate"><span class="pre">cv2.structured_light_GrayCodePattern</span></code>)
@@ -1410,7 +1374,7 @@ If not given they will be calculated.</p></li>
 <li><p><strong>extended</strong> (<em>bool</em>) – If True, <cite>perViewErrors</cite> of the stereo calibration are returned. Default to False.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>StereoRig</em> – A StereoRig object</p></li>
 <li><p><em>perViewErrors</em> – Returned only if <cite>extended</cite> is True. For each pattern view, the
@@ -1426,7 +1390,7 @@ RMS error of camera and projector is returned.</p></li>
 <span class="sig-prename descclassname"><span class="pre">simplestereo.calibration.</span></span><span class="sig-name descname"><span class="pre">chessboardSingle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">images</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chessboardSize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(6,</span> <span class="pre">7)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">squareSize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">showImages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/calibration.html#chessboardSingle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.calibration.chessboardSingle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calibrate a single camera with a chessboard pattern.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>images</strong> (<em>list</em><em> or </em><em>tuple</em>) – A list (or tuple) of image paths, e.g. [“one.png”, “two.png”, …]</p></li>
 <li><p><strong>chessboardSize</strong> (<em>tuple</em>) – Chessboard <em>internal</em> dimensions as (width, height). Dimensions should be different to avoid ambiguity.
@@ -1437,7 +1401,7 @@ measures in the 3D reconstruction will be in mm. Default to 1.</p></li>
 Default to False.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><strong>retval</strong> (<em>bool</em>) – Same values of <cite>cv2.calibrateCamera</cite>.</p></li>
 <li><p><strong>cameraMatrix</strong> (<em>numpy.ndarray</em>)</p></li>
@@ -1456,7 +1420,7 @@ Default to False.</p></li>
 <dd><p>Performs stereo calibration between two cameras and returns a StereoRig object.</p>
 <p>First camera (generally left) will be put in world origin.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>images</strong> (<em>list</em><em> or </em><em>tuple</em>) – A list (or tuple) of 2 dimensional tuples (ordered left and
 right) of image paths, e.g. [(“oneL.png”,”oneR.png”),
@@ -1467,7 +1431,7 @@ Default to (7,6).</p></li>
 measures in the 3D reconstruction will be in mm. Default to 1.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>StereoRig</em> – A StereoRig object</p></li>
 <li><p><em>..todo::</em> – Iteratively exclude images that have high reprojection errors and re-calibrate.</p></li>
@@ -1484,7 +1448,7 @@ measures in the 3D reconstruction will be in mm. Default to 1.</p></li>
 <p><em>chessboardSize</em> is expressed as (columns, rows) tuple, counting <em>internal line</em> columns and rows
 as OpenCV does (e.g. to obtain a 10x7 chessboard, use (9,6)).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>chessboardSize</strong> (<em>tuple</em>) – Size of the chessboard as (columns, rows).</p></li>
 <li><p><strong>filepath</strong> (<em>string</em>) – File path where to save the SVG file.</p></li>
@@ -1500,16 +1464,16 @@ as OpenCV does (e.g. to obtain a 10x7 chessboard, use (9,6)).</p>
 <dd><p>Compute the fundamental matrix from two projection matrices.</p>
 <p>The algorithm is adapted from an original lesson of Cristina Turrini, UNIMI, Trento (09/04/2017).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>P1</strong> (<em>numpy.ndarray</em>) – 3x4 camera projection matrices.</p></li>
 <li><p><strong>P2</strong> (<em>numpy.ndarray</em>) – 3x4 camera projection matrices.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>F</strong> – The 3x3 fundamental matrix.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -1521,9 +1485,9 @@ as OpenCV does (e.g. to obtain a 10x7 chessboard, use (9,6)).</p>
 <dd><p>Calibrate camera and projector using phase shifting and the
 heterodyne principle [Reich 1997].</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>periods</strong> (<em>list of lists</em>) – Periods of fringe used in the projector as list of lists.
+<li><p><strong>periods</strong> (<em>list</em><em> of </em><em>lists</em>) – Periods of fringe used in the projector as list of lists.
 First list is for the horizontal fringes, second for the vertical ones.
 In descending order (e.g. 1280, 1024, 512, …).</p></li>
 <li><p><strong>projectorResolution</strong> (<em>tuple</em>) – Projector pixel resolution as (width, height).</p></li>
@@ -1540,10 +1504,10 @@ Default to (6,7).</p></li>
 If not given they will be calculated.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A StereoRig object</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig">StereoRig</a></p>
 </dd>
 </dl>
@@ -1558,9 +1522,9 @@ corners as targets.</p>
 <p>The center of a white square is well defined and less subject to
 noise or uncertanty of the phase value.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>periods</strong> (<em>list of lists</em>) – Periods of fringe used in the projector as list of lists.
+<li><p><strong>periods</strong> (<em>list</em><em> of </em><em>lists</em>) – Periods of fringe used in the projector as list of lists.
 First list is for the horizontal fringes, second for the vertical ones.
 In descending order (e.g. 1280, 1024, 512, …).</p></li>
 <li><p><strong>projectorResolution</strong> (<em>tuple</em>) – Projector pixel resolution as (width, height).</p></li>
@@ -1578,7 +1542,7 @@ If not given they will be calculated.</p></li>
 <li><p><strong>extended</strong> (<em>bool</em>) – If True, <cite>perViewErrors</cite> of the stereo calibration are returned. Default to False.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>StereoRig</em> – A StereoRig object</p></li>
 <li><p><em>perViewErrors</em> – Returned only if <cite>extended</cite> is True. For each pattern view, the
@@ -1590,13 +1554,13 @@ RMS error of camera and projector is returned.</p></li>
 </dd></dl>
 
 </section>
-</section>
 <section id="module-simplestereo.passive">
-<span id="simplestereo-passive-module"></span><h2>simplestereo.passive module<a class="headerlink" href="#module-simplestereo.passive" title="Permalink to this headline">¶</a></h2>
+<span id="simplestereo-passive-module"></span><h2>simplestereo.passive module<a class="headerlink" href="#module-simplestereo.passive" title="Permalink to this heading">¶</a></h2>
 <section id="passive">
-<h3>passive<a class="headerlink" href="#passive" title="Permalink to this headline">¶</a></h3>
+<h3>passive<a class="headerlink" href="#passive" title="Permalink to this heading">¶</a></h3>
 <p>Contains different passive stereo algorithms to build disparity maps.</p>
 <p>Simpler algorithms, like StereoBM and StereoSGBM, are already implemented in OpenCV.</p>
+</section>
 <dl class="py class">
 <dt class="sig sig-object py" id="simplestereo.passive.StereoASW">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simplestereo.passive.</span></span><span class="sig-name descname"><span class="pre">StereoASW</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">winSize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxDisparity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minDisparity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gammaC</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gammaP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">17.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consistent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/passive.html#StereoASW"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.passive.StereoASW" title="Permalink to this definition">¶</a></dt>
@@ -1604,7 +1568,7 @@ RMS error of camera and projector is returned.</p></li>
 <p>Custom implementation of “Adaptive Support-Weight Approach
 for Correspondence Search”, K. Yoon, I. Kweon, 2006.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>winSize</strong> (<em>int</em>) – Side of the square window. Must be an odd positive number. Default is 35.</p></li>
 <li><p><strong>maxDisparity</strong> (<em>int</em>) – Maximum accepted disparity. Default is 16.</p></li>
@@ -1637,11 +1601,7 @@ using 4 CPUs (while other implementations need 60 sec, see DOI 10.1007/s11554-01
 To improve the final result, a smoothering filter could be applied.</p>
 </div>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo.passive.StereoASW.compute" title="simplestereo.passive.StereoASW.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute</span></code></a>(img1, img2)</p></td>
 <td><p>Compute disparity map for BGR images.</p></td>
@@ -1653,16 +1613,16 @@ To improve the final result, a smoothering filter could be applied.</p>
 <span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/passive.html#StereoASW.compute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.passive.StereoASW.compute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute disparity map for BGR images.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>img1</strong> (<em>cv2.Mat</em>) – A couple of OpenCV images (left and right, respectively) of same shape.</p></li>
 <li><p><strong>img2</strong> (<em>cv2.Mat</em>) – A couple of OpenCV images (left and right, respectively) of same shape.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A disparity map of the same width and height of the images.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray (np.int16)</p>
 </dd>
 </dl>
@@ -1677,7 +1637,7 @@ To improve the final result, a smoothering filter could be applied.</p>
 <p><em>Incomplete</em> implementation of “Local stereo matching using geodesic support weights”,
 Asmaa Hosni, Michael Bleyer, Margrit Gelautz and Christoph Rhemann (2009).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>winSize</strong> (<em>int</em><em>, </em><em>optional</em>) – Side of the square window. Must be an odd positive number.</p></li>
 <li><p><strong>maxDisparity</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum accepted disparity. Default is 16.</p></li>
@@ -1697,11 +1657,7 @@ Need to implement right image consistency and subsequent occlusion filling.</p><
 </dd>
 </dl>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo.passive.StereoGSW.compute" title="simplestereo.passive.StereoGSW.compute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute</span></code></a>(img1, img2)</p></td>
 <td><p>Compute disparity map for 3-color channel images.</p></td>
@@ -1717,28 +1673,28 @@ Need to implement right image consistency and subsequent occlusion filling.</p><
 </dd></dl>
 
 </section>
-</section>
 <section id="module-simplestereo.points">
-<span id="simplestereo-points-module"></span><h2>simplestereo.points module<a class="headerlink" href="#module-simplestereo.points" title="Permalink to this headline">¶</a></h2>
+<span id="simplestereo-points-module"></span><h2>simplestereo.points module<a class="headerlink" href="#module-simplestereo.points" title="Permalink to this heading">¶</a></h2>
 <section id="points">
-<h3>points<a class="headerlink" href="#points" title="Permalink to this headline">¶</a></h3>
+<h3>points<a class="headerlink" href="#points" title="Permalink to this heading">¶</a></h3>
 <p>Functions to manage point clouds.</p>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.points.distortPoints">
 <span class="sig-prename descclassname"><span class="pre">simplestereo.points.</span></span><span class="sig-name descname"><span class="pre">distortPoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distCoeff</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/points.html#distortPoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.points.distortPoints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Undistort relative coordinate points.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>points</strong> (<em>list</em>) – List of lists (or tuples) of x,y points in relative coordinates
 (already multiplied by the inverse intrinsic matrix and undistorted).</p></li>
 <li><p><strong>distCoeff</strong> (<em>list</em>) – List of 4, 5 or 8 elements (see OpenCV).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>List of lists of distorted x,y points in relative coordinates</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list</p>
 </dd>
 </dl>
@@ -1755,7 +1711,7 @@ To use numpy.</p>
 <span class="sig-prename descclassname"><span class="pre">simplestereo.points.</span></span><span class="sig-name descname"><span class="pre">exportPLY</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points3D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">referenceImage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/points.html#exportPLY"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.points.exportPLY" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export raw point cloud to PLY file (ASCII).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>points3D</strong> (<em>numpy.ndarray</em>) – Array of 3D points. The last dimension must contain ordered x,y,z coordinates.</p></li>
 <li><p><strong>filepath</strong> (<em>str</em>) – File path for the PLY file (absolute or relative).</p></li>
@@ -1781,14 +1737,14 @@ Useful to reconstruct non-metric 3D models from any disparity map
 when the stereo rig object is not known.
 It may lead to incorrect proportions.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>disparityMap</strong> (<em>numpy.ndarray</em>) – A dense disparity map having same height and width of images.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Array of points having shape <em>(height,width,3)</em>, where at each y,x coordinates
 a <em>(x,y,z)</em> point is associated.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -1803,18 +1759,18 @@ a <em>(x,y,z)</em> point is associated.</p>
 <span class="sig-prename descclassname"><span class="pre">simplestereo.points.</span></span><span class="sig-name descname"><span class="pre">importPLY</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">properties</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/points.html#importPLY"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.points.importPLY" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import 3D coordinates from PLY file.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>filename</strong> (<em>str</em>) – PLY file path.</p></li>
 <li><p><strong>*properties</strong> (<em>argument list</em><em>, </em><em>optional</em>) – Property column positions to be extracted as <cite>float</cite>, in the
 same order. Default to (0,1,2).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Array of data values with shape (number of values, number of
 properties).</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -1826,12 +1782,12 @@ Manage values other than <cite>float</cite>.</p>
 </dd></dl>
 
 </section>
-</section>
 <section id="module-simplestereo.rectification">
-<span id="simplestereo-rectification-module"></span><h2>simplestereo.rectification module<a class="headerlink" href="#module-simplestereo.rectification" title="Permalink to this headline">¶</a></h2>
+<span id="simplestereo-rectification-module"></span><h2>simplestereo.rectification module<a class="headerlink" href="#module-simplestereo.rectification" title="Permalink to this heading">¶</a></h2>
 <section id="rectification">
-<h3>rectification<a class="headerlink" href="#rectification" title="Permalink to this headline">¶</a></h3>
+<h3>rectification<a class="headerlink" href="#rectification" title="Permalink to this heading">¶</a></h3>
 <p>Contains different rectification algorithms.</p>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py" id="simplestereo.rectification.fusielloRectify">
 <span class="sig-prename descclassname"><span class="pre">simplestereo.rectification.</span></span><span class="sig-name descname"><span class="pre">fusielloRectify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rig</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/rectification.html#fusielloRectify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.rectification.fusielloRectify" title="Permalink to this definition">¶</a></dt>
@@ -1839,13 +1795,13 @@ Manage values other than <cite>float</cite>.</p>
 <p>This method uses the algorithm illustrated in <em>A compact algorithm for rectification of stereo pair</em>,
 A. Fusiello et al., Machine Vision and Applications (2000).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>rig</strong> (<a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><em>StereoRig</em></a>) – An object of the StereoRig class. Camera must be position 1 (origin), projector in position 2.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>rectifiedStereoRigObj</strong> – An object of the RectifiedStereoRig class containing the rectifying homographies.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig" title="simplestereo._rigs.RectifiedStereoRig">RectifiedStereoRig</a></p>
 </dd>
 </dl>
@@ -1859,16 +1815,16 @@ A. Fusiello et al., Machine Vision and Applications (2000).</p>
 image distortion.
 Original algorithm in par. 7 of <em>Computying rectifying homographies for stereo vision</em>, CVPR 1999, Loop C. and Zhang Z.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rectHomography</strong> (<em>numpy.ndarray</em>) – A 3x3 rectification homography.</p></li>
 <li><p><strong>dims</strong> (<em>tuple</em>) – Resolution of destination image as (width, height) tuple.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>S</strong> – A 3x3 shearing (x axis) transform.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -1888,7 +1844,7 @@ One can apply any transformation that do not affect disparity to fit the image i
 This function corrects flipped images too.
 The algorithm may fail if one epipole is too close to the image.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>intrinsicMatrix1</strong> (<em>numpy.ndarray</em>) – 3x3 original camera matrices of intrinsic parameters.</p></li>
 <li><p><strong>intrinsicMatrix2</strong> (<em>numpy.ndarray</em>) – 3x3 original camera matrices of intrinsic parameters.</p></li>
@@ -1905,10 +1861,10 @@ Intermediate values produce a result in the middle. Extremely skewed camera posi
 do not work well with alpha&lt;1.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>3x3 affine transformation to be used both for the first and for the second camera.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -1922,13 +1878,13 @@ do not work well with alpha&lt;1.</p></li>
 <em>Computying rectifying homographies for stereo vision</em>, CVPR 1999, Loop C. and Zhang Z.
 This function performs a minimization using <code class="docutils literal notranslate"><span class="pre">scipy.optimize</span></code> module.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>rig</strong> (<a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><em>StereoRig</em></a>) – An object of the StereoRig class.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>rectifiedStereoRigObj</strong> – An object of the RectifiedStereoRig class containing the rectifying homographies.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig" title="simplestereo._rigs.RectifiedStereoRig">RectifiedStereoRig</a></p>
 </dd>
 </dl>
@@ -1947,32 +1903,32 @@ transformations (e.g. changing algorithm).</p>
 <p>This function computes the new common camera orientation by averaging.
 It does not produce the rectifying homographies with minimal perspective distortion.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>rig</strong> (<a class="reference internal" href="#simplestereo._rigs.StereoRig" title="simplestereo._rigs.StereoRig"><em>StereoRig</em></a>) – An object of the StereoRig class</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>rectifiedStereoRigObj</strong> – An object of the RectifiedStereoRig class containing the rectifying homographies.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig" title="simplestereo._rigs.RectifiedStereoRig">RectifiedStereoRig</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 </section>
-</section>
 <section id="module-simplestereo.unwrapping">
-<span id="simplestereo-unwrapping-module"></span><h2>simplestereo.unwrapping module<a class="headerlink" href="#module-simplestereo.unwrapping" title="Permalink to this headline">¶</a></h2>
+<span id="simplestereo-unwrapping-module"></span><h2>simplestereo.unwrapping module<a class="headerlink" href="#module-simplestereo.unwrapping" title="Permalink to this heading">¶</a></h2>
 <section id="phaseunwrapping">
-<h3>phaseUnwrapping<a class="headerlink" href="#phaseunwrapping" title="Permalink to this headline">¶</a></h3>
+<h3>phaseUnwrapping<a class="headerlink" href="#phaseunwrapping" title="Permalink to this heading">¶</a></h3>
 <p>Contains different phase unwrapping strategies.</p>
 </section>
 </section>
 <section id="module-simplestereo.utils">
-<span id="simplestereo-utils-module"></span><h2>simplestereo.utils module<a class="headerlink" href="#module-simplestereo.utils" title="Permalink to this headline">¶</a></h2>
+<span id="simplestereo-utils-module"></span><h2>simplestereo.utils module<a class="headerlink" href="#module-simplestereo.utils" title="Permalink to this heading">¶</a></h2>
 <section id="utils">
-<h3>utils<a class="headerlink" href="#utils" title="Permalink to this headline">¶</a></h3>
+<h3>utils<a class="headerlink" href="#utils" title="Permalink to this heading">¶</a></h3>
 <p>This module provides general utilities.</p>
+</section>
 <dl class="py class">
 <dt class="sig sig-object py" id="simplestereo.utils.Capture">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">simplestereo.utils.</span></span><span class="sig-name descname"><span class="pre">Capture</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flipY</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simplestereo/utils.html#Capture"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#simplestereo.utils.Capture" title="Permalink to this definition">¶</a></dt>
@@ -1982,14 +1938,14 @@ It does not produce the rectifying homographies with minimal perspective distort
 minimizing lags for streaming and webcams.
 It supports webcams, URL streaming and video files.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>device</strong> (<em>int</em><em> or </em><em>str</em>) – Id of the opened video capturing device (i.e. a camera index). If there is a single camera connected, usually it will be 0 (default 0).
 Also the string containing full URL of the video stream (e.g. <em>protocol://username:password&#64;script?params</em>) or a path to a video file.</p></li>
 <li><p><strong>flipY</strong> (<em>bool</em>) – If True, output image is flipped on the Y-axis. Default to False.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Raises</dt>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>ValueError</strong> – If device cannot be opened.</p></li>
 <li><p><strong>.. note::</strong> – When using video streaming URL the initialization may require some time. Check that the image frame is not None
@@ -2002,11 +1958,7 @@ and / or insert a time.sleep() after object constructor.</p></li>
 <p>Add support for other options (e.g. change focal length where supported).</p>
 </div>
 <p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#simplestereo.utils.Capture.get" title="simplestereo.utils.Capture.get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code></a>()</p></td>
 <td><p>Retrieve the current frame.</p></td>
@@ -2048,13 +2000,13 @@ and / or insert a time.sleep() after object constructor.</p></li>
 <p>Do not call this for video files or when the thread is running.
 It works only for supported cameras.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>fps</strong> (<em>int</em>) – Frames per second.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>True if the framerate was set successfully, False otherwise.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
@@ -2067,16 +2019,16 @@ It works only for supported cameras.</p>
 <p>Do not call this for video files or when the thread is running.
 It works only for supported cameras.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>width</strong> (<em>int</em>) – Width and height to be set in pixels.</p></li>
 <li><p><strong>heigth</strong> (<em>int</em>) – Width and height to be set in pixels.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>True if the resolution was set successfully, False otherwise.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
@@ -2111,7 +2063,7 @@ Please note that this is an in-place method, i.e. passed images will
 be modified directly.
 Distortion is <em>not</em> taken into account.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>img1</strong> (<em>cv2.Mat</em>) – A couple of OpenCV images taken with a stereo rig (ordered).</p></li>
 <li><p><strong>img2</strong> (<em>cv2.Mat</em>) – A couple of OpenCV images taken with a stereo rig (ordered).</p></li>
@@ -2122,7 +2074,7 @@ Distortion is <em>not</em> taken into account.</p>
 <li><p><strong>thickness</strong> (<em>int</em><em>, </em><em>optional</em>) – Thickness of the lines in pixels (default to 1).</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
@@ -2138,13 +2090,13 @@ Distortion is <em>not</em> taken into account.</p>
 <dd><p>Build the 3x3 antisymmetric matrix representing the cross product with v.</p>
 <p>In literature this is often indicated as [v]<sub>x</sub>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>v</strong> (<em>numpy.ndarray</em><em> or </em><em>list</em>) – A 3-dimensional vector.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A 3x3 matrix representing the cross product with the input vector.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 </dl>
@@ -2158,7 +2110,7 @@ Distortion is <em>not</em> taken into account.</p>
 from extrinsic of two cameras centered anywhere else.
 This is particularly useful when the world coordinate system is not centered into the first camera.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>R1</strong> (<em>np.array</em>) – 3x3 rotation matrices that go from world origin to each camera center.</p></li>
 <li><p><strong>R2</strong> (<em>np.array</em>) – 3x3 rotation matrices that go from world origin to each camera center.</p></li>
@@ -2166,7 +2118,7 @@ This is particularly useful when the world coordinate system is not centered int
 <li><p><strong>t2</strong> (<em>np.array</em>) – 3x1 translation vectors that go from world origin to each camera center.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>numpy.ndarray</em> – Rotation matrix between the 1st and the 2nd camera coordinate systems as numpy.ndarray.</p></li>
 <li><p><em>numpy.ndarray</em> – Translation vector between the coordinate systems of the cameras as numpy.ndarray.</p></li>
@@ -2176,7 +2128,6 @@ This is particularly useful when the world coordinate system is not centered int
 </dl>
 </dd></dl>
 
-</section>
 </section>
 </section>
 
@@ -2198,26 +2149,122 @@ This is particularly useful when the world coordinate system is not centered int
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-simplestereo._rigs">simplestereo._rigs module</a><ul>
 <li><a class="reference internal" href="#rigs">_rigs</a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.Rcommon"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.Rcommon</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.computeRectificationMaps"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.computeRectificationMaps()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.fromFile"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.fromFile()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.get3DPoints"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.get3DPoints()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.getRectifiedProjectionMatrices"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.getRectifiedProjectionMatrices()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.rectHomography1"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.rectHomography1</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.rectHomography2"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.rectHomography2</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.rectifyImages"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.rectifyImages()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.RectifiedStereoRig.save"><code class="docutils literal notranslate"><span class="pre">RectifiedStereoRig.save()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig"><code class="docutils literal notranslate"><span class="pre">StereoRig</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.E"><code class="docutils literal notranslate"><span class="pre">StereoRig.E</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.F"><code class="docutils literal notranslate"><span class="pre">StereoRig.F</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.R"><code class="docutils literal notranslate"><span class="pre">StereoRig.R</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.T"><code class="docutils literal notranslate"><span class="pre">StereoRig.T</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.distCoeffs1"><code class="docutils literal notranslate"><span class="pre">StereoRig.distCoeffs1</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.distCoeffs2"><code class="docutils literal notranslate"><span class="pre">StereoRig.distCoeffs2</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.fromFile"><code class="docutils literal notranslate"><span class="pre">StereoRig.fromFile()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.getBaseline"><code class="docutils literal notranslate"><span class="pre">StereoRig.getBaseline()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.getCenters"><code class="docutils literal notranslate"><span class="pre">StereoRig.getCenters()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.getEssentialMatrix"><code class="docutils literal notranslate"><span class="pre">StereoRig.getEssentialMatrix()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.getFundamentalMatrix"><code class="docutils literal notranslate"><span class="pre">StereoRig.getFundamentalMatrix()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.getProjectionMatrices"><code class="docutils literal notranslate"><span class="pre">StereoRig.getProjectionMatrices()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.intrinsic1"><code class="docutils literal notranslate"><span class="pre">StereoRig.intrinsic1</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.intrinsic2"><code class="docutils literal notranslate"><span class="pre">StereoRig.intrinsic2</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.save"><code class="docutils literal notranslate"><span class="pre">StereoRig.save()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StereoRig.undistortImages"><code class="docutils literal notranslate"><span class="pre">StereoRig.undistortImages()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simplestereo._rigs.StructuredLightRig"><code class="docutils literal notranslate"><span class="pre">StructuredLightRig</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo._rigs.StructuredLightRig.fromFile"><code class="docutils literal notranslate"><span class="pre">StructuredLightRig.fromFile()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StructuredLightRig.triangulate"><code class="docutils literal notranslate"><span class="pre">StructuredLightRig.triangulate()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo._rigs.StructuredLightRig.undistortCameraImage"><code class="docutils literal notranslate"><span class="pre">StructuredLightRig.undistortCameraImage()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-simplestereo.active">simplestereo.active module</a><ul>
 <li><a class="reference internal" href="#active">active</a></li>
+<li><a class="reference internal" href="#simplestereo.active.GrayCode"><code class="docutils literal notranslate"><span class="pre">GrayCode</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo.active.GrayCode.getCloud"><code class="docutils literal notranslate"><span class="pre">GrayCode.getCloud()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simplestereo.active.GrayCodeDouble"><code class="docutils literal notranslate"><span class="pre">GrayCodeDouble</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo.active.GrayCodeDouble.getCloud"><code class="docutils literal notranslate"><span class="pre">GrayCodeDouble.getCloud()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simplestereo.active.GrayCodeSingle"><code class="docutils literal notranslate"><span class="pre">GrayCodeSingle</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTP"><code class="docutils literal notranslate"><span class="pre">StereoFTP</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTP.convertGrayscale"><code class="docutils literal notranslate"><span class="pre">StereoFTP.convertGrayscale()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTP.getCloud"><code class="docutils literal notranslate"><span class="pre">StereoFTP.getCloud()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTPAnaglyph"><code class="docutils literal notranslate"><span class="pre">StereoFTPAnaglyph</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTPAnaglyph.convertGrayscale"><code class="docutils literal notranslate"><span class="pre">StereoFTPAnaglyph.convertGrayscale()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTPAnaglyph.getCloud"><code class="docutils literal notranslate"><span class="pre">StereoFTPAnaglyph.getCloud()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTP_Mapping"><code class="docutils literal notranslate"><span class="pre">StereoFTP_Mapping</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTP_Mapping.getCloud"><code class="docutils literal notranslate"><span class="pre">StereoFTP_Mapping.getCloud()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTP_PhaseOnly"><code class="docutils literal notranslate"><span class="pre">StereoFTP_PhaseOnly</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTP_PhaseOnly.convertGrayscale"><code class="docutils literal notranslate"><span class="pre">StereoFTP_PhaseOnly.convertGrayscale()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.active.StereoFTP_PhaseOnly.getPhase"><code class="docutils literal notranslate"><span class="pre">StereoFTP_PhaseOnly.getPhase()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simplestereo.active.buildAnaglyphFringe"><code class="docutils literal notranslate"><span class="pre">buildAnaglyphFringe()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.active.buildBinaryFringe"><code class="docutils literal notranslate"><span class="pre">buildBinaryFringe()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.active.buildFringe"><code class="docutils literal notranslate"><span class="pre">buildFringe()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.active.computeROI"><code class="docutils literal notranslate"><span class="pre">computeROI()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.active.findCentralStripe"><code class="docutils literal notranslate"><span class="pre">findCentralStripe()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.active.generateGrayCodeImgs"><code class="docutils literal notranslate"><span class="pre">generateGrayCodeImgs()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-simplestereo.calibration">simplestereo.calibration module</a><ul>
 <li><a class="reference internal" href="#calibration">calibration</a></li>
+<li><a class="reference internal" href="#simplestereo.calibration.chessboardProCam"><code class="docutils literal notranslate"><span class="pre">chessboardProCam()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.calibration.chessboardProCamWhite"><code class="docutils literal notranslate"><span class="pre">chessboardProCamWhite()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.calibration.chessboardSingle"><code class="docutils literal notranslate"><span class="pre">chessboardSingle()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.calibration.chessboardStereo"><code class="docutils literal notranslate"><span class="pre">chessboardStereo()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.calibration.generateChessboardSVG"><code class="docutils literal notranslate"><span class="pre">generateChessboardSVG()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.calibration.getFundamentalMatrixFromProjections"><code class="docutils literal notranslate"><span class="pre">getFundamentalMatrixFromProjections()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.calibration.phaseShift"><code class="docutils literal notranslate"><span class="pre">phaseShift()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.calibration.phaseShiftWhite"><code class="docutils literal notranslate"><span class="pre">phaseShiftWhite()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-simplestereo.passive">simplestereo.passive module</a><ul>
 <li><a class="reference internal" href="#passive">passive</a></li>
+<li><a class="reference internal" href="#simplestereo.passive.StereoASW"><code class="docutils literal notranslate"><span class="pre">StereoASW</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo.passive.StereoASW.compute"><code class="docutils literal notranslate"><span class="pre">StereoASW.compute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simplestereo.passive.StereoGSW"><code class="docutils literal notranslate"><span class="pre">StereoGSW</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo.passive.StereoGSW.compute"><code class="docutils literal notranslate"><span class="pre">StereoGSW.compute()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-simplestereo.points">simplestereo.points module</a><ul>
 <li><a class="reference internal" href="#points">points</a></li>
+<li><a class="reference internal" href="#simplestereo.points.distortPoints"><code class="docutils literal notranslate"><span class="pre">distortPoints()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.points.exportPLY"><code class="docutils literal notranslate"><span class="pre">exportPLY()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.points.getAdimensional3DPoints"><code class="docutils literal notranslate"><span class="pre">getAdimensional3DPoints()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.points.importPLY"><code class="docutils literal notranslate"><span class="pre">importPLY()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-simplestereo.rectification">simplestereo.rectification module</a><ul>
 <li><a class="reference internal" href="#rectification">rectification</a></li>
+<li><a class="reference internal" href="#simplestereo.rectification.fusielloRectify"><code class="docutils literal notranslate"><span class="pre">fusielloRectify()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.rectification.getBestXShearingTransformation"><code class="docutils literal notranslate"><span class="pre">getBestXShearingTransformation()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.rectification.getFittingMatrix"><code class="docutils literal notranslate"><span class="pre">getFittingMatrix()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.rectification.loopRectify"><code class="docutils literal notranslate"><span class="pre">loopRectify()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.rectification.stereoRectify"><code class="docutils literal notranslate"><span class="pre">stereoRectify()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-simplestereo.unwrapping">simplestereo.unwrapping module</a><ul>
@@ -2226,6 +2273,18 @@ This is particularly useful when the world coordinate system is not centered int
 </li>
 <li><a class="reference internal" href="#module-simplestereo.utils">simplestereo.utils module</a><ul>
 <li><a class="reference internal" href="#utils">utils</a></li>
+<li><a class="reference internal" href="#simplestereo.utils.Capture"><code class="docutils literal notranslate"><span class="pre">Capture</span></code></a><ul>
+<li><a class="reference internal" href="#simplestereo.utils.Capture.get"><code class="docutils literal notranslate"><span class="pre">Capture.get()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.utils.Capture.getResolution"><code class="docutils literal notranslate"><span class="pre">Capture.getResolution()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.utils.Capture.setFrameRate"><code class="docutils literal notranslate"><span class="pre">Capture.setFrameRate()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.utils.Capture.setResolution"><code class="docutils literal notranslate"><span class="pre">Capture.setResolution()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.utils.Capture.start"><code class="docutils literal notranslate"><span class="pre">Capture.start()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.utils.Capture.stop"><code class="docutils literal notranslate"><span class="pre">Capture.stop()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simplestereo.utils.drawCorrespondingEpipolarLines"><code class="docutils literal notranslate"><span class="pre">drawCorrespondingEpipolarLines()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.utils.getCrossProductMatrix"><code class="docutils literal notranslate"><span class="pre">getCrossProductMatrix()</span></code></a></li>
+<li><a class="reference internal" href="#simplestereo.utils.moveExtrinsicOriginToFirstCamera"><code class="docutils literal notranslate"><span class="pre">moveExtrinsicOriginToFirstCamera()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -2254,7 +2313,7 @@ This is particularly useful when the world coordinate system is not centered int
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -2277,7 +2336,7 @@ This is particularly useful when the world coordinate system is not centered int
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2023, decadenza.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
     </div>
   </body>
 </html>
