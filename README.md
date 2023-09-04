@@ -27,7 +27,7 @@ Clone or download the latest version and unzip. Then, from the folder containing
 pip3 install .
 ```
 ### Troubleshooting
-I am aware of some issues while installing SimpleStereo with Python 3.11. I believe these are related to NumPy but haven't debugged this yet. If you are using Python 3.11 and have errors during installation, please open an issue.
+I am aware of some issues while installing SimpleStereo. If you have errors during installation, please open an issue.
 
 #### Windows users troubleshooting
 
