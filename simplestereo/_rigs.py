@@ -77,7 +77,7 @@ class StereoRig:
     def intrinsic2(self):
         return self._intrinsic2
     
-    @intrinsic1.setter
+    @intrinsic2.setter
     def intrinsic2(self, v):
         self._intrinsic2 = np.asarray(v) # Ensure numpy.ndarray.
 
