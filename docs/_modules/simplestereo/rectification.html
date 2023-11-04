@@ -1,17 +1,16 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>simplestereo.rectification &#8212; SimpleStereo 1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css?v=601dbdee" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=0d33fa41" />
+    <script src="../../_static/documentation_options.js?v=29a6c3e3"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -53,7 +52,9 @@
 <span class="kn">import</span> <span class="nn">simplestereo</span> <span class="k">as</span> <span class="nn">ss</span>
 
 
-<div class="viewcode-block" id="getFittingMatrix"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.getFittingMatrix">[docs]</a><span class="k">def</span> <span class="nf">getFittingMatrix</span><span class="p">(</span><span class="n">intrinsicMatrix1</span><span class="p">,</span> <span class="n">intrinsicMatrix2</span><span class="p">,</span> <span class="n">H1</span><span class="p">,</span> <span class="n">H2</span><span class="p">,</span> <span class="n">dims1</span><span class="p">,</span> <span class="n">dims2</span><span class="p">,</span>
+<div class="viewcode-block" id="getFittingMatrix">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.getFittingMatrix">[docs]</a>
+<span class="k">def</span> <span class="nf">getFittingMatrix</span><span class="p">(</span><span class="n">intrinsicMatrix1</span><span class="p">,</span> <span class="n">intrinsicMatrix2</span><span class="p">,</span> <span class="n">H1</span><span class="p">,</span> <span class="n">H2</span><span class="p">,</span> <span class="n">dims1</span><span class="p">,</span> <span class="n">dims2</span><span class="p">,</span>
                         <span class="n">distCoeffs1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">destDims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute affine tranformation to fit the rectified images into desidered dimensions.</span>
@@ -159,6 +160,7 @@
     <span class="n">K</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">s</span> <span class="o">*</span> <span class="n">top</span>
     
     <span class="k">return</span> <span class="n">K</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Fit</span><span class="p">)</span></div>
+
     
 
 <span class="k">def</span> <span class="nf">_getCorners</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">intrinsicMatrix</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">distCoeffs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -224,7 +226,9 @@
         
 
 
-<div class="viewcode-block" id="stereoRectify"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.stereoRectify">[docs]</a><span class="k">def</span> <span class="nf">stereoRectify</span><span class="p">(</span><span class="n">rig</span><span class="p">):</span>
+<div class="viewcode-block" id="stereoRectify">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.stereoRectify">[docs]</a>
+<span class="k">def</span> <span class="nf">stereoRectify</span><span class="p">(</span><span class="n">rig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Rectify the StereoRig object using the standard OpenCV algorithm.</span>
 <span class="sd">    </span>
@@ -260,7 +264,10 @@
 
 
 
-<div class="viewcode-block" id="fusielloRectify"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.fusielloRectify">[docs]</a><span class="k">def</span> <span class="nf">fusielloRectify</span><span class="p">(</span><span class="n">rig</span><span class="p">):</span>
+
+<div class="viewcode-block" id="fusielloRectify">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.fusielloRectify">[docs]</a>
+<span class="k">def</span> <span class="nf">fusielloRectify</span><span class="p">(</span><span class="n">rig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes the two rectifying homographies and returns a RectifiedStereoRig.</span>
 <span class="sd">    </span>
@@ -307,6 +314,7 @@
 
 
 
+
 <span class="k">def</span> <span class="nf">_lowLevelRectify</span><span class="p">(</span><span class="n">rig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get basic rectification using Fusiello et al.</span>
@@ -341,7 +349,9 @@
     <span class="k">return</span> <span class="n">R1</span><span class="p">,</span> <span class="n">R2</span><span class="p">,</span> <span class="n">R</span>
 
 
-<div class="viewcode-block" id="loopRectify"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.loopRectify">[docs]</a><span class="k">def</span> <span class="nf">loopRectify</span><span class="p">(</span><span class="n">rig</span><span class="p">):</span>
+<div class="viewcode-block" id="loopRectify">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.loopRectify">[docs]</a>
+<span class="k">def</span> <span class="nf">loopRectify</span><span class="p">(</span><span class="n">rig</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes the two rectifying homographies and returns a RectifiedStereoRig.</span>
 <span class="sd">    </span>
@@ -526,7 +536,10 @@
 
 
 
-<div class="viewcode-block" id="getBestXShearingTransformation"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.getBestXShearingTransformation">[docs]</a><span class="k">def</span> <span class="nf">getBestXShearingTransformation</span><span class="p">(</span><span class="n">rectHomography</span><span class="p">,</span> <span class="n">dims</span><span class="p">):</span>
+
+<div class="viewcode-block" id="getBestXShearingTransformation">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.rectification.getBestXShearingTransformation">[docs]</a>
+<span class="k">def</span> <span class="nf">getBestXShearingTransformation</span><span class="p">(</span><span class="n">rectHomography</span><span class="p">,</span> <span class="n">dims</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get best shear transformation (affine) over x axis that minimizes distortion.</span>
 <span class="sd">    </span>
@@ -572,6 +585,7 @@
     <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">a_coeff</span><span class="p">,</span><span class="n">b_coeff</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]])</span>
     
     <span class="k">return</span> <span class="n">S</span></div>
+
 
 
 
@@ -805,8 +819,8 @@
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2023, decadenza.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    &#169; Copyright 2023, decadenza.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

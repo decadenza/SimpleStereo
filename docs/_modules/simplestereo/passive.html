@@ -1,17 +1,16 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>simplestereo.passive &#8212; SimpleStereo 1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css?v=601dbdee" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=0d33fa41" />
+    <script src="../../_static/documentation_options.js?v=29a6c3e3"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -52,7 +51,9 @@
 <span class="kn">from</span> <span class="nn">simplestereo</span> <span class="kn">import</span> <span class="n">_passive</span>
 
 
-<div class="viewcode-block" id="StereoASW"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoASW">[docs]</a><span class="k">class</span> <span class="nc">StereoASW</span><span class="p">():</span>
+<div class="viewcode-block" id="StereoASW">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoASW">[docs]</a>
+<span class="k">class</span> <span class="nc">StereoASW</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Custom implementation of &quot;Adaptive Support-Weight Approach</span>
 <span class="sd">    for Correspondence Search&quot;, K. Yoon, I. Kweon, 2006.</span>
@@ -108,7 +109,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">consistent</span> <span class="o">=</span> <span class="n">consistent</span>
         
     
-<div class="viewcode-block" id="StereoASW.compute"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoASW.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">):</span>
+<div class="viewcode-block" id="StereoASW.compute">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoASW.compute">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute disparity map for BGR images.</span>
 <span class="sd">        </span>
@@ -128,14 +131,18 @@
                                              <span class="bp">self</span><span class="o">.</span><span class="n">maxDisparity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">minDisparity</span><span class="p">,</span>
                                              <span class="bp">self</span><span class="o">.</span><span class="n">gammaC</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gammaP</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">consistent</span><span class="p">)</span>
                                              
-        <span class="k">return</span> <span class="n">disparityMap</span></div></div>
+        <span class="k">return</span> <span class="n">disparityMap</span></div>
+</div>
+
         
 
 
 
 
 
-<div class="viewcode-block" id="StereoGSW"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoGSW">[docs]</a><span class="k">class</span> <span class="nc">StereoGSW</span><span class="p">():</span>
+<div class="viewcode-block" id="StereoGSW">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoGSW">[docs]</a>
+<span class="k">class</span> <span class="nc">StereoGSW</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    *Incomplete* implementation of &quot;Local stereo matching using geodesic support weights&quot;,</span>
 <span class="sd">    Asmaa Hosni, Michael Bleyer, Margrit Gelautz and Christoph Rhemann (2009).</span>
@@ -183,7 +190,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span> <span class="o">=</span> <span class="n">iterations</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bins</span> <span class="o">=</span> <span class="n">bins</span>
         
-<div class="viewcode-block" id="StereoGSW.compute"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoGSW.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">):</span>
+<div class="viewcode-block" id="StereoGSW.compute">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.passive.StereoGSW.compute">[docs]</a>
+    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute disparity map for 3-color channel images.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -194,7 +203,9 @@
                                              <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">fMax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterations</span><span class="p">,</span>
                                              <span class="bp">self</span><span class="o">.</span><span class="n">bins</span><span class="p">)</span>
         
-        <span class="k">return</span> <span class="n">disparityMap</span></div></div>
+        <span class="k">return</span> <span class="n">disparityMap</span></div>
+</div>
+
 
 </pre></div>
 
@@ -233,8 +244,8 @@
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2023, decadenza.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    &#169; Copyright 2023, decadenza.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

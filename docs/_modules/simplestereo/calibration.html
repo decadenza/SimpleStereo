@@ -1,17 +1,16 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>simplestereo.calibration &#8212; SimpleStereo 1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/nature.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nature.css?v=601dbdee" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=0d33fa41" />
+    <script src="../../_static/documentation_options.js?v=29a6c3e3"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -61,7 +60,9 @@
 <span class="n">DEFAULT_TERMINATION_CRITERIA</span> <span class="o">=</span> <span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">TERM_CRITERIA_EPS</span> <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">TERM_CRITERIA_MAX_ITER</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="chessboardSingle"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardSingle">[docs]</a><span class="k">def</span> <span class="nf">chessboardSingle</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">showImages</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="chessboardSingle">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardSingle">[docs]</a>
+<span class="k">def</span> <span class="nf">chessboardSingle</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">showImages</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">distortionCoeffsNumber</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calibrate a single camera with a chessboard pattern.</span>
 <span class="sd">    </span>
@@ -78,6 +79,12 @@
 <span class="sd">    showImages : bool</span>
 <span class="sd">        If True, each processed image is showed to check for correct chessboard detection.</span>
 <span class="sd">        Default to False.</span>
+<span class="sd">    distortionCoeffsNumber: int, optional</span>
+<span class="sd">        Number of distortion coefficients to be used for calibration, either 0, 4, 5, 8, 12 or 14.</span>
+<span class="sd">        Coefficients are the same order as specified in :ref:`OpenCV documentation&lt;https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html&gt;`.</span>
+<span class="sd">        Please note that this library uses only a small subset of the advanced calibration options found in OpenCV.</span>
+<span class="sd">        If set to 0 distortion correction is disabled (coefficients will be 0).</span>
+<span class="sd">        Default to 5 (basic radial and tangential distortion correction).</span>
 <span class="sd">    </span>
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -115,11 +122,15 @@
                 <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;Chessboard&#39;</span><span class="p">,</span><span class="n">img</span><span class="p">)</span>
                 <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         
-    <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span><span class="n">objpoints</span><span class="p">,</span> <span class="n">imgpoints</span><span class="p">,</span> <span class="n">gray</span><span class="o">.</span><span class="n">shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+    <span class="n">flags</span> <span class="o">=</span> <span class="n">_getCalibrationFlags</span><span class="p">(</span><span class="n">distortionCoeffsNumber</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span><span class="n">objpoints</span><span class="p">,</span> <span class="n">imgpoints</span><span class="p">,</span> <span class="n">gray</span><span class="o">.</span><span class="n">shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span></div>
+
     
-    
-        
-<div class="viewcode-block" id="chessboardStereo"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardStereo">[docs]</a><span class="k">def</span> <span class="nf">chessboardStereo</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+
+<div class="viewcode-block" id="chessboardStereo">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardStereo">[docs]</a>
+<span class="k">def</span> <span class="nf">chessboardStereo</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="o">=</span><span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">distortionCoeffsNumber</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Performs stereo calibration between two cameras and returns a StereoRig object.</span>
 <span class="sd">    </span>
@@ -134,9 +145,15 @@
 <span class="sd">    chessboardSize: tuple</span>
 <span class="sd">        Chessboard *internal* dimensions as (width, height). Dimensions should be different to avoid ambiguity.</span>
 <span class="sd">        Default to (7,6).</span>
-<span class="sd">    squareSize : float</span>
+<span class="sd">    squareSize : float, optional</span>
 <span class="sd">        Length of the square side in the chosen world units. For example, if the square size is set in mm, </span>
 <span class="sd">        measures in the 3D reconstruction will be in mm. Default to 1.</span>
+<span class="sd">    distortionCoeffsNumber: int, optional</span>
+<span class="sd">        Number of distortion coefficients to be used for calibration, either 0, 4, 5, 8, 12 or 14.</span>
+<span class="sd">        Coefficients are the same order as specified in :ref:`OpenCV documentation&lt;https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html&gt;`.</span>
+<span class="sd">        Please note that this library uses only a small subset of the advanced calibration options found in OpenCV.</span>
+<span class="sd">        If set to 0 distortion correction is disabled (coefficients will be 0).</span>
+<span class="sd">        Default to 5 (basic radial and tangential distortion correction).</span>
 <span class="sd">        </span>
 <span class="sd">    Returns</span>
 <span class="sd">    ----------</span>
@@ -186,11 +203,8 @@
     <span class="n">cameraMatrix2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="n">distCoeffs1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
     <span class="n">distCoeffs2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    
-    <span class="c1"># Flags for calibration</span>
-    <span class="c1"># TO DO flags management to provide different configurations to user</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span>
-    
+    <span class="n">flags</span> <span class="o">=</span> <span class="n">_getCalibrationFlags</span><span class="p">(</span><span class="n">distortionCoeffsNumber</span><span class="p">)</span>
+
     <span class="c1"># Do stereo calibration</span>
     <span class="n">retval</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">stereoCalibrate</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">objp</span><span class="p">]]</span> <span class="o">*</span> <span class="n">counter</span><span class="p">),</span> <span class="n">imagePoints1</span><span class="p">,</span> <span class="n">imagePoints2</span><span class="p">,</span> <span class="n">cameraMatrix1</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">cameraMatrix2</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">imageSize</span> <span class="o">=</span> <span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span>
     
@@ -200,7 +214,10 @@
     <span class="k">return</span> <span class="n">stereoRigObj</span></div>
 
 
-<div class="viewcode-block" id="chessboardProCam"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardProCam">[docs]</a><span class="k">def</span> <span class="nf">chessboardProCam</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
+
+<div class="viewcode-block" id="chessboardProCam">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardProCam">[docs]</a>
+<span class="k">def</span> <span class="nf">chessboardProCam</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
                      <span class="n">black_thr</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">white_thr</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">camIntrinsic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Performs stereo calibration between a camera (reference) and a projector.</span>
@@ -233,7 +250,7 @@
 <span class="sd">        required for valid pixels, between the graycode pattern and its inverse images. Default to 5.</span>
 <span class="sd">    camIntrinsic : numpy.ndarray, optional</span>
 <span class="sd">        A 3x3 matrix representing camera intrinsic parameters. If not given it will be calculated.</span>
-<span class="sd">    camIntrinsic : list, optional</span>
+<span class="sd">    camDistCoeffs : list, optional</span>
 <span class="sd">        Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).</span>
 <span class="sd">        If not given they will be calculated.</span>
 <span class="sd">    normalize : bool</span>
@@ -374,6 +391,7 @@
     <span class="k">return</span> <span class="n">stereoRigObj</span></div>
 
 
+
 <span class="k">def</span> <span class="nf">_getWhiteCenters</span><span class="p">(</span><span class="n">cam_corners_list</span><span class="p">,</span> <span class="n">cam_int</span><span class="p">,</span> <span class="n">cam_dist</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="p">,</span> <span class="n">squareSize</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    From ordered camera chessboard corners and camera intrinsics, get</span>
@@ -434,7 +452,9 @@
     <span class="k">return</span> <span class="n">cam_whiteCorners_list</span><span class="p">,</span> <span class="n">whiteObjps</span>
     
     
-<div class="viewcode-block" id="chessboardProCamWhite"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardProCamWhite">[docs]</a><span class="k">def</span> <span class="nf">chessboardProCamWhite</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
+<div class="viewcode-block" id="chessboardProCamWhite">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardProCamWhite">[docs]</a>
+<span class="k">def</span> <span class="nf">chessboardProCamWhite</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
                      <span class="n">black_thr</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">white_thr</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">camIntrinsic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extended</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Performs stereo calibration between a camera (reference) and a projector.</span>
@@ -643,7 +663,10 @@
         <span class="k">return</span> <span class="n">stereoRigObj</span></div>
 
 
-<div class="viewcode-block" id="phaseShift"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.phaseShift">[docs]</a><span class="k">def</span> <span class="nf">phaseShift</span><span class="p">(</span><span class="n">periods</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">cameraImages</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="o">=</span><span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+
+<div class="viewcode-block" id="phaseShift">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.phaseShift">[docs]</a>
+<span class="k">def</span> <span class="nf">phaseShift</span><span class="p">(</span><span class="n">periods</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">cameraImages</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="o">=</span><span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                <span class="n">camIntrinsic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calibrate camera and projector using phase shifting and the </span>
@@ -809,9 +832,12 @@
     <span class="n">stereoRigObj</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">StereoRig</span><span class="p">(</span><span class="n">cam_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">F</span><span class="p">,</span> <span class="n">E</span> <span class="o">=</span> <span class="n">E</span><span class="p">,</span> <span class="n">reprojectionError</span> <span class="o">=</span> <span class="n">retval</span><span class="p">)</span>
     
     <span class="k">return</span> <span class="n">stereoRigObj</span></div>
+
     
 
-<div class="viewcode-block" id="phaseShiftWhite"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.phaseShiftWhite">[docs]</a><span class="k">def</span> <span class="nf">phaseShiftWhite</span><span class="p">(</span><span class="n">periods</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">cameraImages</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="o">=</span><span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span>
+<div class="viewcode-block" id="phaseShiftWhite">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.phaseShiftWhite">[docs]</a>
+<span class="k">def</span> <span class="nf">phaseShiftWhite</span><span class="p">(</span><span class="n">periods</span><span class="p">,</span> <span class="n">projectorResolution</span><span class="p">,</span> <span class="n">cameraImages</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="o">=</span><span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span>
                     <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">camIntrinsic</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">camDistCoeffs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extended</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calibrate camera and projector using phase shifting and heterodyne</span>
@@ -1006,7 +1032,10 @@
         <span class="k">return</span> <span class="n">stereoRigObj</span></div>
 
 
-<div class="viewcode-block" id="generateChessboardSVG"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.generateChessboardSVG">[docs]</a><span class="k">def</span> <span class="nf">generateChessboardSVG</span><span class="p">(</span><span class="n">chessboardSize</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">border</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+
+<div class="viewcode-block" id="generateChessboardSVG">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.generateChessboardSVG">[docs]</a>
+<span class="k">def</span> <span class="nf">generateChessboardSVG</span><span class="p">(</span><span class="n">chessboardSize</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">border</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Write the desired chessboard to a SVG file.</span>
 <span class="sd">    </span>
@@ -1036,9 +1065,12 @@
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&lt;path fill=&quot;#000&quot; d=&quot;</span><span class="si">{}</span><span class="s1">&quot;/&gt;&lt;/svg&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
     
     <span class="k">return</span></div>
+
     
         
-<div class="viewcode-block" id="getFundamentalMatrixFromProjections"><a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.getFundamentalMatrixFromProjections">[docs]</a><span class="k">def</span> <span class="nf">getFundamentalMatrixFromProjections</span><span class="p">(</span><span class="n">P1</span><span class="p">,</span><span class="n">P2</span><span class="p">):</span>
+<div class="viewcode-block" id="getFundamentalMatrixFromProjections">
+<a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.getFundamentalMatrixFromProjections">[docs]</a>
+<span class="k">def</span> <span class="nf">getFundamentalMatrixFromProjections</span><span class="p">(</span><span class="n">P1</span><span class="p">,</span><span class="n">P2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the fundamental matrix from two projection matrices.</span>
 <span class="sd">    </span>
@@ -1072,6 +1104,50 @@
             <span class="n">F</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">X</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
     
     <span class="k">return</span> <span class="n">F</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_getCalibrationFlags</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get flags for calibration from the selected number of parameters.</span>
+<span class="sd">    </span>
+<span class="sd">    Selecting distortion coefficients in OpenCV:</span>
+<span class="sd">    The distortion parameters are the radial coefficients k1, k2, k3, k4, k5, and k6 ,</span>
+<span class="sd">    p1 and p2 are the tangential distortion coefficients, and s1, s2, s3, and s4, are</span>
+<span class="sd">    the thin prism distortion coefficients. τx,τy are two rotations to correct for sensor orientation.</span>
+<span class="sd">    Higher-order coefficients are not considered in OpenCV.</span>
+<span class="sd">    The coefficients are passed or returned as</span>
+<span class="sd">    (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4,[τx,τy]]]])</span>
+<span class="sd">    See https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html</span>
+<span class="sd">    if distortionCoeffsNumber == 0:</span>
+<span class="sd">        Fix standard 5 coefficients to 0 so that optimisation is not affected.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_ZERO_TANGENT_DIST</span>
+            <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_K1</span> 
+            <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_K2</span> 
+            <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_K3</span>
+            <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_RATIONAL_MODEL</span>   
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># For n== 5 or any other case.</span>
+        <span class="k">return</span> <span class="mi">0</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        # TODO</span>
+<span class="sd">        elif distortionCoeffsNumber == 12:</span>
+<span class="sd">            flags = (</span>
+<span class="sd">                cv2.CALIB_RATIONAL_MODEL</span>
+<span class="sd">                + cv2.CALIB_THIN_PRISM_MODEL</span>
+<span class="sd">                )</span>
+<span class="sd">        elif distortionCoeffsNumber == 14:</span>
+<span class="sd">            flags = (</span>
+<span class="sd">                cv2.CALIB_RATIONAL_MODEL</span>
+<span class="sd">                + cv2.CALIB_THIN_PRISM_MODEL</span>
+<span class="sd">                + cv2.CALIB_TILTED_MODEL</span>
+<span class="sd">                )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 </pre></div>
 
             <div class="clearer"></div>
@@ -1109,8 +1185,8 @@
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2023, decadenza.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.1.3.
+    &#169; Copyright 2023, decadenza.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.2.6.
     </div>
   </body>
 </html>

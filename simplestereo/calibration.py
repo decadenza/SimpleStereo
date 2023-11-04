@@ -83,7 +83,7 @@ def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSiz
                 cv2.waitKey(0)
         
     flags = _getCalibrationFlags(distortionCoeffsNumber)
-    
+
     return cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None, flags=flags, criteria=DEFAULT_TERMINATION_CRITERIA)
     
 
@@ -204,7 +204,7 @@ def chessboardProCam(images, projectorResolution, chessboardSize = DEFAULT_CHESS
         required for valid pixels, between the graycode pattern and its inverse images. Default to 5.
     camIntrinsic : numpy.ndarray, optional
         A 3x3 matrix representing camera intrinsic parameters. If not given it will be calculated.
-    camIntrinsic : list, optional
+    camDistCoeffs : list, optional
         Camera distortion coefficients of 4, 5, 8, 12 or 14 elements (refer to OpenCV documentation).
         If not given they will be calculated.
     normalize : bool
