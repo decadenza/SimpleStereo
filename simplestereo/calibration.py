@@ -40,7 +40,7 @@ def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSiz
         If True, each processed image is showed to check for correct chessboard detection.
         Default to False.
     distortionCoeffsNumber: int, optional
-        Number of distortion coefficients to be used for calibration, either 0, 4, 5, 8, 12 or 14.
+        Number of distortion coefficients to be used for calibration, either either 0, 5 or 8.
         Coefficients are the same order as specified in :ref:`OpenCV documentation<https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html>`.
         Please note that this library uses only a small subset of the advanced calibration options found in OpenCV.
         If set to 0 distortion correction is disabled (coefficients will be 0).
@@ -106,7 +106,7 @@ def chessboardStereo(images, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=
         Length of the square side in the chosen world units. For example, if the square size is set in mm, 
         measures in the 3D reconstruction will be in mm. Default to 1.
     distortionCoeffsNumber: int, optional
-        Number of distortion coefficients to be used for calibration, either 0, 4, 5, 8, 12 or 14.
+        Number of distortion coefficients to be used for calibration, either 0, 5 or 8.
         Coefficients are the same order as specified in :ref:`OpenCV documentation<https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html>`.
         Please note that this library uses only a small subset of the advanced calibration options found in OpenCV.
         If set to 0 distortion correction is disabled (coefficients will be 0).
