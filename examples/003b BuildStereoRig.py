@@ -21,7 +21,7 @@ images = [ ( os.path.join(loadPath,str(i)+'_L.png'), os.path.join(loadPath,str(i
 print(f"Calibrating using {len(images)} images from:\n{loadPath}...")
 
 # Calibrate and build StereoRig object
-rig = ss.calibration.chessboardStereo( images, chessboardSize=(7,6), squareSize=60.5 )
+rig = ss.calibration.chessboardStereo( images, chessboardSize=(7,6), squareSize=60.5)
 
 # Save rig object to file
 rig.save( saveFile )
@@ -31,5 +31,8 @@ print("Saved in:", saveFile)
 print("Reprojection error:", rig.reprojectionError)
 print("Centers:", rig.getCenters())
 print("Baseline:", rig.getBaseline())
+
+print("Distortion coefficients 1:", rig.distCoeffs1)
+print("Distortion coefficients 2:", rig.distCoeffs2)
 
 print("Done!")

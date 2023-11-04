@@ -1,8 +1,9 @@
 *.pyc
-SimpleStereo.egg-info/**
-build/**
-.vscode/**
-./eggs/**
+SimpleStereo.egg-info/
+build/
+.vscode/
+.eggs/
+.github/
 
 !.gitignore
 !.nojekyll
