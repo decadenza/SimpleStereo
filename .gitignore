@@ -2,6 +2,7 @@
 SimpleStereo.egg-info/**
 build/**
 .vscode/**
+./eggs/**
 
 !.gitignore
 !.nojekyll

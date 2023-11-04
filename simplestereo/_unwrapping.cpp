@@ -82,14 +82,14 @@ PyObject *infiniteImpulseResponse(PyObject *self, PyObject *args)
         s[i] = new bool[w];
     }
 
-    int y;
-    int x;
-    int S;
-    double temp;
-    double cur;
+    int y = 0;
+    int x = 0;
+    int S = 0;
+    double temp = 0;
+    double cur = 0;
     std::vector<Coord> neigh;
     
-    // Initialize s with zeros
+    // Initialize s with zeros.
     std::fill_n(&s[0][0], h * w, 0);
     
     // Remove transient response (first row unwrapped forth and back)
