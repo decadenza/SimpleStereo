@@ -22,7 +22,7 @@ DEFAULT_CORNERSUBPIX_WINSIZE = (11,11)
 DEFAULT_TERMINATION_CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-6)
 
 
-def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1, showImages=False, distortionCoeffsNumber=5):
+def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSize=1, showImages=False, distCoeffsNumber=5):
     """
     Calibrate a single camera with a chessboard pattern.
     
@@ -39,8 +39,8 @@ def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSiz
     showImages : bool
         If True, each processed image is showed to check for correct chessboard detection.
         Default to False.
-    distortionCoeffsNumber: int, optional
-        Number of distortion coefficients to be used for calibration, either either 0, 5 or 8.
+    distCoeffsNumber: int, optional
+        Number of distortion coefficients to be used for calibration, either either 0, 4, 5, 8 or 14.
         Coefficients are the same order as specified in :ref:`OpenCV documentation<https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html>`.
         Please note that this library uses only a small subset of the advanced calibration options found in OpenCV.
         If set to 0 distortion correction is disabled (coefficients will be 0).
@@ -82,12 +82,12 @@ def chessboardSingle(images, chessboardSize = DEFAULT_CHESSBOARD_SIZE, squareSiz
                 cv2.imshow('Chessboard',img)
                 cv2.waitKey(0)
         
-    flags = _getCalibrationFlags(distortionCoeffsNumber)
+    flags = _getCalibrationFlags(distCoeffsNumber)
 
     return cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None, flags=flags, criteria=DEFAULT_TERMINATION_CRITERIA)
     
 
-def chessboardStereo(images, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=1, distortionCoeffsNumber=5):
+def chessboardStereo(images, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=1, distCoeffsNumber=5):
     """
     Performs stereo calibration between two cameras and returns a StereoRig object.
     
@@ -105,8 +105,8 @@ def chessboardStereo(images, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=
     squareSize : float, optional
         Length of the square side in the chosen world units. For example, if the square size is set in mm, 
         measures in the 3D reconstruction will be in mm. Default to 1.
-    distortionCoeffsNumber: int, optional
-        Number of distortion coefficients to be used for calibration, either 0, 5 or 8.
+    distCoeffsNumber: int, optional
+        Number of distortion coefficients to be used for calibration, either either 0, 4, 5, 8 or 14.
         Coefficients are the same order as specified in :ref:`OpenCV documentation<https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html>`.
         Please note that this library uses only a small subset of the advanced calibration options found in OpenCV.
         If set to 0 distortion correction is disabled (coefficients will be 0).
@@ -158,9 +158,9 @@ def chessboardStereo(images, chessboardSize=DEFAULT_CHESSBOARD_SIZE, squareSize=
     T = np.zeros((3, 1), dtype=np.float64)      # Translation vector between the coordinate systems of the cameras.
     cameraMatrix1 = np.eye(3, dtype=np.float64)
     cameraMatrix2 = np.eye(3, dtype=np.float64)
-    distCoeffs1 = np.empty(5)
-    distCoeffs2 = np.empty(5)
-    flags = _getCalibrationFlags(distortionCoeffsNumber)
+    distCoeffs1 = None
+    distCoeffs2 = None
+    flags = _getCalibrationFlags(distCoeffsNumber)
 
     # Do stereo calibration
     retval, intrinsic1, distCoeffs1, intrinsic2, distCoeffs2, R, T, E, F = cv2.stereoCalibrate( np.array([[objp]] * counter), imagePoints1, imagePoints2, cameraMatrix1, distCoeffs1, cameraMatrix2, distCoeffs2, imageSize = img1.shape[::-1], flags=flags, criteria = DEFAULT_TERMINATION_CRITERIA)
@@ -1054,35 +1054,45 @@ def _getCalibrationFlags(n):
     p1 and p2 are the tangential distortion coefficients, and s1, s2, s3, and s4, are
     the thin prism distortion coefficients. τx,τy are two rotations to correct for sensor orientation.
     Higher-order coefficients are not considered in OpenCV.
+    
     The coefficients are passed or returned as
     (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4,[τx,τy]]]])
     See https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html
-    if distortionCoeffsNumber == 0:
-        Fix standard 5 coefficients to 0 so that optimisation is not affected.
     """
     if n == 0:
+        # Fix standard 5 coefficients to 0, so that optimisation is not affected.
         return (
             cv2.CALIB_ZERO_TANGENT_DIST
             + cv2.CALIB_FIX_K1 
             + cv2.CALIB_FIX_K2 
             + cv2.CALIB_FIX_K3
             )
+    elif n == 4:
+        # Fix k3=0.
+        return cv2.CALIB_FIX_K3
     elif n == 8:
-        return cv2.CALIB_RATIONAL_MODEL   
+        return cv2.CALIB_RATIONAL_MODEL
+        """
+        # FIXME Error in OpenCV
+        # cv2.error: OpenCV(4.8.1) /io/opencv/modules/calib3d/src/calibration.cpp:1418:
+        # error: (-5:Bad argument) Thin prism model must have 12 parameters in the distortion
+        # matrix in function 'cvCalibrateCamera2Internal'
+        elif n == 12:
+                return (
+                    cv2.CALIB_RATIONAL_MODEL
+                    + cv2.CALIB_THIN_PRISM_MODEL
+                    )
+        """
+    elif n == 14:
+        return (
+            cv2.CALIB_RATIONAL_MODEL
+            + cv2.CALIB_THIN_PRISM_MODEL
+            + cv2.CALIB_TILTED_MODEL
+            )
     else:
         # For n== 5 or any other case.
         return 0
     """
         # TODO
-        elif distortionCoeffsNumber == 12:
-            flags = (
-                cv2.CALIB_RATIONAL_MODEL
-                + cv2.CALIB_THIN_PRISM_MODEL
-                )
-        elif distortionCoeffsNumber == 14:
-            flags = (
-                cv2.CALIB_RATIONAL_MODEL
-                + cv2.CALIB_THIN_PRISM_MODEL
-                + cv2.CALIB_TILTED_MODEL
-                )
+        
         """
