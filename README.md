@@ -112,6 +112,7 @@ cd ..
 
 ## Future work
 - Add distortionCoeffsNumber support for 4, 12 and 14 coefficients (currently only 0, 5 and 8 supported).
+- Add support for fisheye cameras.
 - Adapt structured light algorithms to work with two cameras.
 - ArUco camera calibration algorithm.
 
