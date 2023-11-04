@@ -66,7 +66,7 @@ print("Baseline:", rig.getBaseline())
     
 More examples available in the [examples](https://github.com/decadenza/SimpleStereo/tree/master/examples) folder.
 
-## Features and Future Work
+## Features
 
 ### General
 * `StereoRig`, `RectifiedStereoRig` and `StructuredLightRig` classes to easily manage your stereo rigs and their calibration
@@ -77,7 +77,6 @@ More examples available in the [examples](https://github.com/decadenza/SimpleSte
 - [x] Chessboard calibration (one and two cameras)
 - [x] Camera-projector calibration adapted (Moreno D. et al.), adapted from [procam](https://github.com/kamino410/procam-calibration) (`ss.calibration.chessboardProCam`)
 - [x] Camera-projector calibration alternative version (`ss.calibration.chessboardProCamWhite`)
-- [ ] ArUco camera calibration algorithm
 
 ### Stereo rectification algorithms
 - [x] Fusiello et al., *A compact algorithm for rectification of stereo pairs*, 2000 (`ss.rectification.fusielloRectify`)
@@ -91,8 +90,6 @@ More examples available in the [examples](https://github.com/decadenza/SimpleSte
 
 ### Active and Structured light algorithms
 - [x] Gray code
-- [ ] De Brujin
-- [ ] Adapt structured light algorithms to work with two cameras
 - [x] StereoFTP (Lafiosca P. et al., [Automated Aircraft Dent Inspection via a Modified Fourier Transform Profilometry Algorithm](https://doi.org/10.3390/s22020433), Sensors, 2022)
 
 ### Unwrapping algorithms
@@ -112,6 +109,11 @@ cd sphinx-documentation-generator
 sh BUILD_SCRIPT.sh
 cd ..
 ```
+
+## Future work
+- Add distortionCoeffsNumber support for 4, 12 and 14 coefficients (currently only 0, 5 and 8 supported).
+- Adapt structured light algorithms to work with two cameras.
+- ArUco camera calibration algorithm.
 
 ## Contributions
 Reporting issues and proposing integrations of other stereo vision algorithms is highly encouraged and it will be acknowledged.
