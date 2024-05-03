@@ -24,12 +24,14 @@ if __name__ == '__main__':
                         Extension(
                                 'simplestereo._passive', 
                                 ['simplestereo/_passive.cpp'],
-                                include_dirs=[get_numpy_include()]
+                                include_dirs=[get_numpy_include()],
+                                extra_compile_args=["-std=c++11"]
                                 ),
                         Extension(
                                  'simplestereo._unwrapping',
                                  ['simplestereo/_unwrapping.cpp'],
-                                 include_dirs=[get_numpy_include()]
+                                 include_dirs=[get_numpy_include()],
+                                 extra_compile_args=["-std=c++11"]
                                  ),
                         ],
           )
