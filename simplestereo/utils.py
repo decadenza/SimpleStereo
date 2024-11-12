@@ -229,7 +229,7 @@ def getCrossProductMatrix(v):
     v = v.ravel()
     return np.array( [ [0, -v[2], v[1]], \
                        [v[2], 0, -v[0]], \
-                       [-v[1], v[0], 0] ] , dtype=np.float)
+                       [-v[1], v[0], 0] ] , dtype=np.float32)
 
 
 def drawCorrespondingEpipolarLines(img1, img2, F, x1=[], x2=[], color=(0,0,255), thickness=1):
