@@ -653,9 +653,9 @@ class StereoFTP:
         stripe_cam = stripe_cam.reshape(-1,2) # x, y camera points (already undistorted)
         
         # Find integer indexes of stripe on camera (round half down)
-        #cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)
+        #cam_indexes = np.ceil(objStripe-0.5).astype(np.int64) # As (x,y)
         # Use undistorted values
-        stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int) # As (x,y)
+        stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int64) # As (x,y)
         
         ### Find world points corresponding to stripe
         stripe_world = self._triangulate(stripe_cam, self.stripeCentralPeak, roi)
@@ -942,9 +942,9 @@ class StereoFTPAnaglyph(StereoFTP):
         stripe_cam = stripe_cam.reshape(-1,2) # x, y camera points (already undistorted)
         
         # Find integer indexes of stripe on camera (round half down)
-        #cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)
+        #cam_indexes = np.ceil(objStripe-0.5).astype(np.int64) # As (x,y)
         # Use undistorted values
-        stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int) # As (x,y)
+        stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int64) # As (x,y)
         
         ### Find world points corresponding to stripe
         stripe_world = self._triangulate(stripe_cam, self.stripeCentralPeak, roi)
@@ -1337,7 +1337,7 @@ class StereoFTP_Mapping(StereoFTP):
         stripe_cam = stripe_cam.reshape(-1,2) # x, y camera points (already undistorted)
         
         # Find integer indexes of stripe on camera (round half down)
-        #cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)
+        #cam_indexes = np.ceil(objStripe-0.5).astype(np.int64) # As (x,y)
         
         
         ### Find world points corresponding to stripe
@@ -1423,7 +1423,7 @@ class StereoFTP_Mapping(StereoFTP):
         # Calculate absolute phase shift [S. Zhang 2006 Novel method...]
         
         # ALTERNATIVE
-        #stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int) # As (x,y)
+        #stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int64) # As (x,y)
         #theta_shift = phaseUnwrapped[stripe_indexes[:,1],stripe_indexes[:,0]]
         # Interpolation of phase values
         

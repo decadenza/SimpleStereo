@@ -27,3 +27,10 @@ dependencies = [
 [project.urls]
 "Homepage" = "https://github.com/decadenza/SimpleStereo"
 "Bug Tracker" = "https://github.com/decadenza/SimpleStereo/issues"
+
+
+[tool.setuptools]
+ext-modules = [
+  {name = "simplestereo._passive", sources = ["simplestereo/_passive.cpp"]},
+  {name = "simplestereo._unwrapping", sources = ["simplestereo/_unwrapping.cpp"]},
+]

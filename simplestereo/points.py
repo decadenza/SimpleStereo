@@ -59,7 +59,7 @@ def exportPLY(points3D, filepath, referenceImage=None, precision=6):
                 referenceImage = np.ravel(referenceImage)
                 
                 # If intensity values are integers
-                if np.issubdtype(referenceImage.dtype, np.integer):
+                if np.issubdtype(referenceImage.dtype, np.int64):
                     f.write("property int intensity\n")
                     f.write("end_header\n")
                 

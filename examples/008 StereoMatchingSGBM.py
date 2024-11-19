@@ -18,8 +18,8 @@ loadFile = os.path.join(curPath,"res","1","rigRect.json")      # StereoRig file
 rigRect = ss.RectifiedStereoRig.fromFile(loadFile)
 
 # Read right and left image (please ensure the order!!!)
-img1 = cv2.imread(os.path.join(imgPath,'test_L.png'))
-img2 = cv2.imread(os.path.join(imgPath,'test_R.png'))
+img1 = cv2.imread(os.path.join(imgPath,'left.png'))
+img2 = cv2.imread(os.path.join(imgPath,'right.png'))
 
 # Simply rectify two images
 img1_rect, img2_rect = rigRect.rectifyImages(img1, img2)

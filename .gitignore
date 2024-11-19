@@ -7,3 +7,6 @@ build/
 
 !.gitignore
 !.nojekyll
+
+# Point cloud files
+*.ply
