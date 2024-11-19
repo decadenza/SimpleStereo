@@ -110,6 +110,22 @@ sh BUILD_SCRIPT.sh
 cd ..
 ```
 
+## Deploy
+After building the documentation and pulled changes in master branch, assign a version in `pyproject.toml`. Tag the commit accordingly.
+
+Then, build `*.tar.gz` distribution package:
+```
+python3 -m build --sdist
+```
+Test upload on PyPI test repository:
+```
+python3 -m twine upload --repository testpypi dist/*
+```
+Finally, upload to PyPI officially repository:
+```
+python3 -m twine upload dist/*
+```
+
 ## Future work
 - Fix distortion coefficient issue (OpenCV related) when using 12 coefficients (currently 0, 4, 5, 8 and 14 are supported).
 - Add support for fisheye cameras.
