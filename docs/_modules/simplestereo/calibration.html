@@ -62,7 +62,7 @@
 
 <div class="viewcode-block" id="chessboardSingle">
 <a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardSingle">[docs]</a>
-<span class="k">def</span> <span class="nf">chessboardSingle</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">showImages</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">distortionCoeffsNumber</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">chessboardSingle</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">chessboardSize</span> <span class="o">=</span> <span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">showImages</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">distCoeffsNumber</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calibrate a single camera with a chessboard pattern.</span>
 <span class="sd">    </span>
@@ -79,8 +79,8 @@
 <span class="sd">    showImages : bool</span>
 <span class="sd">        If True, each processed image is showed to check for correct chessboard detection.</span>
 <span class="sd">        Default to False.</span>
-<span class="sd">    distortionCoeffsNumber: int, optional</span>
-<span class="sd">        Number of distortion coefficients to be used for calibration, either either 0, 5 or 8.</span>
+<span class="sd">    distCoeffsNumber: int, optional</span>
+<span class="sd">        Number of distortion coefficients to be used for calibration, either either 0, 4, 5, 8 or 14.</span>
 <span class="sd">        Coefficients are the same order as specified in :ref:`OpenCV documentation&lt;https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html&gt;`.</span>
 <span class="sd">        Please note that this library uses only a small subset of the advanced calibration options found in OpenCV.</span>
 <span class="sd">        If set to 0 distortion correction is disabled (coefficients will be 0).</span>
@@ -122,7 +122,7 @@
                 <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;Chessboard&#39;</span><span class="p">,</span><span class="n">img</span><span class="p">)</span>
                 <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         
-    <span class="n">flags</span> <span class="o">=</span> <span class="n">_getCalibrationFlags</span><span class="p">(</span><span class="n">distortionCoeffsNumber</span><span class="p">)</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="n">_getCalibrationFlags</span><span class="p">(</span><span class="n">distCoeffsNumber</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">calibrateCamera</span><span class="p">(</span><span class="n">objpoints</span><span class="p">,</span> <span class="n">imgpoints</span><span class="p">,</span> <span class="n">gray</span><span class="o">.</span><span class="n">shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span> <span class="n">criteria</span><span class="o">=</span><span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span></div>
 
@@ -130,7 +130,7 @@
 
 <div class="viewcode-block" id="chessboardStereo">
 <a class="viewcode-back" href="../../simplestereo.html#simplestereo.calibration.chessboardStereo">[docs]</a>
-<span class="k">def</span> <span class="nf">chessboardStereo</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="o">=</span><span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">distortionCoeffsNumber</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">chessboardStereo</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">chessboardSize</span><span class="o">=</span><span class="n">DEFAULT_CHESSBOARD_SIZE</span><span class="p">,</span> <span class="n">squareSize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">distCoeffsNumber</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Performs stereo calibration between two cameras and returns a StereoRig object.</span>
 <span class="sd">    </span>
@@ -148,8 +148,8 @@
 <span class="sd">    squareSize : float, optional</span>
 <span class="sd">        Length of the square side in the chosen world units. For example, if the square size is set in mm, </span>
 <span class="sd">        measures in the 3D reconstruction will be in mm. Default to 1.</span>
-<span class="sd">    distortionCoeffsNumber: int, optional</span>
-<span class="sd">        Number of distortion coefficients to be used for calibration, either 0, 5 or 8.</span>
+<span class="sd">    distCoeffsNumber: int, optional</span>
+<span class="sd">        Number of distortion coefficients to be used for calibration, either either 0, 4, 5, 8 or 14.</span>
 <span class="sd">        Coefficients are the same order as specified in :ref:`OpenCV documentation&lt;https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html&gt;`.</span>
 <span class="sd">        Please note that this library uses only a small subset of the advanced calibration options found in OpenCV.</span>
 <span class="sd">        If set to 0 distortion correction is disabled (coefficients will be 0).</span>
@@ -201,9 +201,9 @@
     <span class="n">T</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>      <span class="c1"># Translation vector between the coordinate systems of the cameras.</span>
     <span class="n">cameraMatrix1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="n">cameraMatrix2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-    <span class="n">distCoeffs1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">distCoeffs2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">flags</span> <span class="o">=</span> <span class="n">_getCalibrationFlags</span><span class="p">(</span><span class="n">distortionCoeffsNumber</span><span class="p">)</span>
+    <span class="n">distCoeffs1</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">distCoeffs2</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="n">_getCalibrationFlags</span><span class="p">(</span><span class="n">distCoeffsNumber</span><span class="p">)</span>
 
     <span class="c1"># Do stereo calibration</span>
     <span class="n">retval</span><span class="p">,</span> <span class="n">intrinsic1</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">intrinsic2</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">F</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">stereoCalibrate</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">objp</span><span class="p">]]</span> <span class="o">*</span> <span class="n">counter</span><span class="p">),</span> <span class="n">imagePoints1</span><span class="p">,</span> <span class="n">imagePoints2</span><span class="p">,</span> <span class="n">cameraMatrix1</span><span class="p">,</span> <span class="n">distCoeffs1</span><span class="p">,</span> <span class="n">cameraMatrix2</span><span class="p">,</span> <span class="n">distCoeffs2</span><span class="p">,</span> <span class="n">imageSize</span> <span class="o">=</span> <span class="n">img1</span><span class="o">.</span><span class="n">shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span> <span class="n">criteria</span> <span class="o">=</span> <span class="n">DEFAULT_TERMINATION_CRITERIA</span><span class="p">)</span>
@@ -1116,37 +1116,47 @@
 <span class="sd">    p1 and p2 are the tangential distortion coefficients, and s1, s2, s3, and s4, are</span>
 <span class="sd">    the thin prism distortion coefficients. τx,τy are two rotations to correct for sensor orientation.</span>
 <span class="sd">    Higher-order coefficients are not considered in OpenCV.</span>
+<span class="sd">    </span>
 <span class="sd">    The coefficients are passed or returned as</span>
 <span class="sd">    (k1,k2,p1,p2[,k3[,k4,k5,k6[,s1,s2,s3,s4,[τx,τy]]]])</span>
 <span class="sd">    See https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html</span>
-<span class="sd">    if distortionCoeffsNumber == 0:</span>
-<span class="sd">        Fix standard 5 coefficients to 0 so that optimisation is not affected.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Fix standard 5 coefficients to 0, so that optimisation is not affected.</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_ZERO_TANGENT_DIST</span>
             <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_K1</span> 
             <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_K2</span> 
             <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_K3</span>
             <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="c1"># Fix k3=0.</span>
+        <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_FIX_K3</span>
     <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_RATIONAL_MODEL</span>   
+        <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_RATIONAL_MODEL</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        # FIXME Error in OpenCV</span>
+<span class="sd">        # cv2.error: OpenCV(4.8.1) /io/opencv/modules/calib3d/src/calibration.cpp:1418:</span>
+<span class="sd">        # error: (-5:Bad argument) Thin prism model must have 12 parameters in the distortion</span>
+<span class="sd">        # matrix in function &#39;cvCalibrateCamera2Internal&#39;</span>
+<span class="sd">        elif n == 12:</span>
+<span class="sd">                return (</span>
+<span class="sd">                    cv2.CALIB_RATIONAL_MODEL</span>
+<span class="sd">                    + cv2.CALIB_THIN_PRISM_MODEL</span>
+<span class="sd">                    )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">14</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_RATIONAL_MODEL</span>
+            <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_THIN_PRISM_MODEL</span>
+            <span class="o">+</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CALIB_TILTED_MODEL</span>
+            <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># For n== 5 or any other case.</span>
         <span class="k">return</span> <span class="mi">0</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        # TODO</span>
-<span class="sd">        elif distortionCoeffsNumber == 12:</span>
-<span class="sd">            flags = (</span>
-<span class="sd">                cv2.CALIB_RATIONAL_MODEL</span>
-<span class="sd">                + cv2.CALIB_THIN_PRISM_MODEL</span>
-<span class="sd">                )</span>
-<span class="sd">        elif distortionCoeffsNumber == 14:</span>
-<span class="sd">            flags = (</span>
-<span class="sd">                cv2.CALIB_RATIONAL_MODEL</span>
-<span class="sd">                + cv2.CALIB_THIN_PRISM_MODEL</span>
-<span class="sd">                + cv2.CALIB_TILTED_MODEL</span>
-<span class="sd">                )</span>
+<span class="sd">        </span>
 <span class="sd">        &quot;&quot;&quot;</span>
 </pre></div>
 

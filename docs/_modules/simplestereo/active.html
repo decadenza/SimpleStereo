@@ -713,9 +713,9 @@
         <span class="n">stripe_cam</span> <span class="o">=</span> <span class="n">stripe_cam</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># x, y camera points (already undistorted)</span>
         
         <span class="c1"># Find integer indexes of stripe on camera (round half down)</span>
-        <span class="c1">#cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)</span>
+        <span class="c1">#cam_indexes = np.ceil(objStripe-0.5).astype(np.int64) # As (x,y)</span>
         <span class="c1"># Use undistorted values</span>
-        <span class="n">stripe_indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">stripe_cam</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span> <span class="c1"># As (x,y)</span>
+        <span class="n">stripe_indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">stripe_cam</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="c1"># As (x,y)</span>
         
         <span class="c1">### Find world points corresponding to stripe</span>
         <span class="n">stripe_world</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_triangulate</span><span class="p">(</span><span class="n">stripe_cam</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stripeCentralPeak</span><span class="p">,</span> <span class="n">roi</span><span class="p">)</span>
@@ -1011,9 +1011,9 @@
         <span class="n">stripe_cam</span> <span class="o">=</span> <span class="n">stripe_cam</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># x, y camera points (already undistorted)</span>
         
         <span class="c1"># Find integer indexes of stripe on camera (round half down)</span>
-        <span class="c1">#cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)</span>
+        <span class="c1">#cam_indexes = np.ceil(objStripe-0.5).astype(np.int64) # As (x,y)</span>
         <span class="c1"># Use undistorted values</span>
-        <span class="n">stripe_indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">stripe_cam</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span> <span class="c1"># As (x,y)</span>
+        <span class="n">stripe_indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">stripe_cam</span><span class="o">-</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="c1"># As (x,y)</span>
         
         <span class="c1">### Find world points corresponding to stripe</span>
         <span class="n">stripe_world</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_triangulate</span><span class="p">(</span><span class="n">stripe_cam</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stripeCentralPeak</span><span class="p">,</span> <span class="n">roi</span><span class="p">)</span>
@@ -1418,7 +1418,7 @@
         <span class="n">stripe_cam</span> <span class="o">=</span> <span class="n">stripe_cam</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># x, y camera points (already undistorted)</span>
         
         <span class="c1"># Find integer indexes of stripe on camera (round half down)</span>
-        <span class="c1">#cam_indexes = np.ceil(objStripe-0.5).astype(np.int) # As (x,y)</span>
+        <span class="c1">#cam_indexes = np.ceil(objStripe-0.5).astype(np.int64) # As (x,y)</span>
         
         
         <span class="c1">### Find world points corresponding to stripe</span>
@@ -1504,7 +1504,7 @@
         <span class="c1"># Calculate absolute phase shift [S. Zhang 2006 Novel method...]</span>
         
         <span class="c1"># ALTERNATIVE</span>
-        <span class="c1">#stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int) # As (x,y)</span>
+        <span class="c1">#stripe_indexes = np.ceil(stripe_cam-0.5).astype(np.int64) # As (x,y)</span>
         <span class="c1">#theta_shift = phaseUnwrapped[stripe_indexes[:,1],stripe_indexes[:,0]]</span>
         <span class="c1"># Interpolation of phase values</span>
         
