@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "numpy>=1.19",
+    "numpy<2",
     "opencv-contrib-python>=4.5",
     "scipy>=1.4",
     "matplotlib>=3",
