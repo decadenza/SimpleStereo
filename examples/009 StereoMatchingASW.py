@@ -35,6 +35,7 @@ stereo = ss.passive.StereoASW(winSize=35, minDisparity=4, maxDisparity=25, gamma
 
 # Get disparity map
 # Returned disparity is unsigned int 16 bit.
+print("Get comfy. This may take a while...")
 disparityMap = stereo.compute(img1_rect, img2_rect)
 
 # Normalize and apply a color map

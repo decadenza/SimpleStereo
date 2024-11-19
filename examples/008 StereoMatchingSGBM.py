@@ -11,15 +11,15 @@ Use OpenCV basic matching algorithm on rectified images.
 
 # Paths
 curPath = os.path.dirname(os.path.realpath(__file__))
-imgPath = os.path.join(curPath,"res","1")
-loadFile = os.path.join(curPath,"res","1","rigRect.json")      # StereoRig file
+imgPath = os.path.join(curPath,"res","2")
+loadFile = os.path.join(curPath,"res","2","rigRect.json")      # StereoRig file
 
 # Load stereo rig from file
 rigRect = ss.RectifiedStereoRig.fromFile(loadFile)
 
 # Read right and left image (please ensure the order!!!)
-img1 = cv2.imread(os.path.join(imgPath,'left.png'))
-img2 = cv2.imread(os.path.join(imgPath,'right.png'))
+img1 = cv2.imread(os.path.join(imgPath,'lawn_L.png'))
+img2 = cv2.imread(os.path.join(imgPath,'lawn_R.png'))
 
 # Simply rectify two images
 img1_rect, img2_rect = rigRect.rectifyImages(img1, img2)

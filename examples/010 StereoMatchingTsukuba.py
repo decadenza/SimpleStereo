@@ -20,7 +20,7 @@ imgPath = os.path.join(curPath,"res","tsukuba")
 img1_rect = cv2.imread(os.path.join(imgPath,'tsukuba_l.png'))
 img2_rect = cv2.imread(os.path.join(imgPath,'tsukuba_r.png'))
 
-print("Matchin in progress...")
+print("Matching in progress...")
 # You can try to adjust settings of each algorithm
 
 # Call SimpleStereo algorithms
