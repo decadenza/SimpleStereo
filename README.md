@@ -22,7 +22,7 @@ pip3 install simplestereo
 ```
 
 ### Option 2
-Clone or download the latest version and unzip. Then, from the folder containing `setup.py`, run:
+Clone or download the latest version and unzip. Then, from the root folder (the one containing `pyproject.toml`), run:
 ```
 pip3 install .
 ```
