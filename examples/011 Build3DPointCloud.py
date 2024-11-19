@@ -11,7 +11,7 @@ import os
 import numpy as np
 import cv2
 from scipy.ndimage import median_filter 
-from scipy.signal.signaltools import wiener
+from scipy.signal import wiener
 
 import simplestereo as ss
 
