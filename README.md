@@ -126,6 +126,11 @@ Finally, upload to PyPI officially repository:
 python3 -m twine upload dist/*
 ```
 
+Optionally, clean up the `dist` folder with:
+```
+rm -r dist
+```
+
 ## Future work
 - Fix distortion coefficient issue (OpenCV related) when using 12 coefficients (currently 0, 4, 5, 8 and 14 are supported).
 - Add support for fisheye cameras.
