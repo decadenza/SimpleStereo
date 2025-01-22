@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "SimpleStereo"
-version = "1.0.8"
+version = "1.0.9"
 authors = [
   { name="decadenza" },
 ]
@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "numpy<2",
+    "numpy>=1.19, <2",
     "opencv-contrib-python>=4.5",
     "scipy>=1.4",
     "matplotlib>=3",
