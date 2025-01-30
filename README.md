@@ -5,7 +5,7 @@ SimpleStereo is a high level framework for stereo vision applications. It is wri
 Documentation is available at https://decadenza.github.io/SimpleStereo/
 
 ## Dependencies
-* Python 3 (tested with 3.9.2)
+* Python 3
 * NumPy
 * SciPy
 * OpenCV
